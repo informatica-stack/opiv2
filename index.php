@@ -15,7 +15,7 @@ $rol = $_SESSION['user_rol'] ?? '';
 
 switch ($rol) {
     case 'SYSADMIN':
-        header('Location: master.php');
+        header('Location: mis_solicitudes.php');
         break;
     case 'PRESUPUESTO': 
         header('Location: control_presupuestario.php'); 

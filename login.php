@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 function redirectBasedOnRole($role) {
     switch ($role) {
         case 'SYSADMIN':
-            header('Location: master.php');
+            header('Location: mis_solicitudes.php');
             break;
         case 'PRESUPUESTO': 
             header('Location: control_presupuestario.php'); 
@@ -150,8 +150,8 @@ function redirectBasedOnRole($role) {
             <div class="d-flex justify-content-center mb-3">
                 <img src="logo.png" alt="Logo Institucional" class="img-fluid rounded bg-white p-2 shadow-sm" style="max-height: 96px; width: auto;">
             </div>
-            <h4 class="fw-bold mb-1">Gestión de Compras</h4>
-            <p class="text-info small mb-0">Plataforma de Orden de Pedido Interno</p>
+            <h4 class="fw-bold mb-1">Sistema de órdenes de pedido interno</h4>
+            <!--  <p class="text-info small mb-0">Plataforma de Orden de Pedido Interno</p>-->
         </div>
 
         <div class="card-body p-4 p-sm-5">
@@ -167,7 +167,7 @@ function redirectBasedOnRole($role) {
                 
                 <!-- CORREO INSTITUCIONAL -->
                 <div class="mb-3">
-                    <label for="email" class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Correo Institucional</label>
+                    <label for="email" class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Correo</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light text-secondary border-end-0">
                             <i class="bi bi-envelope-fill"></i>

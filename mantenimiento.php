@@ -119,7 +119,7 @@ $es_admin = (($_SESSION['user_rol'] ?? '') === 'SYSADMIN');
 
         <?php if ($es_admin): ?>
             <div class="mt-4">
-                <a href="master.php" class="btn btn-primary btn-sm px-4 py-2 rounded-pill fw-bold">
+                <a href="mis_solicitudes.php" class="btn btn-primary btn-sm px-4 py-2 rounded-pill fw-bold">
                     <i class="bi bi-shield-lock me-1"></i> Ir al Panel Maestro
                 </a>
             </div>

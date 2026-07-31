@@ -80,9 +80,7 @@ $user_name = $_SESSION['user_name'] ?? 'Usuario';
                         <li><hr class="dropdown-divider"></li>
                         <li><span class="dropdown-header text-uppercase text-secondary fw-bold" style="font-size: 9px; letter-spacing: 0.5px;">Configuración</span></li>
                         <li><a class="dropdown-item rounded-3 py-2 small d-flex align-items-center gap-2 <?= ($pagina_actual === 'mantenedor_flujos.php') ? 'active bg-primary text-white' : 'text-dark' ?>" href="mantenedor_flujos.php"><i class="bi bi-gear-wide-connected"></i> Diseñador de Flujos</a></li>
-                        <?php if($rol === 'SYSADMIN'): ?>
-                            <li><a class="dropdown-item rounded-3 py-2 small d-flex align-items-center gap-2 <?= ($pagina_actual === 'master.php') ? 'active bg-primary text-white' : 'text-dark' ?>" href="master.php"><i class="bi bi-key-fill"></i> Panel Maestro</a></li>
-                        <?php endif; ?>
+
                     <?php endif; ?>
                     
                     <li><hr class="dropdown-divider"></li>
