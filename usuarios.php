@@ -47,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $u_data = $stmtU->fetch();
 
             if ($u_data) {
+                $link_login = obtener_base_url() . "/login.php";
                 $cuerpo_aprobado = '
                     <h3 style="color: #1e293b; margin-top: 0;">¡Cuenta Aprobada!</h3>
                     <p>Estimado(a) <strong>' . htmlspecialchars($u_data['nombre_completo']) . '</strong>,</p>
@@ -56,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <p style="margin: 3px 0;"><strong>RUT:</strong> ' . htmlspecialchars($u_data['rut']) . '</p>
                     </div>
                     <p style="text-align: center; margin: 25px 0;">
-                        <a href="login.php" class="btn" style="background-color: #198754; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                        <a href="' . $link_login . '" class="btn" style="background-color: #198754; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
                             Iniciar Sesión Ahora
                         </a>
                     </p>

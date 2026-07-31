@@ -46,10 +46,7 @@ if (empty($token)) {
             ");
             $sysadmins = $stmtSys->fetchAll();
 
-            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-            $host = $_SERVER['HTTP_HOST'];
-            $script_dir = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
-            $link_admin = "$protocol://$host$script_dir/usuarios.php";
+            $link_admin = obtener_base_url() . "/usuarios.php";
 
             $cuerpo_sysadmin = '
                 <h3 style="color: #1e293b; margin-top: 0;">[Atención SYSADMIN] Nueva Solicitud de Usuario</h3>

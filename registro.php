@@ -73,10 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmtIns->execute([$nombre, $email, $rut, $default_rol_id, $unidad_id, $cargo, $hash, $token]);
 
         // 7. Enviar Correo de Verificación
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'];
-        $script_dir = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
-        $link_verificacion = "$protocol://$host$script_dir/verificar_email.php?token=$token";
+        $link_verificacion = obtener_base_url() . "/verificar_email.php?token=$token";
 
         $cuerpo_correo = '
             <h3 style="color: #1e293b; margin-top: 0;">¡Bienvenido(a), ' . htmlspecialchars($nombre) . '!</h3>
