@@ -1,0 +1,310 @@
+<?php
+// control_presupuestario_controller.php - Lógica de Negocio (V4.8 - Criterios y CM IDs)
+require_once __DIR__ . '/config.php';
+
+// 1. SEGURIDAD Y SESIÓN
+if (session_status() === PHP_SESSION_NONE) session_start();
+if (!isset($_SESSION['user_id'])) { header("Location: login.php"); exit; }
+
+// SOLO ROL PRESUPUESTO O ADMIN O SYSADMIN
+$rol = $_SESSION['user_rol'] ?? '';
+if ($rol !== 'PRESUPUESTO' && $rol !== 'ADMIN_MUNICIPAL' && $rol !== 'SYSADMIN') {
+    die("Acceso Denegado. Módulo exclusivo de VB Presupuestario.");
+}
+
+$user_id = $_SESSION['user_id'];
+$mensaje = ''; $tipo_mensaje = '';
+$vista = $_GET['view'] ?? 'pendientes'; // 'pendientes', 'procesados', 'revisar'
+
+// =====================================================================
+// MANEJO DE ACCIONES (POST) - MOTOR DE FLUJOS DINÁMICO
+// =====================================================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        $exp_id = isset($_POST['expediente_id']) ? (int)$_POST['expediente_id'] : null;
+        $accion = $_POST['accion'] ?? '';
+        $transicion_id = $_POST['transicion_id'] ?? null;
+        
+        $pdo->beginTransaction();
+
+        $stmtEst = $pdo->prepare("SELECT estado_actual FROM expedientes WHERE id = ?");
+        $stmtEst->execute([$exp_id]);
+        $estado_actual = $stmtEst->fetchColumn();
+
+        // Si se recibe transicion_id, determinar la acción lógica
+        $trans = null;
+        if ($transicion_id) {
+            $stmtT = $pdo->prepare("SELECT * FROM flujos_definicion WHERE id = ?");
+            $stmtT->execute([$transicion_id]);
+            $trans = $stmtT->fetch();
+            if ($trans) {
+                $accion = strtolower($trans['accion_codigo']); // 'aprobar', 'devolver', 'rechazar'
+            }
+        }
+
+        // A. VISAR (APROBAR Y/O COMPROMETER FONDOS)
+        if ($accion === 'aprobar') {
+            if ($estado_actual === 'EN_VALIDACION_PRESUPUESTARIA') {
+                $comentario = "Certificado de Disponibilidad Presupuestaria (CDP) generado. Visación presupuestaria aprobada.";
+                
+            } elseif ($estado_actual === 'EN_VALIDACION_PRESUPUESTARIA_FINAL') {
+                // Subir Borrador CDP si fue adjuntado
+                if (!empty($_FILES['archivo_cdp_borrador']['name'])) {
+                    $ext_borrador = strtolower(pathinfo($_FILES['archivo_cdp_borrador']['name'], PATHINFO_EXTENSION));
+                    if ($ext_borrador !== 'pdf') throw new Exception("El Borrador de CDP debe estar en formato PDF.");
+                    
+                    $anio = date('Y');
+                    $dir = __DIR__ . "/uploads/$anio/exp_$exp_id/";
+                    if (!file_exists($dir)) mkdir($dir, 0777, true);
+
+                    $name_borrador = "CDP_BORRADOR_" . time() . ".pdf";
+                    $ruta_borrador = "uploads/$anio/exp_$exp_id/$name_borrador";
+                    if (move_uploaded_file($_FILES['archivo_cdp_borrador']['tmp_name'], $dir . $name_borrador)) {
+                        $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'CDP_BORRADOR', ?, ?)")
+                            ->execute([$exp_id, $user_id, $ruta_borrador, $_FILES['archivo_cdp_borrador']['name']]);
+                    }
+                }
+
+                // Subir Situación de Gastos si fue adjuntada
+                if (!empty($_FILES['archivo_situacion_gastos']['name'])) {
+                    $ext_situacion = strtolower(pathinfo($_FILES['archivo_situacion_gastos']['name'], PATHINFO_EXTENSION));
+                    if ($ext_situacion !== 'pdf') throw new Exception("La Situación Presupuestaria de Gastos debe estar en formato PDF.");
+
+                    $anio = date('Y');
+                    $dir = __DIR__ . "/uploads/$anio/exp_$exp_id/";
+                    if (!file_exists($dir)) mkdir($dir, 0777, true);
+
+                    $name_situacion = "SITUACION_GASTOS_" . time() . ".pdf";
+                    $ruta_situacion = "uploads/$anio/exp_$exp_id/$name_situacion";
+                    if (move_uploaded_file($_FILES['archivo_situacion_gastos']['tmp_name'], $dir . $name_situacion)) {
+                        $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'SITUACION_PRESUPUESTARIA', ?, ?)")
+                            ->execute([$exp_id, $user_id, $ruta_situacion, $_FILES['archivo_situacion_gastos']['name']]);
+                    }
+                }
+
+                $comentario = "Visación final por gasto real aprobada. Borrador de CDP y Situación de Gastos cargados. Expediente enviado a Finanzas para firma.";
+            }
+
+            // Subir CDP si fue adjuntado
+            if (!empty($_FILES['archivo_cdp']['name'])) {
+                $ext = strtolower(pathinfo($_FILES['archivo_cdp']['name'], PATHINFO_EXTENSION));
+                if($ext !== 'pdf') throw new Exception("El archivo del CDP debe ser un PDF.");
+                
+                $anio = date('Y');
+                $dir = __DIR__ . "/uploads/$anio/exp_$exp_id/";
+                if (!file_exists($dir)) mkdir($dir, 0777, true);
+                
+                $name = "CDP_OFICIAL_" . time() . ".pdf";
+                if (move_uploaded_file($_FILES['archivo_cdp']['tmp_name'], $dir . $name)) {
+                    $ruta = "uploads/$anio/exp_$exp_id/$name";
+                    $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'OTRO', ?, ?)")
+                        ->execute([$exp_id, $user_id, $ruta, $_FILES['archivo_cdp']['name']]);
+                }
+            }
+
+            $pdo->prepare("UPDATE expedientes SET fecha_visa_presupuesto = NOW() WHERE id = ?")->execute([$exp_id]);
+
+            if ($transicion_id) {
+                $nuevo_estado = ejecutar_transicion_por_id($pdo, $exp_id, $user_id, $transicion_id, $_POST['motivo_rechazo'] ?: $comentario);
+            } else {
+                $nuevo_estado = avanzar_flujo($pdo, $exp_id, $user_id, $comentario);
+            }
+
+            $stmtNd = $pdo->prepare("SELECT nombre FROM estados_tramite WHERE codigo = ?");
+            $stmtNd->execute([$nuevo_estado]);
+            $nombre_dest = $stmtNd->fetchColumn();
+            $mensaje = "Visación presupuestaria exitosa. El trámite avanzó a: $nombre_dest.";
+            $tipo_mensaje = "success";
+            $vista = 'pendientes';
+        } 
+        
+        // B. RECHAZAR / DEVOLVER (LIBERAR FONDOS)
+        elseif (in_array($accion, ['rechazar', 'devolver'])) {
+            $motivo = trim($_POST['motivo_rechazo']);
+            if (empty($motivo)) throw new Exception("Debe ingresar un motivo para la observación/rechazo.");
+
+            if ($transicion_id) {
+                $nuevo_estado = ejecutar_transicion_por_id($pdo, $exp_id, $user_id, $transicion_id, $motivo);
+                $stmtNd = $pdo->prepare("SELECT nombre FROM estados_tramite WHERE codigo = ?");
+                $stmtNd->execute([$nuevo_estado]);
+                $nombre_dest = $stmtNd->fetchColumn();
+                $mensaje = "Acción '" . htmlspecialchars($trans['accion_label']) . "' procesada correctamente. Solicitud enviada a: $nombre_dest.";
+            } else {
+                if ($accion === 'rechazar') {
+                    rechazar_flujo($pdo, $exp_id, $user_id, "Rechazado definitivamente por Presupuesto: " . $motivo);
+                    $mensaje = "Solicitud rechazada. Fondos liberados.";
+                } else {
+                    devolver_flujo($pdo, $exp_id, $user_id, "Devuelto por Presupuesto: " . $motivo);
+                    $mensaje = "Solicitud devuelta para corrección. Fondos liberados.";
+                }
+            }
+            $tipo_mensaje = ($accion === 'devolver') ? 'warning' : 'error';
+            $vista = 'pendientes';
+        }
+        
+        // C. SOLICITAR CDP A FINANZAS
+        elseif ($accion === 'solicitar_cdp') {
+            if (!$transicion_id) {
+                throw new Exception("Transición de solicitud de CDP no válida.");
+            }
+
+            if (empty($_FILES['archivo_cdp_borrador']['name'])) {
+                throw new Exception("Debe adjuntar obligatoriamente el Borrador de CDP (Paso 1).");
+            }
+            if (empty($_FILES['archivo_situacion_gastos']['name'])) {
+                throw new Exception("Debe adjuntar obligatoriamente el documento de Situación Presupuestaria de Gastos (Paso 2).");
+            }
+
+            $ext_borrador = strtolower(pathinfo($_FILES['archivo_cdp_borrador']['name'], PATHINFO_EXTENSION));
+            $ext_situacion = strtolower(pathinfo($_FILES['archivo_situacion_gastos']['name'], PATHINFO_EXTENSION));
+
+            if ($ext_borrador !== 'pdf' || $ext_situacion !== 'pdf') {
+                throw new Exception("Ambos documentos adjuntos deben estar en formato PDF.");
+            }
+
+            $anio = date('Y');
+            $dir = __DIR__ . "/uploads/$anio/exp_$exp_id/";
+            if (!file_exists($dir)) mkdir($dir, 0777, true);
+
+            // 1. Subir Borrador CDP
+            $name_borrador = "CDP_BORRADOR_" . time() . ".pdf";
+            $ruta_borrador = "uploads/$anio/exp_$exp_id/$name_borrador";
+            if (!move_uploaded_file($_FILES['archivo_cdp_borrador']['tmp_name'], $dir . $name_borrador)) {
+                throw new Exception("Error al guardar el Borrador de CDP.");
+            }
+
+            // 2. Subir Situación de Gastos
+            $name_situacion = "SITUACION_GASTOS_" . time() . ".pdf";
+            $ruta_situacion = "uploads/$anio/exp_$exp_id/$name_situacion";
+            if (!move_uploaded_file($_FILES['archivo_situacion_gastos']['tmp_name'], $dir . $name_situacion)) {
+                throw new Exception("Error al guardar la Situación Presupuestaria de Gastos.");
+            }
+
+            // 3. Registrar en DB
+            $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'CDP_BORRADOR', ?, ?)")
+                ->execute([$exp_id, $user_id, $ruta_borrador, $_FILES['archivo_cdp_borrador']['name']]);
+
+            $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'SITUACION_PRESUPUESTARIA', ?, ?)")
+                ->execute([$exp_id, $user_id, $ruta_situacion, $_FILES['archivo_situacion_gastos']['name']]);
+
+            $comentario = "Borrador de CDP y Situación Presupuestaria de Gastos cargados. Solicitud enviada a Finanzas.";
+            $nuevo_estado = ejecutar_transicion_por_id($pdo, $exp_id, $user_id, $transicion_id, $comentario);
+            
+            $stmtNd = $pdo->prepare("SELECT nombre FROM estados_tramite WHERE codigo = ?");
+            $stmtNd->execute([$nuevo_estado]);
+            $nombre_dest = $stmtNd->fetchColumn();
+            
+            $mensaje = "Solicitud enviada a Finanzas para firma de CDP. Estado actual: $nombre_dest.";
+            $tipo_mensaje = "success";
+            $vista = 'pendientes';
+        }
+
+        $pdo->commit();
+
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        $mensaje = "Error: " . $e->getMessage();
+        $tipo_mensaje = "error";
+    }
+}
+
+// =====================================================================
+// CONSULTAS GET (CARGA DE VISTAS)
+// =====================================================================
+
+$q_buscar = $_GET['q'] ?? '';
+
+// BANDEJA PENDIENTES
+if ($vista === 'pendientes') {
+    $sql = "
+        SELECT e.*, u.nombre_completo as solicitante, un.nombre as unidad, p.nombre as prioridad_nom, p.clase_css, tc.nombre as tipo_compra_nom, et.nombre as estado_nombre 
+        FROM expedientes e 
+        JOIN usuarios u ON e.usuario_creador_id = u.id 
+        JOIN unidades un ON e.unidad_origen_id = un.id 
+        JOIN prioridades p ON e.prioridad_id = p.id 
+        JOIN tipos_compra tc ON e.tipo_compra_id = tc.id 
+        JOIN estados_tramite et ON e.estado_actual = et.codigo
+        WHERE e.estado_actual IN ('EN_VALIDACION_PRESUPUESTARIA', 'EN_VALIDACION_PRESUPUESTARIA_FINAL', 'ESPERANDO_CDP_FINANZAS', 'ESPERANDO_CDP_FINANZAS_FINAL')
+    ";
+    if ($q_buscar) { $sql .= " AND (e.codigo_interno LIKE '%$q_buscar%' OR e.titulo_compra LIKE '%$q_buscar%')"; }
+    $sql .= " ORDER BY p.id DESC, e.created_at ASC";
+    $pendientes = $pdo->query($sql)->fetchAll();
+}
+
+// BANDEJA PROCESADOS (Historial)
+if ($vista === 'procesados') {
+    $sql = "
+        SELECT e.*, u.nombre_completo as solicitante, un.nombre as unidad, p.nombre as prioridad_nom, p.clase_css, tc.nombre as tipo_compra_nom, et.nombre as estado_nombre 
+        FROM expedientes e 
+        JOIN usuarios u ON e.usuario_creador_id = u.id 
+        JOIN unidades un ON e.unidad_origen_id = un.id 
+        JOIN prioridades p ON e.prioridad_id = p.id 
+        JOIN tipos_compra tc ON e.tipo_compra_id = tc.id 
+        JOIN estados_tramite et ON e.estado_actual = et.codigo
+        JOIN expedientes_historial eh ON e.id = eh.expediente_id
+        WHERE eh.usuario_id = $user_id AND eh.accion IN ('APROBAR', 'RECHAZAR', 'DEVOLVER') AND eh.estado_anterior LIKE '%PRESUPUESTARIA%'
+    ";
+    if ($q_buscar) { $sql .= " AND (e.codigo_interno LIKE '%$q_buscar%' OR e.titulo_compra LIKE '%$q_buscar%')"; }
+    $sql .= " GROUP BY e.id ORDER BY eh.fecha_accion DESC LIMIT 50";
+    $procesados = $pdo->query($sql)->fetchAll();
+}
+
+// DETALLE DE REVISIÓN
+if ($vista === 'revisar' && isset($_GET['id'])) {
+    $stmtHead = $pdo->prepare("
+        SELECT e.*, u.nombre_completo as solicitante, un.nombre as unidad, cc.nombre as centro_costo, tc.nombre as tipo_compra_nom, tc.codigo as tipo_compra_cod, p.nombre as prioridad_nom, p.clase_css, et.nombre as estado_nombre, et.rol_responsable, prov.razon_social as proveedor_nombre, prov.rut as proveedor_rut
+        FROM expedientes e
+        JOIN usuarios u ON e.usuario_creador_id = u.id
+        JOIN unidades un ON e.unidad_origen_id = un.id
+        JOIN centros_costo cc ON e.centro_costo_id = cc.id
+        JOIN tipos_compra tc ON e.tipo_compra_id = tc.id
+        JOIN prioridades p ON e.prioridad_id = p.id
+        JOIN estados_tramite et ON e.estado_actual = et.codigo
+        LEFT JOIN proveedores prov ON e.proveedor_adjudicado_id = prov.id
+        WHERE e.id = ?
+    ");
+    $stmtHead->execute([$_GET['id']]);
+    $expediente = $stmtHead->fetch();
+    if (!$expediente) die("Expediente no encontrado.");
+
+    $es_accionable = in_array($expediente['estado_actual'], ['EN_VALIDACION_PRESUPUESTARIA', 'EN_VALIDACION_PRESUPUESTARIA_FINAL']);
+    $es_fase_inicial = in_array($expediente['estado_actual'], ['EN_VALIDACION_PRESUPUESTARIA', 'ESPERANDO_CDP_FINANZAS']);
+
+    $stmtItems = $pdo->prepare("
+        SELECT ei.*, cm.codigo as cuenta_codigo, cm.nombre as cuenta_nombre, ag.codigo as ag_codigo
+        FROM expedientes_items ei
+        JOIN presupuestos_asignados pa ON ei.presupuesto_asignado_id = pa.id
+        JOIN cuentas_maestras cm ON pa.cuenta_maestra_id = cm.id
+        LEFT JOIN areas_gestion ag ON pa.area_gestion_id = ag.id
+        WHERE ei.expediente_id = ?
+    ");
+    $stmtItems->execute([$_GET['id']]);
+    $items = $stmtItems->fetchAll();
+
+    $stmtDocs = $pdo->prepare("SELECT * FROM expedientes_documentos WHERE expediente_id = ? ORDER BY fecha_subida DESC");
+    $stmtDocs->execute([$_GET['id']]);
+    $docs = $stmtDocs->fetchAll();
+
+    // Verificar si existe el CDP firmado subido por Finanzas
+    $has_cdp_finanzas = false;
+    $doc_cdp_firmado = null;
+    foreach ($docs as $d) {
+        if ($d['tipo_doc'] === 'CDP_FIRMADO_FINANZAS' || 
+            $d['tipo_doc'] === 'CDP_OFICIAL_FINANZAS' || 
+            $d['tipo_doc'] === 'CDP_OFICIAL' || 
+            strpos($d['ruta_archivo'], 'CDP_FIRMADO_FINANZAS') !== false ||
+            strpos($d['ruta_archivo'], 'CDP_OFICIAL_FINANZAS') !== false) {
+            $has_cdp_finanzas = true;
+            $doc_cdp_firmado = $d;
+            break;
+        }
+    }
+
+    // Traer Criterios de Evaluación para Licitaciones
+    $stmtCrit = $pdo->prepare("SELECT * FROM expedientes_criterios WHERE expediente_id = ? ORDER BY numero_criterio ASC");
+    $stmtCrit->execute([$_GET['id']]);
+    $criterios = $stmtCrit->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function money($v) { return '$ ' . number_format($v, 0, ',', '.'); }
+?>
