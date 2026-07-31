@@ -1,5 +1,5 @@
 <?php
-// index.php - Enrutador Principal e Inicio del Sistema de Gestión de Compras OPI
+// index.php - Enrutador Principal e Inicio del Sistema de Órdenes de Pedido Interno
 require_once __DIR__ . '/config.php';
 
 if (session_status() === PHP_SESSION_NONE) session_start();

@@ -103,7 +103,7 @@ $items = $stmtI->fetchAll();
         </div>
 
         <div class="absolute bottom-10 left-10 text-xs text-gray-500">
-            Documento generado electrónicamente por Sistema de Gestión OPI.
+            Documento generado electrónicamente por Sistema de órdenes de pedido interno.
         </div>
 
     </div>

@@ -28,7 +28,7 @@ function obtener_config_smtp() {
     $port   = intval(getenv('SMTP_PORT') ?: ($_ENV['SMTP_PORT'] ?? ($_SERVER['SMTP_PORT'] ?? (defined('SMTP_PORT') ? SMTP_PORT : 587))));
     $secure = getenv('SMTP_SECURE') ?: ($_ENV['SMTP_SECURE'] ?? ($_SERVER['SMTP_SECURE'] ?? (defined('SMTP_SECURE') ? SMTP_SECURE : 'tls')));
     $from   = getenv('SMTP_FROM')   ?: ($_ENV['SMTP_FROM']   ?? ($_SERVER['SMTP_FROM']   ?? (defined('SMTP_FROM')   ? SMTP_FROM   : 'informatica@lebu.cl')));
-    $name   = getenv('SMTP_NAME')   ?: ($_ENV['SMTP_NAME']   ?? ($_SERVER['SMTP_NAME']   ?? 'Municipalidad de Lebu - Gestión OPI'));
+    $name   = getenv('SMTP_NAME')   ?: ($_ENV['SMTP_NAME']   ?? ($_SERVER['SMTP_NAME']   ?? 'Municipalidad de Lebu - Sistema de Órdenes de Pedido Interno'));
 
     return [
         'host'   => trim($host),
@@ -74,13 +74,13 @@ function enviar_correo_institucional($para_email, $para_nombre, $asunto, $cuerpo
         <div class="container">
             <div class="header">
                 <h2>MUNICIPALIDAD DE LEBU</h2>
-                <p>Sistema de Gestión de Compras OPI</p>
+                <p>Sistema de Órdenes de Pedido Interno</p>
             </div>
             <div class="content">
                 ' . $cuerpo_html . '
             </div>
             <div class="footer">
-                Este es un mensaje automático generado por el Sistema de Gestión OPI.<br>
+                Este es un mensaje automático generado por el Sistema de órdenes de pedido interno.<br>
                 Departamento de Informática - Municipalidad de Lebu.
             </div>
         </div>

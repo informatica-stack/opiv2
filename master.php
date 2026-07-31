@@ -18,7 +18,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'backup_db') {
         $tables = $pdo->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
         
         echo "-- =====================================================\n";
-        echo "-- RESPALDO DE BASE DE DATOS - GESTIÓN OPI\n";
+        echo "-- RESPALDO DE BASE DE DATOS - SISTEMA DE ÓRDENES DE PEDIDO INTERNO\n";
         echo "-- GENERADO EL: " . date('Y-m-d H:i:s') . "\n";
         echo "-- =====================================================\n\n";
         
@@ -271,7 +271,7 @@ $limite_peso_val = intval($config_sistema['limite_peso_adjunto_mb'] ?? 10);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Maestro de Control - Gestión OPI</title>
+    <title>Panel Maestro de Control - Sistema de Órdenes de Pedido Interno</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <!-- Bootstrap Icons -->

@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $cuerpo_aprobado = '
                     <h3 style="color: #1e293b; margin-top: 0;">¡Cuenta Aprobada!</h3>
                     <p>Estimado(a) <strong>' . htmlspecialchars($u_data['nombre_completo']) . '</strong>,</p>
-                    <p>Tu solicitud de registro en el <strong>Sistema de Gestión de Compras OPI de la Municipalidad de Lebu</strong> ha sido aprobada por el Administrador del Sistema (SYSADMIN).</p>
+                    <p>Tu solicitud de registro en el <strong>Sistema de Órdenes de Pedido Interno de la Municipalidad de Lebu</strong> ha sido aprobada.</p>
                     <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 6px; margin: 15px 0;">
                         <p style="margin: 3px 0;"><strong>Rol Asignado:</strong> ' . htmlspecialchars($u_data['rol_nombre']) . '</p>
                         <p style="margin: 3px 0;"><strong>RUT:</strong> ' . htmlspecialchars($u_data['rut']) . '</p>
@@ -196,7 +196,7 @@ $tab_activa = $_GET['tab'] ?? ($count_pendientes > 0 && !isset($_GET['action']) 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Usuarios del Sistema - Gestión OPI</title>
+    <title>Usuarios del Sistema - Sistema de Órdenes de Pedido Interno</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <!-- Bootstrap Icons -->

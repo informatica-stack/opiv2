@@ -49,7 +49,7 @@ if (empty($token)) {
             $link_admin = obtener_base_url() . "/usuarios.php";
 
             $cuerpo_sysadmin = '
-                <h3 style="color: #1e293b; margin-top: 0;">[Atención SYSADMIN] Nueva Solicitud de Usuario</h3>
+                <h3 style="color: #1e293b; margin-top: 0;">Nueva Solicitud de Usuario</h3>
                 <p>El siguiente funcionario ha verificado su correo electrónico con éxito y requiere aprobación y asignación de rol:</p>
                 <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 6px; margin: 15px 0;">
                     <p style="margin: 3px 0;"><strong>Nombre:</strong> ' . htmlspecialchars($usr['nombre_completo']) . '</p>

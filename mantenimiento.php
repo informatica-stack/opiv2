@@ -11,7 +11,7 @@ $es_admin = (($_SESSION['user_rol'] ?? '') === 'SYSADMIN');
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mantenimiento en Curso - Gestión OPI</title>
+    <title>Mantenimiento en Curso - Sistema de Órdenes de Pedido Interno</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <!-- Bootstrap Icons -->
@@ -114,7 +114,7 @@ $es_admin = (($_SESSION['user_rol'] ?? '') === 'SYSADMIN');
         <p>Estamos realizando mejoras programadas y actualizaciones de seguridad en la plataforma para ofrecerle un mejor servicio. Estaremos de vuelta muy pronto.</p>
         
         <div class="border-top border-secondary-subtle pt-3 mt-4 opacity-50">
-            <small class="text-xs text-uppercase tracking-wider">Gestión OPI - Ilustre Municipalidad</small>
+            <small class="text-xs text-uppercase tracking-wider">Sistema de Órdenes de Pedido Interno - Ilustre Municipalidad</small>
         </div>
 
         <?php if ($es_admin): ?>

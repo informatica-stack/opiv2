@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $cuerpo_correo = '
             <h3 style="color: #1e293b; margin-top: 0;">¡Bienvenido(a), ' . htmlspecialchars($nombre) . '!</h3>
-            <p>Gracias por registrarte en el <strong>Sistema de Gestión de Compras OPI de la Municipalidad de Lebu</strong>.</p>
+            <p>Gracias por registrarte en el <strong>Sistema de Órdenes de Pedido Interno de la Municipalidad de Lebu</strong>.</p>
             <p>Para continuar con el proceso de activación de tu cuenta, por favor confirma tu correo electrónico haciendo clic en el siguiente botón:</p>
             <p style="text-align: center; margin: 30px 0;">
                 <a href="' . $link_verificacion . '" class="btn" style="background-color: #0d6efd; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
@@ -124,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="card-header bg-dark text-white text-center py-4 px-4">
                 <img src="logo.png" alt="Municipalidad de Lebu" style="max-height: 55px;" class="mb-2">
                 <h4 class="fw-bold mb-1">Registro de Funcionario</h4>
-                <p class="small text-white-50 mb-0">Sistema de Gestión de Compras y Solicitudes OPI</p>
+                <p class="small text-white-50 mb-0">Sistema de Órdenes de Pedido Interno</p>
             </div>
 
             <div class="card-body p-4 p-md-5">
