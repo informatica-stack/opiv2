@@ -204,7 +204,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
             $ext_ficha = validar_subida_archivo($_FILES['ficha_proveedor']);
             if ($ext_ficha) {
                 $dir = __DIR__ . "/uploads/$anio_actual/exp_$exp_id/";
-                if (!file_exists($dir)) mkdir($dir, 0777, true);
+                if (!file_exists($dir)) {
+                    if (!@mkdir($dir, 0777, true) && !is_dir($dir)) {
+                        throw new Exception("Error de permisos: No se pudo crear el directorio de destino en '$dir'. Verifique los permisos de /app/uploads.");
+                    }
+                }
                 $nombre_final_ficha = "ficha_prov_" . time() . "." . $ext_ficha;
                 if (move_uploaded_file($_FILES['ficha_proveedor']['tmp_name'], $dir . $nombre_final_ficha)) {
                     $ruta_ficha = "uploads/$anio_actual/exp_$exp_id/" . $nombre_final_ficha;
@@ -248,7 +252,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
                 }
             }
 
-            if (!file_exists($dir)) mkdir($dir, 0777, true);
+            if (!file_exists($dir)) {
+                if (!@mkdir($dir, 0777, true) && !is_dir($dir)) {
+                    throw new Exception("Error de permisos: No se pudo crear la carpeta del expediente en '$dir'. Verifique los permisos de /app/uploads.");
+                }
+            }
             
             for ($i = 0; $i < $total_files; $i++) {
                 if ($_FILES['archivos_adjuntos']['error'][$i] === UPLOAD_ERR_OK) {

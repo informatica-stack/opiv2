@@ -251,7 +251,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
             if ($ext_ficha) {
                 $anio_actual = date('Y');
                 $dir = __DIR__ . "/uploads/$anio_actual/exp_$id/";
-                if (!file_exists($dir)) mkdir($dir, 0777, true);
+                if (!file_exists($dir)) {
+                    if (!@mkdir($dir, 0777, true) && !is_dir($dir)) {
+                        throw new Exception("Error de permisos: No se pudo crear el directorio de destino en '$dir'. Verifique los permisos de /app/uploads.");
+                    }
+                }
                 $nombre_final_ficha = "ficha_prov_" . time() . "." . $ext_ficha;
                 if (move_uploaded_file($_FILES['ficha_proveedor']['tmp_name'], $dir . $nombre_final_ficha)) {
                     $ruta_ficha = "uploads/$anio_actual/exp_$id/" . $nombre_final_ficha;
@@ -291,7 +295,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
                 $file = $_FILES['archivo_adjunto'];
                 $anio = date('Y');
                 $dir = __DIR__ . "/uploads/$anio/exp_$id/";
-                if (!file_exists($dir)) mkdir($dir, 0777, true);
+                if (!file_exists($dir)) {
+                    if (!@mkdir($dir, 0777, true) && !is_dir($dir)) {
+                        throw new Exception("Error de permisos: No se pudo crear el directorio de destino en '$dir'. Verifique los permisos de /app/uploads.");
+                    }
+                }
                 
                 $nombre_final = "adj_corregido_" . time() . "." . $ext;
                 if(move_uploaded_file($file['tmp_name'], $dir . $nombre_final)){
