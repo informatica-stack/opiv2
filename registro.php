@@ -157,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">RUT Funcionario *</label>
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text bg-light"><i class="bi bi-card-heading"></i></span>
-                                    <input type="text" name="rut" id="rutInput" required class="form-control fw-bold text-dark" placeholder="12.345.678-K" onblur="formatearRutInput(this)">
+                                    <input type="text" name="rut" id="rutInput" required class="form-control fw-bold text-dark" placeholder="" onblur="formatearRutInput(this)">
                                 </div>
                                 <div id="rutFeedback" class="form-text text-danger small" style="display:none; font-size: 10px;">RUT no válido.</div>
                             </div>
@@ -167,16 +167,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Nombre Completo *</label>
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text bg-light"><i class="bi bi-person-fill"></i></span>
-                                    <input type="text" name="nombre_completo" required class="form-control" placeholder="Juan Pérez González">
+                                    <input type="text" name="nombre_completo" required class="form-control" placeholder="">
                                 </div>
                             </div>
 
                             <!-- CORREO INSTITUCIONAL -->
                             <div class="col-md-12">
-                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Correo Electrónico Institucional *</label>
+                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Correo electrónico *</label>
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text bg-light"><i class="bi bi-envelope-fill"></i></span>
-                                    <input type="email" name="email" required class="form-control" placeholder="ejemplo@lebu.cl">
+                                    <input type="email" name="email" required class="form-control" placeholder="">
                                 </div>
                                 <div class="form-text text-muted" style="font-size: 10px;">Le enviaremos un correo de verificación a esta casilla.</div>
                             </div>
@@ -197,7 +197,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Cargo / Función *</label>
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text bg-light"><i class="bi bi-briefcase-fill"></i></span>
-                                    <input type="text" name="cargo" required class="form-control" placeholder="Analista, Encargado, etc.">
+                                    <input type="text" name="cargo" required class="form-control" placeholder="">
                                 </div>
                             </div>
 
