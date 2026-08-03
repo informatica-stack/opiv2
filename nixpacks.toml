@@ -1,0 +1,12 @@
+[phases.setup]
+# Asegura que las herramientas necesarias estén instaladas
+nixPkgs = ['...', 'php']
+
+[phases.build]
+# Crea la carpeta durante la fase de compilación
+cmds = ['mkdir -p /app/uploads']
+
+[start]
+# Comandos que se ejecutan justo al arrancar el contenedor:
+# Arregla los permisos del volumen montado y luego inicia el servidor web
+cmd = 'chown -R www-data:www-data /app/uploads && chmod -R 775 /app/uploads && nixpacks-start'
