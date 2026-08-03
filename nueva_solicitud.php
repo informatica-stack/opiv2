@@ -146,7 +146,7 @@ foreach($otros_proveedores as $p) {
                 </div>
                 <div class="bg-white border px-3 py-2 rounded-3 shadow-sm d-flex align-items-center gap-2 shrink-0">
                     <span class="text-uppercase text-muted fw-bold" style="font-size: 10px;">ID CC</span>
-                    <span class="font-monospace fw-bold text-primary">#<?= htmlspecialchars($centro_costo['id']) ?></span>
+                    <span class="font-monospace fw-bold text-primary">#<?= htmlspecialchars($centro_costo['codigo_cuenta']) ?></span>
                 </div>
             </div>
         </div>
