@@ -49,38 +49,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['user_rol'] = $user['rol_nombre'];
                     $_SESSION['user_unidad'] = $user['unidad_id'];
 
-                    // 4. Lógica de Subrogancia (Heredar Jefatura, Rol y Unidad del Titular)
+                    // 4. Lógica de Subrogancia (Heredar Jefatura, Rol y Unidad del Titular - Excluyendo SYSADMIN)
                     $es_jefe = $user['es_jefe_unidad'];
                     $soy_subrogante = false;
+                    $subrogado_id = null;
                     $subrogado_nombre = null;
                     $hoy = date('Y-m-d');
                     
-                    // Buscar si estoy subrogando a alguien HOY
-                    $stmtSub = $pdo->prepare("
-                        SELECT s.usuario_titular_id, u.nombre_completo as titular_nombre, u.unidad_id as titular_unidad, u.es_jefe_unidad as titular_es_jefe, r.nombre as titular_rol
-                        FROM subrogancias s
-                        JOIN usuarios u ON s.usuario_titular_id = u.id
-                        JOIN roles r ON u.rol_id = r.id
-                        WHERE s.usuario_subrogante_id = ? 
-                        AND s.activo = 1 
-                        AND ? BETWEEN s.fecha_inicio AND s.fecha_fin
-                        LIMIT 1
-                    ");
-                    $stmtSub->execute([$user['id'], $hoy]);
-                    $sub = $stmtSub->fetch();
+                    // Buscar si estoy subrogando a alguien HOY (salvo que sea SYSADMIN)
+                    if ($user['rol_nombre'] !== 'SYSADMIN') {
+                        $stmtSub = $pdo->prepare("
+                            SELECT s.usuario_titular_id, u.nombre_completo as titular_nombre, u.unidad_id as titular_unidad, u.es_jefe_unidad as titular_es_jefe, r.nombre as titular_rol
+                            FROM subrogancias s
+                            JOIN usuarios u ON s.usuario_titular_id = u.id
+                            JOIN roles r ON u.rol_id = r.id
+                            WHERE s.usuario_subrogante_id = ? 
+                            AND s.activo = 1 
+                            AND ? BETWEEN s.fecha_inicio AND s.fecha_fin
+                            LIMIT 1
+                        ");
+                        $stmtSub->execute([$user['id'], $hoy]);
+                        $sub = $stmtSub->fetch();
 
-                    if ($sub) {
-                        $soy_subrogante = true;
-                        $subrogado_nombre = $sub['titular_nombre'];
-                        $es_jefe = $sub['titular_es_jefe'];
-                        
-                        // Sobrescribir Rol y Unidad para el flujo y accesos
-                        $_SESSION['user_rol'] = $sub['titular_rol'];
-                        $_SESSION['user_unidad'] = $sub['titular_unidad'];
+                        if ($sub) {
+                            $soy_subrogante = true;
+                            $subrogado_id = $sub['usuario_titular_id'];
+                            $subrogado_nombre = $sub['titular_nombre'];
+                            $es_jefe = $sub['titular_es_jefe'];
+                            
+                            // Sobrescribir Rol y Unidad para el flujo y accesos
+                            $_SESSION['user_rol'] = $sub['titular_rol'];
+                            $_SESSION['user_unidad'] = $sub['titular_unidad'];
+                        }
                     }
 
                     $_SESSION['es_jefe'] = $es_jefe;
                     $_SESSION['es_subrogante'] = $soy_subrogante;
+                    $_SESSION['subrogado_id'] = $subrogado_id;
                     $_SESSION['subrogado_nombre'] = $subrogado_nombre;
 
                     // 5. Redirigir
@@ -107,6 +112,9 @@ function redirectBasedOnRole($role) {
             break;
         case 'PRESUPUESTO': 
             header('Location: control_presupuestario.php'); 
+            break;
+        case 'FINANZAS': 
+            header('Location: finanzas.php'); 
             break;
         case 'ADQUISICIONES': 
             header('Location: adquisiciones.php'); 

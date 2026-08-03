@@ -9,58 +9,70 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 $unidad_id = $_SESSION['user_unidad'];
+$user_rol = $_SESSION['user_rol'] ?? '';
+$es_sysadmin = ($user_rol === 'SYSADMIN');
 $mensaje = '';
 $tipo_mensaje = '';
+
+if ($es_sysadmin) {
+    $mensaje = 'El rol de Administrador del Sistema (SYSADMIN) tiene prohibido configurar o participar en delegaciones de subrogancia.';
+    $tipo_mensaje = 'warning';
+}
 
 // --- ACCIONES (POST) ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
-    // 1. CREAR NUEVA SUBROGANCIA
-    if (isset($_POST['crear_subrogancia'])) {
-        $subrogante_id = $_POST['subrogante_id'];
-        $fecha_inicio = $_POST['fecha_inicio'];
-        $fecha_fin = $_POST['fecha_fin'];
-        $motivo = $_POST['motivo'];
+    if ($es_sysadmin) {
+        $mensaje = 'Acción Denegada: El rol SYSADMIN no puede crear ni modificar subrogancias.';
+        $tipo_mensaje = 'error';
+    } else {
+        // 1. CREAR NUEVA SUBROGANCIA
+        if (isset($_POST['crear_subrogancia'])) {
+            $subrogante_id = $_POST['subrogante_id'];
+            $fecha_inicio = $_POST['fecha_inicio'];
+            $fecha_fin = $_POST['fecha_fin'];
+            $motivo = $_POST['motivo'];
 
-        try {
-            // Validaciones básicas
-            if ($fecha_fin < $fecha_inicio) throw new Exception("La fecha de fin no puede ser anterior al inicio.");
-            if ($subrogante_id == $user_id) throw new Exception("No puedes subrogarte a ti mismo.");
+            try {
+                // Validaciones básicas
+                if ($fecha_fin < $fecha_inicio) throw new Exception("La fecha de fin no puede ser anterior al inicio.");
+                if ($subrogante_id == $user_id) throw new Exception("No puedes subrogarte a ti mismo.");
 
-            // Validar solapamiento (que no haya otra activa en esas fechas)
-            $stmtCheck = $pdo->prepare("
-                SELECT COUNT(*) FROM subrogancias 
-                WHERE usuario_titular_id = ? AND activo = 1
-                AND (
-                    (fecha_inicio BETWEEN ? AND ?) OR 
-                    (fecha_fin BETWEEN ? AND ?)
-                )
-            ");
-            $stmtCheck->execute([$user_id, $fecha_inicio, $fecha_fin, $fecha_inicio, $fecha_fin]);
-            
-            if ($stmtCheck->fetchColumn() > 0) {
-                throw new Exception("Ya tienes una subrogancia programada en ese rango de fechas.");
+                // Validar solapamiento (que no haya otra activa en esas fechas)
+                $stmtCheck = $pdo->prepare("
+                    SELECT COUNT(*) FROM subrogancias 
+                    WHERE usuario_titular_id = ? AND activo = 1
+                    AND (
+                        (fecha_inicio BETWEEN ? AND ?) OR 
+                        (fecha_fin BETWEEN ? AND ?)
+                    )
+                ");
+                $stmtCheck->execute([$user_id, $fecha_inicio, $fecha_fin, $fecha_inicio, $fecha_fin]);
+                
+                if ($stmtCheck->fetchColumn() > 0) {
+                    throw new Exception("Ya tienes una subrogancia programada en ese rango de fechas.");
+                }
+
+                // Insertar
+                $sql = "INSERT INTO subrogancias (usuario_titular_id, usuario_subrogante_id, fecha_inicio, fecha_fin, motivo) VALUES (?, ?, ?, ?, ?)";
+                $pdo->prepare($sql)->execute([$user_id, $subrogante_id, $fecha_inicio, $fecha_fin, $motivo]);
+
+                $mensaje = "Subrogancia configurada exitosamente.";
+                $tipo_mensaje = 'success';
+
+            } catch (Exception $e) {
+                $mensaje = $e->getMessage();
+                $tipo_mensaje = 'error';
             }
-
-            // Insertar
-            $sql = "INSERT INTO subrogancias (usuario_titular_id, usuario_subrogante_id, fecha_inicio, fecha_fin, motivo) VALUES (?, ?, ?, ?, ?)";
-            $pdo->prepare($sql)->execute([$user_id, $subrogante_id, $fecha_inicio, $fecha_fin, $motivo]);
-
-            $mensaje = "Subrogancia configurada exitosamente.";
-            $tipo_mensaje = 'success';
-
-        } catch (Exception $e) {
-            $mensaje = $e->getMessage();
-            $tipo_mensaje = 'error';
         }
-    }
 
-    // 2. CANCELAR SUBROGANCIA
-    if (isset($_POST['cancelar_id'])) {
-        $stmt = $pdo->prepare("UPDATE subrogancias SET activo = 0 WHERE id = ? AND usuario_titular_id = ?");
-        $stmt->execute([$_POST['cancelar_id'], $user_id]);
-        $mensaje = "Subrogancia cancelada.";
-        $tipo_mensaje = 'success';
+        // 2. CANCELAR SUBROGANCIA
+        if (isset($_POST['cancelar_id'])) {
+            $stmt = $pdo->prepare("UPDATE subrogancias SET activo = 0 WHERE id = ? AND usuario_titular_id = ?");
+            $stmt->execute([$_POST['cancelar_id'], $user_id]);
+            $mensaje = "Subrogancia cancelada.";
+            $tipo_mensaje = 'success';
+        }
     }
 }
 
@@ -77,8 +89,13 @@ $stmt = $pdo->prepare("
 $stmt->execute([$user_id]);
 $mis_subrogancias = $stmt->fetchAll();
 
-// 2. Candidatos a Subrogarme (Compañeros de mi misma unidad)
-$stmtU = $pdo->prepare("SELECT id, nombre_completo FROM usuarios WHERE unidad_id = ? AND id != ? AND activo = 1");
+// 2. Candidatos a Subrogarme (Compañeros de mi misma unidad excluyendo SYSADMIN)
+$stmtU = $pdo->prepare("
+    SELECT u.id, u.nombre_completo 
+    FROM usuarios u
+    JOIN roles r ON u.rol_id = r.id
+    WHERE u.unidad_id = ? AND u.id != ? AND u.activo = 1 AND r.nombre != 'SYSADMIN' AND u.rut != '11.111.111-1'
+");
 $stmtU->execute([$unidad_id, $user_id]);
 $candidatos = $stmtU->fetchAll();
 
@@ -121,8 +138,12 @@ function estado_fecha($inicio, $fin) {
         </div>
 
         <?php if($mensaje): ?>
-            <div class="alert alert-<?= $tipo_mensaje === 'error' ? 'danger' : 'success' ?> d-flex align-items-center gap-2 mb-4" role="alert">
-                <i class="bi bi-<?= $tipo_mensaje === 'error' ? 'exclamation-triangle-fill' : 'check-circle-fill' ?>"></i>
+            <?php 
+                $alert_class = ($tipo_mensaje === 'error') ? 'danger' : (($tipo_mensaje === 'warning') ? 'warning' : 'success');
+                $icon_class = ($tipo_mensaje === 'error') ? 'exclamation-triangle-fill' : (($tipo_mensaje === 'warning') ? 'exclamation-circle-fill' : 'check-circle-fill');
+            ?>
+            <div class="alert alert-<?= $alert_class ?> d-flex align-items-center gap-2 mb-4" role="alert">
+                <i class="bi bi-<?= $icon_class ?>"></i>
                 <div class="small fw-semibold"><?= htmlspecialchars($mensaje) ?></div>
             </div>
         <?php endif; ?>
@@ -144,7 +165,7 @@ function estado_fecha($inicio, $fin) {
                             <div class="row g-3">
                                 <div class="col-12">
                                     <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Funcionario Subrogante</label>
-                                    <select name="subrogante_id" required class="form-select text-sm">
+                                    <select name="subrogante_id" required class="form-select text-sm" <?= $es_sysadmin ? 'disabled' : '' ?>>
                                         <option value="">-- Seleccione Compañero --</option>
                                         <?php foreach($candidatos as $c): ?>
                                             <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['nombre_completo']) ?></option>
@@ -155,21 +176,21 @@ function estado_fecha($inicio, $fin) {
 
                                 <div class="col-12">
                                     <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Desde</label>
-                                    <input type="date" name="fecha_inicio" required min="<?= date('Y-m-d') ?>" class="form-control text-sm">
+                                    <input type="date" name="fecha_inicio" required min="<?= date('Y-m-d') ?>" class="form-control text-sm" <?= $es_sysadmin ? 'disabled' : '' ?>>
                                 </div>
 
                                 <div class="col-12">
                                     <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Hasta (Inclusive)</label>
-                                    <input type="date" name="fecha_fin" required min="<?= date('Y-m-d') ?>" class="form-control text-sm">
+                                    <input type="date" name="fecha_fin" required min="<?= date('Y-m-d') ?>" class="form-control text-sm" <?= $es_sysadmin ? 'disabled' : '' ?>>
                                 </div>
 
                                 <div class="col-12">
                                     <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Motivo (Interno)</label>
-                                    <input type="text" name="motivo" class="form-control text-sm">
+                                    <input type="text" name="motivo" class="form-control text-sm" <?= $es_sysadmin ? 'disabled' : '' ?>>
                                 </div>
 
                                 <div class="col-12">
-                                    <button type="submit" name="crear_subrogancia" class="btn btn-primary w-100 py-2.5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2">
+                                    <button type="submit" name="crear_subrogancia" class="btn btn-primary w-100 py-2.5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" <?= $es_sysadmin ? 'disabled' : '' ?>>
                                         Activar Subrogancia
                                         <i class="bi bi-check-lg"></i>
                                     </button>
