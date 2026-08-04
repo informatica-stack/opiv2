@@ -5,18 +5,14 @@ require_once __DIR__ . '/mis_solicitudes_controller.php';
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mis Solicitudes</title>
-    <link rel="stylesheet" href="css/style.css">
+    <?php 
+    $titulo_pagina = "Mis Solicitudes";
+    include __DIR__ . '/head.php'; 
+    ?>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans pb-20">
 
     <?php include __DIR__ . '/nav.php'; ?>
-
-    <!-- Inclusión de Bootstrap 5 y Bootstrap Icons después de nav.php para garantizar prioridad de estilos en los componentes -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <div class="container mt-4 px-3 px-md-4">
         

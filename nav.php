@@ -5,12 +5,6 @@ $rol = $_SESSION['user_rol'] ?? '';
 $es_jefe = $_SESSION['es_jefe'] ?? 0;
 $user_name = $_SESSION['user_name'] ?? 'Usuario';
 ?>
-<!-- Optimización de Carga de Fuentes -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Sistema de Diseño Global -->
-<link rel="stylesheet" href="css/style.css">
-
 <!-- Barra Superior Clara -->
 <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm py-2">
     <div class="container-fluid px-4">

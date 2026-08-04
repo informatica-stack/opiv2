@@ -119,14 +119,10 @@ function money($v) { return '$ ' . number_format($v, 0, ',', '.'); }
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Presupuestaria - Sistema de Órdenes de Pedido Interno</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="css/style.css">
+    <?php 
+    $titulo_pagina = "Gestión Presupuestaria";
+    include __DIR__ . '/head.php'; 
+    ?>
 </head>
 <body class="bg-light text-slate-800 pb-20 font-sans">
 

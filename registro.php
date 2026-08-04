@@ -105,14 +105,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto-Registro de Funcionario - Municipalidad de Lebu</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <?php 
+    $titulo_pagina = "Registro de Funcionario";
+    include __DIR__ . '/head.php'; 
+    ?>
     <style>
-        body { background-color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
         .card-registro { max-width: 650px; border-radius: 12px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
     </style>
 </head>

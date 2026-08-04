@@ -32,72 +32,14 @@ foreach($otros_proveedores as $p) {
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nueva Solicitud Dinámica</title>
-    <link rel="stylesheet" href="css/style.css">
-    <style>
-        .custom-select-container {
-            position: relative;
-            width: 100%;
-        }
-        .custom-select-input {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 0.75rem center;
-            background-size: 16px 12px;
-            padding-right: 2.25rem;
-            cursor: pointer;
-        }
-        .custom-select-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            width: 100%;
-            z-index: 1050;
-            max-height: 250px;
-            overflow-y: auto;
-            background: #fff;
-            border: 1px solid #dee2e6;
-            border-radius: 0.375rem;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-            display: none;
-        }
-        .custom-select-dropdown.show {
-            display: block;
-        }
-        .custom-select-option {
-            padding: 0.5rem 0.75rem;
-            cursor: pointer;
-            transition: background 0.15s ease;
-            font-size: 13px;
-        }
-        .custom-select-option:hover,
-        .custom-select-option.active {
-            background-color: #e9ecef;
-        }
-        .custom-select-option.text-primary-emphasis {
-            background-color: #e8f4fd;
-        }
-        .custom-select-group-header {
-            padding: 0.25rem 0.75rem;
-            font-size: 10px;
-            font-weight: bold;
-            color: #6c757d;
-            text-transform: uppercase;
-            background-color: #f8f9fa;
-            border-bottom: 1px solid #e9ecef;
-            border-top: 1px solid #e9ecef;
-        }
-    </style>
+    <?php 
+    $titulo_pagina = "Nueva Solicitud Dinámica";
+    include __DIR__ . '/head.php'; 
+    ?>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans pb-20">
 
     <?php include __DIR__ . '/nav.php'; ?>
-
-    <!-- Inclusión de Bootstrap 5 y Bootstrap Icons después de nav.php para garantizar prioridad de estilos en los componentes -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <div class="container mt-4 px-3 px-md-4">
         
