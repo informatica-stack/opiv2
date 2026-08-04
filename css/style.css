@@ -968,6 +968,12 @@ select.input-tabla {
     margin: 0.25rem 0;
 }
 
+/* REGLAS DE OVERFLOW PARA MENÚS DESPLEGABLES FLOTANTES */
+.overflow-visible,
+.card-overflow-visible {
+    overflow: visible !important;
+}
+
 /* PANELES CON TRANSICIONES SUAVES */
 .panel-slide {
     max-height: 0;
