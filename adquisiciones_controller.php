@@ -200,21 +200,105 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // ==============================================================================
-// CONSULTAS GET (CARGA DE VISTAS)
+// CONSULTAS GET (CARGA DE VISTAS HOMOLOGADAS)
 // ==============================================================================
 
-$sqlPend = "
-    SELECT e.*, u.nombre_completo as solicitante, un.nombre as unidad, tc.nombre as tipo_compra, p.clase_css, p.nombre as prioridad, et.nombre as estado_nombre
-    FROM expedientes e
-    JOIN usuarios u ON e.usuario_creador_id = u.id
-    JOIN unidades un ON e.unidad_origen_id = un.id
-    JOIN tipos_compra tc ON e.tipo_compra_id = tc.id
-    JOIN prioridades p ON e.prioridad_id = p.id
-    JOIN estados_tramite et ON e.estado_actual = et.codigo
-    WHERE et.rol_responsable = 'ADQUISICIONES' 
-    ORDER BY p.id DESC, e.created_at ASC
-";
-$pendientes = $pdo->query($sqlPend)->fetchAll();
+$f_q = trim($_GET['f_q'] ?? $_GET['q'] ?? '');
+$f_tipo = trim($_GET['f_tipo'] ?? '');
+$f_estado = trim($_GET['f_estado'] ?? '');
+$f_desde = trim($_GET['f_desde'] ?? '');
+$f_hasta = trim($_GET['f_hasta'] ?? '');
+
+// CONTADORES PARA PESTAÑAS
+$count_pendientes = $pdo->query("SELECT COUNT(*) FROM expedientes e JOIN estados_tramite et ON e.estado_actual = et.codigo WHERE et.rol_responsable = 'ADQUISICIONES'")->fetchColumn();
+
+$stmtProcCount = $pdo->prepare("SELECT COUNT(DISTINCT e.id) FROM expedientes e JOIN expedientes_historial eh ON e.id = eh.expediente_id WHERE eh.usuario_id = ? AND eh.accion IN ('INGRESAR_ID_PORTAL', 'SUBIR_COTIZACIONES', 'EMITIR_OC', 'PUBLICAR_LICITACION', 'APROBAR', 'GESTION_ADQUISICIONES')");
+$stmtProcCount->execute([$user_id]);
+$count_procesadas = $stmtProcCount->fetchColumn();
+
+$count_todas = $pdo->query("SELECT COUNT(*) FROM expedientes e JOIN estados_tramite et ON e.estado_actual = et.codigo WHERE et.rol_responsable = 'ADQUISICIONES' OR e.id IN (SELECT expediente_id FROM expedientes_historial WHERE accion IN ('INGRESAR_ID_PORTAL', 'SUBIR_COTIZACIONES', 'EMITIR_OC', 'PUBLICAR_LICITACION'))")->fetchColumn();
+
+$solicitudes = [];
+$pendientes = [];
+
+if ($vista !== 'gestionar') {
+    $where = [];
+    $params = [];
+
+    if ($vista === 'procesadas') {
+        $where[] = "EXISTS (SELECT 1 FROM expedientes_historial eh WHERE eh.expediente_id = e.id AND eh.usuario_id = :hist_uid AND eh.accion IN ('INGRESAR_ID_PORTAL', 'SUBIR_COTIZACIONES', 'EMITIR_OC', 'PUBLICAR_LICITACION', 'APROBAR', 'GESTION_ADQUISICIONES'))";
+        $params[':hist_uid'] = $user_id;
+    } elseif ($vista === 'todas') {
+        $where[] = "(et.rol_responsable = 'ADQUISICIONES' OR EXISTS (SELECT 1 FROM expedientes_historial eh WHERE eh.expediente_id = e.id AND eh.accion IN ('INGRESAR_ID_PORTAL', 'SUBIR_COTIZACIONES', 'EMITIR_OC', 'PUBLICAR_LICITACION')))";
+    } else {
+        if (!in_array($vista, ['lista', 'pendientes'])) $vista = 'pendientes';
+        $where[] = "et.rol_responsable = 'ADQUISICIONES'";
+    }
+
+    if ($f_q) {
+        $where[] = "(e.codigo_interno LIKE :q OR e.motivo_compra LIKE :q OR e.titulo_compra LIKE :q)";
+        $params[':q'] = "%$f_q%";
+    }
+    if ($f_tipo) { $where[] = "e.tipo_compra_id = :tipo"; $params[':tipo'] = $f_tipo; }
+    if ($f_estado) { $where[] = "e.estado_actual = :est"; $params[':est'] = $f_estado; }
+    if ($f_desde) { $where[] = "DATE(e.created_at) >= :desde"; $params[':desde'] = $f_desde; }
+    if ($f_hasta) { $where[] = "DATE(e.created_at) <= :hasta"; $params[':hasta'] = $f_hasta; }
+
+    $where_sql = implode(" AND ", $where);
+    if ($where_sql) $where_sql = "WHERE " . $where_sql;
+
+    $sqlLista = "
+        SELECT 
+            e.*, 
+            u.nombre_completo as solicitante,
+            un.nombre as unidad_nombre,
+            tc.nombre as tipo_compra_nom,
+            p.nombre as prioridad_nombre,
+            p.clase_css as prioridad_css,
+            cc.nombre as cc_nombre,
+            cc.codigo_cuenta as cc_codigo,
+            et.nombre as estado_nombre,
+            ru.nombre as rango_utm_nombre,
+            (SELECT GROUP_CONCAT(CONCAT(ruta_archivo, '::', IFNULL(nombre_original, 'Adjunto'), '::', tipo_doc, '::', DATE_FORMAT(fecha_subida, '%d/%m/%Y %H:%i')) SEPARATOR '||') 
+             FROM expedientes_documentos ed WHERE ed.expediente_id = e.id) as docs_adjuntos
+        FROM expedientes e
+        JOIN usuarios u ON e.usuario_creador_id = u.id
+        JOIN unidades un ON e.unidad_origen_id = un.id
+        JOIN tipos_compra tc ON e.tipo_compra_id = tc.id
+        JOIN prioridades p ON e.prioridad_id = p.id
+        JOIN centros_costo cc ON e.centro_costo_id = cc.id
+        JOIN estados_tramite et ON e.estado_actual = et.codigo
+        LEFT JOIN rangos_utm ru ON e.rango_utm_id = ru.id
+        $where_sql
+        ORDER BY p.id DESC, e.created_at DESC
+    ";
+    $stmtL = $pdo->prepare($sqlLista);
+    $stmtL->execute($params);
+    $solicitudes = $stmtL->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($solicitudes as &$row) {
+        $stmtItems = $pdo->prepare("SELECT id, descripcion, cantidad, precio_unitario, unidad_medida FROM expedientes_items WHERE expediente_id = ?");
+        $stmtItems->execute([$row['id']]);
+        $row['items_detalle'] = $stmtItems->fetchAll(PDO::FETCH_ASSOC);
+    }
+    unset($row);
+
+    $pendientes = $solicitudes;
+}
+
+$tipos_compra_filtro = $pdo->query("SELECT id, nombre FROM tipos_compra WHERE activo=1 ORDER BY nombre")->fetchAll();
+$estados_filtro = $pdo->query("SELECT codigo, nombre FROM estados_tramite ORDER BY nombre")->fetchAll();
+
+if (!function_exists('color_estado')) {
+    function color_estado($estado_codigo) {
+        if (in_array($estado_codigo, ['BORRADOR', 'EN_REVISION_JEFATURA'])) return 'bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle';
+        if (in_array($estado_codigo, ['RECHAZADO', 'ANULADO'])) return 'bg-danger-subtle text-danger-emphasis text-decoration-line-through border border-danger-subtle';
+        if ($estado_codigo === 'FINALIZADO') return 'bg-success-subtle text-success-emphasis fw-bold border border-success-subtle';
+        if ($estado_codigo === 'RECEPCIONADO_POR_ADQUISICIONES') return 'bg-purple text-white fw-bold border border-purple';
+        if ($estado_codigo === 'ESPERANDO_ACEPTACION_OC') return 'bg-warning-subtle text-warning-emphasis fw-bold border border-warning-subtle';
+        return 'bg-primary-subtle text-primary-emphasis border border-primary-subtle';
+    }
+}
 
 if ($vista === 'gestionar' && isset($_GET['id'])) {
     $id = (int)$_GET['id'];
