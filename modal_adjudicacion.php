@@ -37,11 +37,12 @@ if (isset($proveedores_db)) {
                                 <div class="card-header bg-white py-2.5">
                                     <h6 class="fw-bold mb-0 text-dark">1. Seleccione el Proveedor Ganador</h6>
                                 </div>
-                                <div class="card-body p-3">                                    <div class="row g-3">
+                                <div class="card-body p-3">
+                                    <div class="row g-3">
                                         <div class="col-md-12">
-                                            <label class="form-label fw-bold text-secondary small uppercase" style="font-size: 9px;">🔎 Buscar y Seleccionar Proveedor (RUT o Razón Social)</label>
+                                            <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px; letter-spacing: 0.5px;">🔎 Buscar y Seleccionar Proveedor (RUT o Razón Social)</label>
                                             <div class="custom-select-container" id="containerProveedorModal">
-                                                <input type="text" id="buscadorProvModal" class="form-control form-control-sm bg-white custom-select-input" autocomplete="off" onfocus="showProvDropdownModal()" oninput="filterProvDropdownModal()">
+                                                <input type="text" id="buscadorProvModal" class="form-control form-control-sm bg-white custom-select-input" placeholder="🔎 Escriba RUT o Razón Social para buscar..." autocomplete="off" onfocus="showProvDropdownModal()" oninput="filterProvDropdownModal()">
                                                 <input type="hidden" name="proveedor_id" id="selProvModal" value="" required>
                                                 <div class="custom-select-dropdown" id="dropdownProvModal">
                                                     <!-- Opciones dinámicas por JS -->
@@ -50,34 +51,36 @@ if (isset($proveedores_db)) {
                                         </div>
                                     </div>
                                     
-                                    <div id="panelNuevoProvModal" class="panel-slide bg-white border border-info rounded-3 p-3 mt-3 shadow-sm">
-                                        <h6 class="text-info-emphasis fw-bold mb-1">Pre-registro de Nuevo Proveedor Adjudicado</h6>
-                                        <p class="text-muted mb-3" style="font-size: 11px;">Ingrese los datos para pre-registro. <b>Es obligatorio</b> subir la Ficha o Cotización formal del proveedor.</p>
-                                        
-                                        <div class="row g-3">
-                                            <div class="col-md-6">
-                                                <label class="form-label fw-bold text-secondary small">RUT Sugerido <span class="text-danger">*</span></label>
-                                                <div class="input-group input-group-sm">
-                                                    <input type="text" name="rut_proveedor" id="inpNuevoProvRutModal" class="form-control inp-nuevo-modal bg-light font-monospace" oninput="handleRutInputModal(this)">
-                                                    <span class="input-group-text bg-light text-secondary py-0" id="rutStatusIconModal" style="font-size: 11px; min-width: 32px; text-align: center; justify-content: center;">➖</span>
+                                    <div id="panelNuevoProvModal" class="panel-slide bg-white border border-info rounded-3 shadow-sm d-none">
+                                        <div class="p-3">
+                                            <h6 class="text-info-emphasis fw-bold mb-1">Pre-registro de Nuevo Proveedor Adjudicado</h6>
+                                            <p class="text-muted mb-3" style="font-size: 11px;">Ingrese los datos para pre-registro. <b>Es obligatorio</b> subir la Ficha o Cotización formal del proveedor.</p>
+                                            
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label fw-bold text-secondary small">RUT Sugerido <span class="text-danger">*</span></label>
+                                                    <div class="input-group input-group-sm">
+                                                        <input type="text" name="rut_proveedor" id="inpNuevoProvRutModal" class="form-control inp-nuevo-modal bg-light font-monospace" placeholder="12.345.678-K" oninput="handleRutInputModal(this)">
+                                                        <span class="input-group-text bg-light text-secondary py-0" id="rutStatusIconModal" style="font-size: 11px; min-width: 32px; text-align: center; justify-content: center;">➖</span>
+                                                    </div>
+                                                    <div id="rutValidationMsgModal" class="small text-danger d-none mt-1" style="font-size: 10px;">⚠️ El formato o dígito verificador del RUT es inválido.</div>
+                                                    <div id="rutDuplicateAlertModal" class="alert alert-warning p-2 mt-2 mb-0 small d-none" style="font-size: 11px; border-left: 4px solid #ffc107;">
+                                                        <strong>⚠️ Ya registrado:</strong> <span id="duplicateProvNameModal" class="fw-bold"></span>. 
+                                                        <button type="button" class="btn btn-xs btn-warning py-0 px-2 fw-bold text-dark border-0 ms-2" onclick="selectDuplicateProviderModal()" style="font-size: 10px; background: #e0a800;">Seleccionar</button>
+                                                    </div>
                                                 </div>
-                                                <div id="rutValidationMsgModal" class="small text-danger d-none mt-1" style="font-size: 10px;">⚠️ El formato o dígito verificador del RUT es inválido.</div>
-                                                <div id="rutDuplicateAlertModal" class="alert alert-warning p-2 mt-2 mb-0 small d-none" style="font-size: 11px; border-left: 4px solid #ffc107;">
-                                                    <strong>⚠️ Ya registrado:</strong> <span id="duplicateProvNameModal" class="fw-bold"></span>. 
-                                                    <button type="button" class="btn btn-xs btn-warning py-0 px-2 fw-bold text-dark border-0 ms-2" onclick="selectDuplicateProviderModal()" style="font-size: 10px; background: #e0a800;">Seleccionar</button>
+                                                <div class="col-md-6">
+                                                    <label class="form-label fw-bold text-secondary small">Razón Social / Nombre Sugerido <span class="text-danger">*</span></label>
+                                                    <input type="text" name="nombre_proveedor" id="inpNuevoProvNombreModal" class="form-control form-control-sm inp-nuevo-modal bg-light">
                                                 </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label fw-bold text-secondary small">Razón Social / Nombre Sugerido <span class="text-danger">*</span></label>
-                                                <input type="text" name="nombre_proveedor" id="inpNuevoProvNombreModal" class="form-control form-control-sm inp-nuevo-modal bg-light">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label fw-bold text-secondary small">Dirección y Comuna Sugerida</label>
-                                                <input type="text" name="direccion_proveedor" id="inpNuevoProvDireccionModal" class="form-control form-control-sm bg-light">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label fw-bold text-secondary small">Ficha del Proveedor (PDF) <span class="text-danger">*</span></label>
-                                                <input type="file" name="ficha_proveedor" id="inpFichaModal" accept="application/pdf" class="form-control form-control-sm bg-light">
+                                                <div class="col-md-6">
+                                                    <label class="form-label fw-bold text-secondary small">Dirección y Comuna Sugerida</label>
+                                                    <input type="text" name="direccion_proveedor" id="inpNuevoProvDireccionModal" class="form-control form-control-sm bg-light">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label fw-bold text-secondary small">Ficha del Proveedor (PDF) <span class="text-danger">*</span></label>
+                                                    <input type="file" name="ficha_proveedor" id="inpFichaModal" accept="application/pdf" class="form-control form-control-sm bg-light">
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -103,7 +106,7 @@ if (isset($proveedores_db)) {
                                                     <th class="p-2">Ítem</th>
                                                     <th class="p-2 text-center" style="width: 80px;">Cant.</th>
                                                     <th class="p-2 text-end" style="width: 120px;">Precio Ref. (Bruto)</th>
-                                                    <th class="p-2 text-right" style="width: 140px;">Nvo. Precio Unit.</th>
+                                                    <th class="p-2 text-end" style="width: 140px;">Nvo. Precio Unit.</th>
                                                     <th class="p-2 text-end" style="width: 120px;">Total Línea</th>
                                                 </tr>
                                             </thead>
@@ -111,15 +114,15 @@ if (isset($proveedores_db)) {
                                             <tfoot class="table-light text-secondary">
                                                 <tr>
                                                     <td colspan="4" class="p-2 text-end fw-semibold" style="font-size: 11px;">Subtotal Neto:</td>
-                                                    <td class="p-2 text-end font-semibold text-dark" id="modalAdjNeto">$ 0</td>
+                                                    <td class="p-2 text-end fw-semibold text-dark" id="modalAdjNeto">$ 0</td>
                                                 </tr>
                                                 <tr>
                                                     <td colspan="4" class="p-2 text-end fw-semibold" style="font-size: 11px;">Impuestos (IVA):</td>
-                                                    <td class="p-2 text-end font-semibold text-dark" id="modalAdjIva">$ 0</td>
+                                                    <td class="p-2 text-end fw-semibold text-dark" id="modalAdjIva">$ 0</td>
                                                 </tr>
                                                 <tr class="table-active">
                                                     <td colspan="4" class="p-2 text-end fw-bold text-dark" style="font-size: 11px;">Total Final a Pagar:</td>
-                                                    <td class="p-2 text-end fw-black text-primary fs-5" id="modalAdjTotal">$ 0</td>
+                                                    <td class="p-2 text-end fw-bold text-primary fs-5" id="modalAdjTotal">$ 0</td>
                                                 </tr>
                                             </tfoot>
                                         </table>
@@ -183,9 +186,9 @@ if (isset($proveedores_db)) {
                 const tr = document.createElement('tr');
                 tr.className = "align-middle";
                 tr.innerHTML = `
-                    <td class="p-2 text-xs text-secondary font-medium" style="max-width: 500px;">${escapeHTML(item.descripcion)}</td>
+                    <td class="p-2 small text-secondary fw-medium" style="max-width: 500px;">${escapeHTML(item.descripcion)}</td>
                     <td class="p-2 text-center fw-bold text-dark">${cant} <span class="text-muted d-block" style="font-size: 9px;">${item.unidad_medida}</span></td>
-                    <td class="p-2 text-end text-muted line-through small" style="font-size: 11px;">${formatCurrency(precOri)}</td>
+                    <td class="p-2 text-end text-muted text-decoration-line-through small" style="font-size: 11px;">${formatCurrency(precOri)}</td>
                     <td class="p-2">
                         <input type="text" name="item_precio[${item.id}]" required class="form-control form-control-sm text-end fw-bold input-precio-adjudicar" value="0" data-cant="${cant}" oninput="calcAdjudicacion()">
                     </td>
@@ -210,7 +213,10 @@ if (isset($proveedores_db)) {
 
         document.querySelectorAll('.input-precio-adjudicar').forEach(inp => {
             let valStr = inp.value.replace(/\D/g, "");
-            inp.value = valStr.replace(/\B(?=(\d{3})+(?!\d))/g, "."); 
+            let formattedVal = valStr ? valStr.replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "0";
+            if (inp.value !== formattedVal) {
+                inp.value = formattedVal;
+            } 
             
             let val = parseFloat(valStr) || 0;
             let cant = parseFloat(inp.getAttribute('data-cant')) || 0;
@@ -549,7 +555,7 @@ if (isset($proveedores_db)) {
                     return;
                 }
                 
-                const options = dropdown.querySelectorAll('.custom-select-option');
+                const options = dropdown.querySelectorAll('.custom-select-option:not(.custom-select-group-header)');
                 if (options.length === 0) return;
                 
                 if (e.key === 'ArrowDown') {
