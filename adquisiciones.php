@@ -310,225 +310,234 @@ require_once __DIR__ . '/adquisiciones_controller.php';
                         </div>
                     </div>
 
-                    <!-- CAJA DE TAREA ACTUAL -->
-                    <div class="card shadow-lg border-primary">
-                        <div class="card-header bg-primary text-white py-3">
-                            <span class="badge bg-white text-primary text-uppercase tracking-wider mb-1" style="font-size: 8px;">Su Tarea Actual</span>
-                            <h5 class="fw-bold mb-0">Gestión del Proceso de Compra</h5>
-                        </div>
-                        
-                        <?php $estado = $exp['estado_actual']; ?>
-
-                        <!-- FASE 1: INGRESO AL PORTAL DE REFERENCIA -->
-                        <?php if ($estado === 'RECEPCIONADO_POR_ADQUISICIONES'): ?>
-                            <div class="card-body p-4">
-                                <h6 class="fw-bold text-dark mb-1">Ingreso al Portal (Mercado Público)</h6>
-                                <p class="text-secondary small mb-4">Cree el requerimiento de compra en el portal oficial de Mercado Público. Luego registre aquí el ID identificador generado.</p>
-                                
-                                <form method="POST">
-    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                    <input type="hidden" name="accion" value="ingresar_id_portal">
-                                    <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
-                                    
-                                    <div class="mb-4">
-                                        <?php if ($exp['tipo_compra_cod'] === 'COMPRA_AGIL'): ?>
-                                            <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">ID Compra Ágil (Mercado Público) <span class="text-danger">*</span></label>
-                                            <input type="text" name="id_compra_agil" required class="form-control">
-                                        <?php elseif ($exp['tipo_compra_cod'] === 'LICITACION'): ?>
-                                            <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">ID de Licitación (Mercado Público) <span class="text-danger">*</span></label>
-                                            <input type="text" name="id_licitacion" required class="form-control">
-                                        <?php else: ?>
-                                            <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">ID de Referencia en Portal <span class="text-danger">*</span></label>
-                                            <input type="text" name="id_referencia" required class="form-control">
-                                        <?php endif; ?>
-                                    </div>
-
-                                    <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold shadow d-flex align-items-center justify-content-center gap-2">
-                                        <span>Guardar ID y Avanzar a Búsqueda de Ofertas</span>
-                                        <i class="bi bi-arrow-right-short fs-4"></i>
-                                    </button>
-                                </form>
+                    <?php if (!empty($es_accionable)): ?>
+                        <!-- CAJA DE TAREA ACTUAL -->
+                        <div class="card shadow-lg border-primary">
+                            <div class="card-header bg-primary text-white py-3">
+                                <span class="badge bg-white text-primary text-uppercase tracking-wider mb-1" style="font-size: 8px;">Su Tarea Actual</span>
+                                <h5 class="fw-bold mb-0">Gestión del Proceso de Compra</h5>
                             </div>
+                            
+                            <?php $estado = $exp['estado_actual']; ?>
 
-                        <!-- FASE 2: SUBIDA DE OFERTAS / COTIZACIONES -->
-                        <?php elseif ($estado === 'EN_COTIZACION_ADQ' || $estado === 'EN_PUBLICACION_MERCADO'): ?>
-                            <div class="card-body p-4">
-                                <h6 class="fw-bold text-dark mb-1"><?= $estado === 'EN_COTIZACION_ADQ' ? 'Recepción de Cotizaciones / Ofertas' : 'Cierre y Ofertas de Licitación' ?></h6>
-                                <p class="text-secondary small mb-4">Descargue las ofertas o cotizaciones recibidas en Mercado Público y suba un archivo comprimido o PDF consolidado para la evaluación del solicitante.</p>
-                                
-                                <form method="POST" enctype="multipart/form-data">
-    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                    <input type="hidden" name="accion" value="<?= $estado === 'EN_COTIZACION_ADQ' ? 'subir_cotizaciones' : 'publicar_licitacion' ?>">
-                                    <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
+                            <!-- FASE 1: INGRESO AL PORTAL DE REFERENCIA -->
+                            <?php if ($estado === 'RECEPCIONADO_POR_ADQUISICIONES'): ?>
+                                <div class="card-body p-4">
+                                    <h6 class="fw-bold text-dark mb-1">Ingreso al Portal (Mercado Público)</h6>
+                                    <p class="text-secondary small mb-4">Cree el requerimiento de compra en el portal oficial de Mercado Público. Luego registre aquí el ID identificador generado.</p>
                                     
-                                    <div class="mb-4">
-                                        <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Archivo de Ofertas/Bases (PDF, ZIP, RAR) <span class="text-danger">*</span></label>
-                                        <input type="file" name="<?= $estado === 'EN_COTIZACION_ADQ' ? 'archivo_cotizacion' : 'archivo_bases' ?>" accept=".pdf,.zip,.rar,application/pdf,application/zip,application/x-rar-compressed" required class="form-control form-control-sm">
-                                    </div>
-                                    
-                                    <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold shadow d-flex align-items-center justify-content-center gap-2">
-                                        <span>Enviar Ofertas a Evaluación Técnica</span>
-                                        <i class="bi bi-send-fill fs-6"></i>
-                                    </button>
-                                </form>
-                            </div>
-
-                        <!-- FASE 3: INGRESO DE ORDEN DE COMPRA Y PROVEEDOR -->
-                        <?php elseif (in_array($estado, ['EN_EMISION_OC', 'EN_ADJUDICACION', 'EN_GESTION_ADQUISICIONES'])): ?>
-                            <div class="card-body p-4">
-                                <h6 class="fw-bold text-dark mb-1">Emisión de Orden de Compra (OC)</h6>
-                                <p class="text-secondary small mb-4">Genere la Orden de Compra en el portal de Mercado Público. A continuación registre el código OC y el documento PDF para el expediente.</p>
-                                
-                                <form method="POST" enctype="multipart/form-data">
-    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                    <input type="hidden" name="accion" value="emitir_oc">
-                                    <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
-
-                                    <div class="bg-light p-3 rounded-3 border mb-4">
-                                        <p class="text-uppercase text-muted fw-bold mb-2.5" style="font-size: 9px; letter-spacing: 0.5px;">Resumen / Adjudicación</p>
+                                    <form method="POST">
+                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                        <input type="hidden" name="accion" value="ingresar_id_portal">
+                                        <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
                                         
-                                        <?php if ($exp['proveedor_adjudicado_id']): ?>
-                                            <div class="small">
-                                                <span class="text-muted fw-bold d-block text-uppercase mb-0.5" style="font-size: 8px;">Proveedor Adjudicado Confirmado</span>
-                                                <span class="fw-bold text-dark"><?= htmlspecialchars($exp['proveedor_rut']) ?> - <?= htmlspecialchars($exp['proveedor_nombre']) ?></span>
-                                            </div>
-                                        <?php else: ?>
-                                            <div class="row g-3">
-                                                <div class="col-md-7">
-                                                    <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Seleccionar Proveedor Adjudicado</label>
-                                                    <div class="input-group">
-                                                        <select name="proveedor_id" class="form-select form-select-sm text-sm" required>
-                                                            <option value="">-- Seleccione --</option>
-                                                            <?php foreach($proveedores as $p) echo "<option value='{$p['id']}'>{$p['rut']} - {$p['razon_social']}</option>"; ?>
-                                                        </select>
-                                                        <button type="button" class="btn btn-success btn-sm px-2.5" data-bs-toggle="modal" data-bs-target="#modalProv" title="Agregar Nuevo Proveedor">
-                                                            <i class="bi bi-plus-lg"></i>
-                                                        </button>
+                                        <div class="mb-4">
+                                            <?php if ($exp['tipo_compra_cod'] === 'COMPRA_AGIL'): ?>
+                                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">ID Compra Ágil (Mercado Público) <span class="text-danger">*</span></label>
+                                                <input type="text" name="id_compra_agil" required class="form-control">
+                                            <?php elseif ($exp['tipo_compra_cod'] === 'LICITACION'): ?>
+                                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">ID de Licitación (Mercado Público) <span class="text-danger">*</span></label>
+                                                <input type="text" name="id_licitacion" required class="form-control">
+                                            <?php else: ?>
+                                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">ID de Referencia en Portal <span class="text-danger">*</span></label>
+                                                <input type="text" name="id_referencia" required class="form-control">
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold shadow d-flex align-items-center justify-content-center gap-2">
+                                            <span>Guardar ID y Avanzar a Búsqueda de Ofertas</span>
+                                            <i class="bi bi-arrow-right-short fs-4"></i>
+                                        </button>
+                                    </form>
+                                </div>
+
+                            <!-- FASE 2: SUBIDA DE OFERTAS / COTIZACIONES -->
+                            <?php elseif ($estado === 'EN_COTIZACION_ADQ' || $estado === 'EN_PUBLICACION_MERCADO'): ?>
+                                <div class="card-body p-4">
+                                    <h6 class="fw-bold text-dark mb-1"><?= $estado === 'EN_COTIZACION_ADQ' ? 'Recepción de Cotizaciones / Ofertas' : 'Cierre y Ofertas de Licitación' ?></h6>
+                                    <p class="text-secondary small mb-4">Descargue las ofertas o cotizaciones recibidas en Mercado Público y suba un archivo comprimido o PDF consolidado para la evaluación del solicitante.</p>
+                                    
+                                    <form method="POST" enctype="multipart/form-data">
+                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                        <input type="hidden" name="accion" value="<?= $estado === 'EN_COTIZACION_ADQ' ? 'subir_cotizaciones' : 'publicar_licitacion' ?>">
+                                        <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
+                                        
+                                        <div class="mb-4">
+                                            <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Archivo de Ofertas/Bases (PDF, ZIP, RAR) <span class="text-danger">*</span></label>
+                                            <input type="file" name="<?= $estado === 'EN_COTIZACION_ADQ' ? 'archivo_cotizacion' : 'archivo_bases' ?>" accept=".pdf,.zip,.rar,application/pdf,application/zip,application/x-rar-compressed" required class="form-control form-control-sm">
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold shadow d-flex align-items-center justify-content-center gap-2">
+                                            <span>Enviar Ofertas a Evaluación Técnica</span>
+                                            <i class="bi bi-send-fill fs-6"></i>
+                                        </button>
+                                    </form>
+                                </div>
+
+                            <!-- FASE 3: INGRESO DE ORDEN DE COMPRA Y PROVEEDOR -->
+                            <?php elseif (in_array($estado, ['EN_EMISION_OC', 'EN_ADJUDICACION', 'EN_GESTION_ADQUISICIONES'])): ?>
+                                <div class="card-body p-4">
+                                    <h6 class="fw-bold text-dark mb-1">Emisión de Orden de Compra (OC)</h6>
+                                    <p class="text-secondary small mb-4">Genere la Orden de Compra en el portal de Mercado Público. A continuación registre el código OC y el documento PDF para el expediente.</p>
+                                    
+                                    <form method="POST" enctype="multipart/form-data">
+                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                        <input type="hidden" name="accion" value="emitir_oc">
+                                        <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
+
+                                        <div class="bg-light p-3 rounded-3 border mb-4">
+                                            <p class="text-uppercase text-muted fw-bold mb-2.5" style="font-size: 9px; letter-spacing: 0.5px;">Resumen / Adjudicación</p>
+                                            
+                                            <?php if ($exp['proveedor_adjudicado_id']): ?>
+                                                <div class="small">
+                                                    <span class="text-muted fw-bold d-block text-uppercase mb-0.5" style="font-size: 8px;">Proveedor Adjudicado Confirmado</span>
+                                                    <span class="fw-bold text-dark"><?= htmlspecialchars($exp['proveedor_rut']) ?> - <?= htmlspecialchars($exp['proveedor_nombre']) ?></span>
+                                                </div>
+                                            <?php else: ?>
+                                                <div class="row g-3">
+                                                    <div class="col-md-7">
+                                                        <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Seleccionar Proveedor Adjudicado</label>
+                                                        <div class="input-group">
+                                                            <select name="proveedor_id" class="form-select form-select-sm text-sm" required>
+                                                                <option value="">-- Seleccione --</option>
+                                                                <?php foreach($proveedores as $p) echo "<option value='{$p['id']}'>{$p['rut']} - {$p['razon_social']}</option>"; ?>
+                                                            </select>
+                                                            <button type="button" class="btn btn-success btn-sm px-2.5" data-bs-toggle="modal" data-bs-target="#modalProv" title="Agregar Nuevo Proveedor">
+                                                                <i class="bi bi-plus-lg"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-5">
+                                                        <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Monto Final C/IVA ($)</label>
+                                                        <input type="text" name="monto_definitivo" id="inpMonto" required class="form-control form-control-sm font-monospace fw-bold text-dark text-end" value="<?= number_format($exp['monto_estimado'], 0, '', '') ?>">
                                                     </div>
                                                 </div>
-                                                <div class="col-md-5">
-                                                    <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Monto Final C/IVA ($)</label>
-                                                    <input type="text" name="monto_definitivo" id="inpMonto" required class="form-control form-control-sm font-monospace fw-bold text-dark text-end" value="<?= number_format($exp['monto_estimado'], 0, '', '') ?>">
-                                                </div>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
+                                            <?php endif; ?>
+                                        </div>
 
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Número de Orden de Compra <span class="text-danger">*</span></label>
-                                        <input type="text" name="orden_compra_numero" required class="form-control">
-                                    </div>
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Número de Orden de Compra <span class="text-danger">*</span></label>
+                                            <input type="text" name="orden_compra_numero" required class="form-control">
+                                        </div>
 
-                                    <div class="mb-4">
-                                        <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Subir Orden de Compra Firmada (PDF) <span class="text-danger">*</span></label>
-                                        <input type="file" name="archivo_oc" accept="application/pdf" required class="form-control form-control-sm">
-                                    </div>
+                                        <div class="mb-4">
+                                            <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Subir Orden de Compra Firmada (PDF) <span class="text-danger">*</span></label>
+                                            <input type="file" name="archivo_oc" accept="application/pdf" required class="form-control form-control-sm">
+                                        </div>
 
-                                    <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold shadow d-flex align-items-center justify-content-center gap-2">
-                                        <span>Registrar OC y Esperar Aceptación</span>
-                                        <i class="bi bi-cloud-arrow-up-fill fs-6"></i>
-                                    </button>
-                                </form>
-                            </div>
+                                        <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold shadow d-flex align-items-center justify-content-center gap-2">
+                                            <span>Registrar OC y Esperar Aceptación</span>
+                                            <i class="bi bi-cloud-arrow-up-fill fs-6"></i>
+                                        </button>
+                                    </form>
+                                </div>
 
-                        <!-- FASE 4: ESPERA ACEPTACIÓN DE PROVEEDOR -->
-                        <?php elseif ($estado === 'ESPERANDO_ACEPTACION_OC'): ?>
-                            <div class="card-body p-4">
-                                <h6 class="fw-bold text-dark mb-1">Confirmación de Aceptación del Proveedor</h6>
-                                <p class="text-secondary small mb-4">Verifique el estado de la Orden de Compra en el portal de Mercado Público. Si fue aceptada por el proveedor o rechazada, márquelo aquí.</p>
-                                
-                                <div class="row g-3">
-                                    <div class="col-sm-6">
-                                        <form method="POST" onsubmit="return confirm('¿Confirma que el proveedor ACEPTÓ la OC?')">
-    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                            <input type="hidden" name="accion" value="oc_aceptada">
-                                            <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
-                                            <button type="submit" class="btn btn-success btn-lg w-100 py-3 fw-bold shadow-sm d-flex flex-column align-items-center gap-1">
-                                                <i class="bi bi-check-circle-fill fs-4"></i>
-                                                <span>Aceptar Compra</span>
-                                            </button>
-                                        </form>
-                                    </div>
+                            <!-- FASE 4: ESPERA ACEPTACIÓN DE PROVEEDOR -->
+                            <?php elseif ($estado === 'ESPERANDO_ACEPTACION_OC'): ?>
+                                <div class="card-body p-4">
+                                    <h6 class="fw-bold text-dark mb-1">Confirmación de Aceptación del Proveedor</h6>
+                                    <p class="text-secondary small mb-4">Verifique el estado de la Orden de Compra en el portal de Mercado Público. Si fue aceptada por el proveedor o rechazada, márquelo aquí.</p>
+                                    
+                                    <div class="row g-3">
+                                        <div class="col-sm-6">
+                                            <form method="POST" onsubmit="return confirm('¿Confirma que el proveedor ACEPTÓ la OC?')">
+                                                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                                <input type="hidden" name="accion" value="oc_aceptada">
+                                                <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
+                                                <button type="submit" class="btn btn-success btn-lg w-100 py-3 fw-bold shadow-sm d-flex flex-column align-items-center gap-1">
+                                                    <i class="bi bi-check-circle-fill fs-4"></i>
+                                                    <span>Aceptar Compra</span>
+                                                </button>
+                                            </form>
+                                        </div>
 
-                                    <div class="col-sm-6">
-                                        <form method="POST" onsubmit="return confirm('¿Rechazó la orden? Se devolverá el trámite a Evaluación. La OPI seguirá vigente.')">
-    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                            <input type="hidden" name="accion" value="oc_rechazada">
-                                            <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
-                                            <input type="text" name="motivo_rechazo_proveedor" required class="form-control form-control-sm text-center border-danger placeholder-danger-emphasis text-danger mb-2">
-                                            <button type="submit" class="btn btn-danger btn-lg w-100 py-3 fw-bold shadow-sm d-flex flex-column align-items-center gap-1">
-                                                <i class="bi bi-x-circle-fill fs-4"></i>
-                                                <span>Rechazar Compra</span>
-                                            </button>
-                                        </form>
+                                        <div class="col-sm-6">
+                                            <form method="POST" onsubmit="return confirm('¿Rechazó la orden? Se devolverá el trámite a Evaluación. La OPI seguirá vigente.')">
+                                                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                                <input type="hidden" name="accion" value="oc_rechazada">
+                                                <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
+                                                <input type="text" name="motivo_rechazo_proveedor" required class="form-control form-control-sm text-center border-danger placeholder-danger-emphasis text-danger mb-2">
+                                                <button type="submit" class="btn btn-danger btn-lg w-100 py-3 fw-bold shadow-sm d-flex flex-column align-items-center gap-1">
+                                                    <i class="bi bi-x-circle-fill fs-4"></i>
+                                                    <span>Rechazar Compra</span>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                        <!-- FASE 5: GENÉRICA -->
-                        <?php else: ?>
-                            <div class="card-body p-4">
-                                <h6 class="fw-bold text-dark mb-1">Gestión de Trámite</h6>
-                                <p class="text-secondary small mb-4">Confirme la gestión de esta fase para avanzar el expediente.</p>
-                                
-                                <form method="POST">
-    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                    <input type="hidden" name="accion" value="accion_generica">
-                                    <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
-                                    <div class="mb-4">
-                                        <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Comentario de la Acción</label>
-                                        <textarea name="comentario_flujo" class="form-control" rows="2" required></textarea>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold shadow">Completar Fase y Avanzar</button>
-                                </form>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <!-- SECCIÓN PELIGRO: ANULACIÓN DE COMPRA -->
-                        <?php if (!empty($exp['folio_opi'])): ?>
-                            <div class="card-footer bg-danger-subtle border-top border-danger-subtle p-4">
-                                <h6 class="text-danger-emphasis fw-bold mb-2 d-flex align-items-center gap-2">
-                                    <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
-                                    Zona de Peligro: Anulación Definitiva (Caída de Compra)
-                                </h6>
-                                <p class="text-danger-emphasis small mb-4">Si la licitación quedó desierta o el proveedor desistió definitivamente y no habrá reintento, anule el requerimiento. <strong>El número de OPI quedará quemado y marcado como anulado en auditoría.</strong></p>
-                                
-                                <form method="POST" onsubmit="return confirm('ATENCIÓN: Esto ANULARÁ definitivamente la OPI. ¿Está completamente seguro?')">
-    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                    <input type="hidden" name="accion" value="anular_opi_definitiva">
-                                    <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
-                                    
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-danger small text-uppercase" style="font-size: 10px;">Motivo exacto de la anulación definitiva</label>
-                                        <input type="text" name="motivo_anulacion" required class="form-control form-control-sm border-danger bg-white">
-                                    </div>
-                                    
-                                    <button type="submit" class="btn btn-danger w-100 py-2 fw-bold shadow-sm">
-                                        Anular Trámite Definitivamente
-                                    </button>
-                                </form>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- COMPROBACIÓN DE ANTECEDENTES Y DEVOLUCIÓN -->
-                    <div class="card shadow-sm border-light">
-                        <div class="card-header bg-white py-3">
-                            <h6 class="fw-bold mb-0 text-dark">¿Problemas con los antecedentes?</h6>
-                        </div>
-                        <div class="card-body p-3">
-                            <p class="text-muted small mb-3">Si falta documentación o las especificaciones del ítem son erróneas, devuelva el requerimiento al usuario emisor para que lo corrija.</p>
-                            <form method="POST" onsubmit="return confirm('¿Devolver al usuario creador?')">
-    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                <input type="hidden" name="accion" value="devolver">
-                                <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
-                                <div class="input-group">
-                                    <input type="text" name="motivo" class="form-control form-control-sm bg-white" required>
-                                    <button type="submit" class="btn btn-outline-secondary btn-sm px-4 fw-bold">Devolver</button>
+                            <!-- FASE 5: GENÉRICA -->
+                            <?php else: ?>
+                                <div class="card-body p-4 text-center">
+                                    <p class="text-muted small mb-0">No hay tareas pendientes asignadas a su perfil para este estado (<?= htmlspecialchars($estado) ?>).</p>
                                 </div>
-                            </form>
+                            <?php endif; ?>
+                            
+                            <!-- SECCIÓN PELIGRO: ANULACIÓN DE COMPRA -->
+                            <?php if (!empty($exp['folio_opi'])): ?>
+                                <div class="card-footer bg-danger-subtle border-top border-danger-subtle p-4">
+                                    <h6 class="text-danger-emphasis fw-bold mb-2 d-flex align-items-center gap-2">
+                                        <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
+                                        Zona de Peligro: Anulación Definitiva (Caída de Compra)
+                                    </h6>
+                                    <p class="text-danger-emphasis small mb-4">Si la licitación quedó desierta o el proveedor desistió definitivamente y no habrá reintento, anule el requerimiento. <strong>El número de OPI quedará quemado y marcado como anulado en auditoría.</strong></p>
+                                    
+                                    <form method="POST" onsubmit="return confirm('ATENCIÓN: Esto ANULARÁ definitivamente la OPI. ¿Está completamente seguro?')">
+                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                        <input type="hidden" name="accion" value="anular_opi_definitiva">
+                                        <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold text-danger small text-uppercase" style="font-size: 10px;">Motivo exacto de la anulación definitiva</label>
+                                            <input type="text" name="motivo_anulacion" required class="form-control form-control-sm border-danger bg-white">
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-danger w-100 py-2 fw-bold shadow-sm">
+                                            Anular Trámite Definitivamente
+                                        </button>
+                                    </form>
+                                </div>
+                            <?php endif; ?>
                         </div>
-                    </div>
+
+                        <!-- COMPROBACIÓN DE ANTECEDENTES Y DEVOLUCIÓN -->
+                        <div class="card shadow-sm border-light">
+                            <div class="card-header bg-white py-3">
+                                <h6 class="fw-bold mb-0 text-dark">¿Problemas con los antecedentes?</h6>
+                            </div>
+                            <div class="card-body p-3">
+                                <p class="text-muted small mb-3">Si falta documentación o las especificaciones del ítem son erróneas, devuelva el requerimiento al usuario emisor para que lo corrija.</p>
+                                <form method="POST" onsubmit="return confirm('¿Devolver al usuario creador?')">
+                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                    <input type="hidden" name="accion" value="devolver">
+                                    <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
+                                    <div class="input-group">
+                                        <input type="text" name="motivo" class="form-control form-control-sm bg-white" required>
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm px-4 fw-bold">Devolver</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <!-- BANNER DE GESTIÓN COMPLETADA -->
+                        <div class="card shadow-sm border-light">
+                            <div class="card-body p-4 text-center">
+                                <div class="p-3 bg-success-subtle text-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 56px; height: 56px;">
+                                    <i class="bi bi-check-lg fs-3"></i>
+                                </div>
+                                <h5 class="fw-bold text-dark mb-1">Gestión Completada</h5>
+                                <p class="text-secondary small mb-4">El expediente ha sido procesado por su departamento en esta fase.</p>
+                                
+                                <div class="bg-light rounded-3 p-3 border d-inline-block text-start mx-auto" style="min-width: 280px;">
+                                    <span class="text-muted fw-bold d-block text-uppercase mb-1" style="font-size: 8px;">Estado Actual del Expediente</span>
+                                    <span class="fw-bold text-dark fs-6 d-block"><?= htmlspecialchars($exp['estado_nombre'] ?? $exp['estado_actual']) ?></span>
+                                    <span class="badge bg-primary-subtle text-primary-emphasis mt-2 px-2 py-1 fs-6" style="font-size: 9px; font-weight: bold;">
+                                        Cargo Responsable: <?= htmlspecialchars($exp['rol_responsable'] ?? 'Otro Departamento') ?>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
 
                 </div>
             </div>

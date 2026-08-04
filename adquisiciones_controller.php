@@ -22,6 +22,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $exp_id = isset($_POST['expediente_id']) ? (int)$_POST['expediente_id'] : null;
         $accion = $_POST['accion'] ?? ''; 
         
+        if ($exp_id && $accion !== 'crear_proveedor') {
+            $stmtEst = $pdo->prepare("SELECT et.rol_responsable FROM expedientes e JOIN estados_tramite et ON e.estado_actual = et.codigo WHERE e.id = ?");
+            $stmtEst->execute([$exp_id]);
+            $rol_resp = $stmtEst->fetchColumn();
+            if ($rol_resp !== 'ADQUISICIONES') {
+                throw new Exception("El expediente ya fue procesado y no se encuentra disponible para gestión en Adquisiciones.");
+            }
+        }
+        
         $anio = date('Y');
         $dir = __DIR__ . "/uploads/$anio/exp_$exp_id/";
         if ($exp_id && !file_exists($dir)) mkdir($dir, 0777, true);
@@ -211,18 +220,21 @@ if ($vista === 'gestionar' && isset($_GET['id'])) {
     $id = (int)$_GET['id'];
     
     $stmt = $pdo->prepare("
-        SELECT e.*, u.nombre_completo as solicitante, un.nombre as unidad, cc.nombre as centro_costo, tc.nombre as tipo_compra_nom, tc.codigo as tipo_compra_cod, prov.razon_social as proveedor_nombre, prov.rut as proveedor_rut
+        SELECT e.*, u.nombre_completo as solicitante, un.nombre as unidad, cc.nombre as centro_costo, tc.nombre as tipo_compra_nom, tc.codigo as tipo_compra_cod, prov.razon_social as proveedor_nombre, prov.rut as proveedor_rut, et.nombre as estado_nombre, et.rol_responsable
         FROM expedientes e 
         JOIN usuarios u ON e.usuario_creador_id = u.id 
         JOIN unidades un ON e.unidad_origen_id = un.id 
         JOIN centros_costo cc ON e.centro_costo_id = cc.id 
         JOIN tipos_compra tc ON e.tipo_compra_id = tc.id
+        JOIN estados_tramite et ON e.estado_actual = et.codigo
         LEFT JOIN proveedores prov ON e.proveedor_adjudicado_id = prov.id
         WHERE e.id = ?
     ");
     $stmt->execute([$id]); 
     $exp = $stmt->fetch();
     if (!$exp) die("Error de datos o expediente no encontrado.");
+    
+    $es_accionable = (($exp['rol_responsable'] ?? '') === 'ADQUISICIONES');
     
     $stmtItems = $pdo->prepare("
         SELECT ei.*, cm.codigo as cuenta_codigo 

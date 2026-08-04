@@ -25,6 +25,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $transicion_id = $_POST['transicion_id'] ?? null;
         $accion = $_POST['accion'] ?? '';
 
+        if ($id) {
+            $stmtEst = $pdo->prepare("SELECT e.estado_actual FROM expedientes e WHERE e.id = ?");
+            $stmtEst->execute([$id]);
+            $stAct = $stmtEst->fetchColumn();
+            if (!in_array($stAct, ['EN_AUTORIZACION_COTIZACION', 'EN_APROBACION_ADMINISTRADOR'])) {
+                throw new Exception("El expediente ya fue procesado y no se encuentra disponible para aprobación en Administración Municipal.");
+            }
+        }
+
         $trans = null;
         if ($transicion_id) {
             $stmtT = $pdo->prepare("SELECT * FROM flujos_definicion WHERE id = ?");
@@ -204,7 +213,7 @@ if ($vista === 'lista') {
 if ($vista === 'revisar' && isset($_GET['id'])) {
     $stmt = $pdo->prepare("
         SELECT e.*, u.nombre_completo as solicitante, un.nombre as unidad, cc.nombre as centro_costo, 
-               p.razon_social as proveedor_nombre, p.rut as proveedor_rut, tc.nombre as tipo_compra_nom, tc.codigo as tipo_compra_cod, et.nombre as estado_nombre
+               p.razon_social as proveedor_nombre, p.rut as proveedor_rut, tc.nombre as tipo_compra_nom, tc.codigo as tipo_compra_cod, et.nombre as estado_nombre, et.rol_responsable
         FROM expedientes e
         JOIN usuarios u ON e.usuario_creador_id = u.id
         JOIN unidades un ON e.unidad_origen_id = un.id
@@ -218,6 +227,8 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
     $exp = $stmt->fetch();
 
     if (!$exp) die("Expediente no encontrado.");
+
+    $es_accionable = in_array($exp['estado_actual'], ['EN_AUTORIZACION_COTIZACION', 'EN_APROBACION_ADMINISTRADOR']);
 
     $stmtI = $pdo->prepare("
         SELECT ei.*, cm.nombre as cuenta_nombre, cm.codigo as cuenta_codigo 

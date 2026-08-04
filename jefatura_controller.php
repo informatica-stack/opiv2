@@ -93,13 +93,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if ($vista === 'revisar' && isset($_GET['id'])) {
     
     $sql = "
-        SELECT e.*, u.nombre_completo as solicitante, un.nombre as unidad, cc.nombre as centro_costo, p.nombre as prioridad_nom, p.clase_css, tc.nombre as tipo_compra_nom, tc.codigo as tipo_compra_cod, prov.razon_social as proveedor_nombre, prov.rut as proveedor_rut
+        SELECT e.*, u.nombre_completo as solicitante, un.nombre as unidad, cc.nombre as centro_costo, p.nombre as prioridad_nom, p.clase_css, tc.nombre as tipo_compra_nom, tc.codigo as tipo_compra_cod, prov.razon_social as proveedor_nombre, prov.rut as proveedor_rut, et.nombre as estado_nombre, et.rol_responsable
         FROM expedientes e 
         JOIN usuarios u ON e.usuario_creador_id = u.id 
         JOIN unidades un ON e.unidad_origen_id = un.id
         JOIN centros_costo cc ON e.centro_costo_id = cc.id 
         JOIN prioridades p ON e.prioridad_id = p.id 
         JOIN tipos_compra tc ON e.tipo_compra_id = tc.id 
+        JOIN estados_tramite et ON e.estado_actual = et.codigo
         LEFT JOIN proveedores prov ON e.proveedor_adjudicado_id = prov.id
         WHERE e.id = ?
     ";
@@ -109,6 +110,8 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
     $exp = $stmt->fetch();
     
     if (!$exp) die("Expediente no encontrado o sin acceso.");
+
+    $es_accionable = ($exp['estado_actual'] === 'EN_REVISION_JEFATURA');
     
     // Ítems con su cuenta presupuestaria
     $stmtItems = $pdo->prepare("

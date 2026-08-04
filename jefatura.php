@@ -322,70 +322,88 @@ require_once __DIR__ . '/jefatura_controller.php';
                             <h5 class="fw-bold mb-0">Resolución de Jefatura</h5>
                         </div>
                         <div class="card-body p-4">
-                            <p class="text-secondary small mb-4">Seleccione una de las acciones autorizadas por el flujo para proceder con el expediente.</p>
-                            
-                            <?php 
-                            $transiciones = obtener_transiciones_disponibles($pdo, $exp['id']); 
-                            ?>
-                            <form method="POST">
-    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
+                            <?php if (!empty($es_accionable)): ?>
+                                <p class="text-secondary small mb-4">Seleccione una de las acciones autorizadas por el flujo para proceder con el expediente.</p>
                                 
-                                <!-- ACCIONES DE APROBACIÓN (BOTÓN VERDE PRINCIPAL) -->
                                 <?php 
-                                $has_approvals = false;
-                                foreach ($transiciones as $t): 
-                                    if ($t['accion_codigo'] === 'APROBAR'): 
-                                        $has_approvals = true;
+                                $transiciones = obtener_transiciones_disponibles($pdo, $exp['id']); 
                                 ?>
-                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn btn-success btn-lg w-100 py-3 mb-4 shadow d-flex align-items-center justify-content-center gap-2 fw-bold">
-                                        <i class="bi bi-check-circle-fill"></i>
-                                        <?= htmlspecialchars($t['accion_label']) ?>
-                                    </button>
-                                <?php 
-                                    endif;
-                                endforeach; 
-                                if (!$has_approvals):
-                                ?>
-                                    <div class="alert alert-secondary text-center small py-2.5 mb-4">No hay transiciones de aprobación disponibles.</div>
-                                <?php endif; ?>
-
-                                <!-- ÁREA DE COMENTARIOS (OBLIGATORIA PARA RETORNAR O RECHAZAR) -->
-                                <div class="border-top pt-4">
-                                    <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Comentario / Motivo de la Observación (Obligatorio para Devolver/Rechazar)</label>
-                                    <textarea name="motivo_rechazo" rows="3" class="form-control text-sm mb-4 bg-light"></textarea>
+                                <form method="POST">
+                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                    <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
                                     
-                                    <div class="row g-2">
-                                        <!-- BOTONES DE DEVOLUCIÓN -->
-                                        <?php foreach ($transiciones as $t): 
-                                            if ($t['accion_codigo'] === 'DEVOLVER'):
-                                        ?>
-                                            <div class="col-sm-6">
-                                                <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn btn-warning w-100 py-2.5 fw-bold text-dark shadow-sm d-flex align-items-center justify-content-center gap-2">
-                                                    <i class="bi bi-arrow-counterclockwise"></i>
-                                                    <?= htmlspecialchars($t['accion_label']) ?>
-                                                </button>
-                                            </div>
-                                        <?php 
-                                            endif;
-                                        endforeach; ?>
+                                    <!-- ACCIONES DE APROBACIÓN (BOTÓN VERDE PRINCIPAL) -->
+                                    <?php 
+                                    $has_approvals = false;
+                                    foreach ($transiciones as $t): 
+                                        if ($t['accion_codigo'] === 'APROBAR'): 
+                                            $has_approvals = true;
+                                    ?>
+                                        <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn btn-success btn-lg w-100 py-3 mb-4 shadow d-flex align-items-center justify-content-center gap-2 fw-bold">
+                                            <i class="bi bi-check-circle-fill"></i>
+                                            <?= htmlspecialchars($t['accion_label']) ?>
+                                        </button>
+                                    <?php 
+                                        endif;
+                                    endforeach; 
+                                    if (!$has_approvals):
+                                    ?>
+                                        <div class="alert alert-secondary text-center small py-2.5 mb-4">No hay transiciones de aprobación disponibles.</div>
+                                    <?php endif; ?>
 
-                                        <!-- BOTONES DE RECHAZO -->
-                                        <?php foreach ($transiciones as $t): 
-                                            if ($t['accion_codigo'] === 'RECHAZAR'):
-                                        ?>
-                                            <div class="col-sm-6">
-                                                <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn btn-outline-danger w-100 py-2.5 fw-bold d-flex align-items-center justify-content-center gap-2">
-                                                    <i class="bi bi-x-circle-fill"></i>
-                                                    <?= htmlspecialchars($t['accion_label']) ?>
-                                                </button>
-                                            </div>
-                                        <?php 
-                                            endif;
-                                        endforeach; ?>
+                                    <!-- ÁREA DE COMENTARIOS (OBLIGATORIA PARA RETORNAR O RECHAZAR) -->
+                                    <div class="border-top pt-4">
+                                        <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Comentario / Motivo de la Observación (Obligatorio para Devolver/Rechazar)</label>
+                                        <textarea name="motivo_rechazo" rows="3" class="form-control text-sm mb-4 bg-light"></textarea>
+                                        
+                                        <div class="row g-2">
+                                            <!-- BOTONES DE DEVOLUCIÓN -->
+                                            <?php foreach ($transiciones as $t): 
+                                                if ($t['accion_codigo'] === 'DEVOLVER'):
+                                            ?>
+                                                <div class="col-sm-6">
+                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn btn-warning w-100 py-2.5 fw-bold text-dark shadow-sm d-flex align-items-center justify-content-center gap-2">
+                                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                                        <?= htmlspecialchars($t['accion_label']) ?>
+                                                    </button>
+                                                </div>
+                                            <?php 
+                                                endif;
+                                            endforeach; ?>
+
+                                            <!-- BOTONES DE RECHAZO -->
+                                            <?php foreach ($transiciones as $t): 
+                                                if ($t['accion_codigo'] === 'RECHAZAR'):
+                                            ?>
+                                                <div class="col-sm-6">
+                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn btn-outline-danger w-100 py-2.5 fw-bold d-flex align-items-center justify-content-center gap-2">
+                                                        <i class="bi bi-x-circle-fill"></i>
+                                                        <?= htmlspecialchars($t['accion_label']) ?>
+                                                    </button>
+                                                </div>
+                                            <?php 
+                                                endif;
+                                            endforeach; ?>
+                                        </div>
+                                    </div>
+                                </form>
+                            <?php else: ?>
+                                <div class="text-center py-2">
+                                    <div class="p-3 bg-success-subtle text-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 56px; height: 56px;">
+                                        <i class="bi bi-check-lg fs-3"></i>
+                                    </div>
+                                    <h5 class="fw-bold text-dark mb-1">Visación Completada</h5>
+                                    <p class="text-secondary small mb-4">La solicitud ha sido procesada por la Jefatura de Unidad en esta fase.</p>
+                                    
+                                    <div class="bg-light rounded-3 p-3 border d-inline-block text-start mx-auto" style="min-width: 280px;">
+                                        <span class="text-muted fw-bold d-block text-uppercase mb-1" style="font-size: 8px;">Estado Actual del Expediente</span>
+                                        <span class="fw-bold text-dark fs-6 d-block"><?= htmlspecialchars($exp['estado_nombre'] ?? $exp['estado_actual']) ?></span>
+                                        <span class="badge bg-primary-subtle text-primary-emphasis mt-2 px-2 py-1 fs-6" style="font-size: 9px; font-weight: bold;">
+                                            Cargo Responsable: <?= htmlspecialchars($exp['rol_responsable'] ?? 'Siguiente Etapa') ?>
+                                        </span>
                                     </div>
                                 </div>
-                            </form>
+                            <?php endif; ?>
                         </div>
                     </div>
 

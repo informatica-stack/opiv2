@@ -245,7 +245,7 @@ if ($vista === 'procesados') {
         WHERE eh.usuario_id = $user_id AND eh.accion IN ('APROBAR', 'RECHAZAR', 'DEVOLVER') AND eh.estado_anterior LIKE '%PRESUPUESTARIA%'
     ";
     if ($q_buscar) { $sql .= " AND (e.codigo_interno LIKE '%$q_buscar%' OR e.titulo_compra LIKE '%$q_buscar%')"; }
-    $sql .= " GROUP BY e.id ORDER BY eh.fecha_accion DESC LIMIT 50";
+    $sql .= " GROUP BY e.id ORDER BY MAX(eh.fecha_accion) DESC LIMIT 50";
     $procesados = $pdo->query($sql)->fetchAll();
 }
 

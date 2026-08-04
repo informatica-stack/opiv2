@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // Registrar Documento
-            $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'CDP_FIRMADO_FINANZAS', ?, ?)")
+            $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'CDP_BORRADOR', ?, ?)")
                 ->execute([$exp_id, $user_id, $ruta, $_FILES['archivo_cdp']['name']]);
 
             $comentario = "Certificado de Disponibilidad Presupuestaria (CDP) cargado exitosamente desde SMC por Finanzas.";
@@ -156,7 +156,7 @@ if ($vista === 'procesados') {
         WHERE eh.usuario_id = $user_id AND eh.accion IN ('APROBAR', 'RECHAZAR', 'DEVOLVER') AND eh.estado_anterior IN ('ESPERANDO_CDP_FINANZAS', 'ESPERANDO_CDP_FINANZAS_FINAL')
     ";
     if ($q_buscar) { $sql .= " AND (e.codigo_interno LIKE '%$q_buscar%' OR e.titulo_compra LIKE '%$q_buscar%')"; }
-    $sql .= " GROUP BY e.id ORDER BY eh.fecha_accion DESC LIMIT 50";
+    $sql .= " GROUP BY e.id ORDER BY MAX(eh.fecha_accion) DESC LIMIT 50";
     $procesados = $pdo->query($sql)->fetchAll();
 }
 
