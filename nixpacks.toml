@@ -1,2 +1,2 @@
 [start]
-cmd = 'sh /app/start.sh'
+cmd = 'mkdir -p /app/uploads && chmod -R 775 /app/uploads && chmod g+s /app/uploads && (chown -R www-data:www-data /app/uploads 2>/dev/null || chown -R nobody:nogroup /app/uploads 2>/dev/null || true) && nixpacks-start'
