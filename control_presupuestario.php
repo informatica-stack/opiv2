@@ -196,6 +196,12 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
                                         <span class="badge <?= color_estado($row['estado_actual']) ?> px-2.5 py-1.5 rounded-2 d-inline-block text-wrap" style="font-size: 10px; max-width: 180px;">
                                             <?= htmlspecialchars($row['estado_nombre']) ?>
                                         </span>
+                                        <div class="mt-1.5">
+                                            <button type="button" onclick="verTrazabilidad(<?= (int)$row['id'] ?>)" class="btn btn-link p-0 text-decoration-none text-secondary d-flex align-items-center gap-1" style="font-size: 11px;">
+                                                <i class="bi bi-clock-history text-primary"></i>
+                                                Ver Historial
+                                            </button>
+                                        </div>
                                     </td>
 
                                     <td class="p-3 text-end text-nowrap">
