@@ -1,6 +1,8 @@
-[phases.build]
-cmds = ['mkdir -p /app/uploads']
-
-[phases.setup]
-# Usamos la fase "setup" para asegurar permisos de la carpeta del proyecto
-cmds = ['chmod -R 775 /app/uploads || true']
+[start]
+cmd = '''
+mkdir -p /app/uploads && \
+chmod -R 775 /app/uploads && \
+chmod g+s /app/uploads && \
+(chown -R www-data:www-data /app/uploads 2>/dev/null || chown -R nobody:nogroup /app/uploads 2>/dev/null || true) && \
+nixpacks-start
+'''
