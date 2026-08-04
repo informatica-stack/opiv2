@@ -1,6 +1,0 @@
-# Bloquear ejecución de scripts PHP y ejecutables dentro de la carpeta de uploads
-<FilesMatch "\.(php|php3|php4|php5|phtml|pl|py|jsp|asp|sh|cgi)$">
-    Require all denied
-</FilesMatch>
-
-Options -ExecCGI -Indexes
