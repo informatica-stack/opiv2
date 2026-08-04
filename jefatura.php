@@ -483,20 +483,20 @@ require_once __DIR__ . '/jefatura_controller.php';
                                     
                                     <!-- ACCIONES DE APROBACIÓN (BOTÓN SOBRIO PRINCIPAL) -->
                                     <?php 
-                                    $has_approvals = false;
-                                    foreach ($transiciones as $t): 
-                                        if ($t['accion_codigo'] === 'APROBAR'): 
-                                            $has_approvals = true;
+                                    $t_aprobar = null;
+                                    foreach ($transiciones as $t) {
+                                        if ($t['accion_codigo'] === 'APROBAR') {
+                                            $t_aprobar = $t;
+                                            break;
+                                        }
+                                    }
+                                    if ($t_aprobar):
                                     ?>
-                                        <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn btn-primary py-2.5 w-100 mb-4 shadow-sm d-flex align-items-center justify-content-center gap-2 fw-semibold">
+                                        <button type="submit" name="transicion_id" value="<?= $t_aprobar['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t_aprobar['accion_label']) ?>?')" class="btn btn-primary py-2.5 w-100 mb-4 shadow-sm d-flex align-items-center justify-content-center gap-2 fw-semibold">
                                             <i class="bi bi-check-circle-fill"></i>
-                                            <?= htmlspecialchars($t['accion_label']) ?>
+                                            <?= htmlspecialchars($t_aprobar['accion_label']) ?>
                                         </button>
-                                    <?php 
-                                        endif;
-                                    endforeach; 
-                                    if (!$has_approvals):
-                                    ?>
+                                    <?php else: ?>
                                         <div class="alert alert-secondary text-center small py-2 mb-4">No hay transiciones de aprobación disponibles.</div>
                                     <?php endif; ?>
 
