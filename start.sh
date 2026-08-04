@@ -11,6 +11,5 @@ chmod g+s /app/uploads || true
 # Cambiar propietario al usuario del servidor web si está disponible
 (chown -R www-data:www-data /app/uploads 2>/dev/null || chown -R nobody:nogroup /app/uploads 2>/dev/null || true)
 
-# Iniciar PHP-FPM y Nginx
-php-fpm -D
-exec nginx -g 'daemon off;'
+# Iniciar la aplicación usando la configuración nativa de Nixpacks
+exec nixpacks-start
