@@ -611,6 +611,9 @@ require_once __DIR__ . '/jefatura_controller.php';
         </div>
     </div>
 
+    <!-- Inclusión de Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
     <script>
         function escapeHTML(str) {
             if (!str) return '';
@@ -649,8 +652,14 @@ require_once __DIR__ . '/jefatura_controller.php';
         }
 
         function abrirModalAdjuntos(docsArray, codigo, expId) {
-            document.getElementById('modalAdjuntosCodigo').innerText = codigo;
+            const codeEl = document.getElementById('modalAdjuntosCodigo');
+            if (codeEl) codeEl.innerText = codigo;
+            
+            const btnZip = document.getElementById('btnDescargarZip');
+            if (btnZip) btnZip.href = '?descargar_zip=' + expId;
+
             const listaContainer = document.getElementById('modalAdjuntosLista');
+            if (!listaContainer) return;
             listaContainer.innerHTML = ''; 
 
             docsArray.forEach(docStr => {
