@@ -490,8 +490,7 @@ require_once __DIR__ . '/adquisiciones_controller.php';
                                             <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Archivo de Ofertas/Bases (PDF, ZIP, RAR) <span class="text-danger">*</span></label>
                                             <input type="file" name="<?= $estado === 'EN_COTIZACION_ADQ' ? 'archivo_cotizacion' : 'archivo_bases' ?>" accept=".pdf,.zip,.rar,application/pdf,application/zip,application/x-rar-compressed" required class="form-control form-control-sm">
                                         </div>
-                                        
-                                        <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold shadow d-flex align-items-center justify-content-center gap-2">
+                                                <button type="submit" class="btn btn-primary w-100 py-2.5 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-2">
                                             <span>Enviar Ofertas a Evaluación Técnica</span>
                                             <i class="bi bi-send-fill fs-6"></i>
                                         </button>
@@ -526,7 +525,7 @@ require_once __DIR__ . '/adquisiciones_controller.php';
                                                                 <option value="">-- Seleccione --</option>
                                                                 <?php foreach($proveedores as $p) echo "<option value='{$p['id']}'>{$p['rut']} - {$p['razon_social']}</option>"; ?>
                                                             </select>
-                                                            <button type="button" class="btn btn-success btn-sm px-2.5" data-bs-toggle="modal" data-bs-target="#modalProv" title="Agregar Nuevo Proveedor">
+                                                            <button type="button" class="btn btn-outline-primary btn-sm px-2.5" data-bs-toggle="modal" data-bs-target="#modalProv" title="Agregar Nuevo Proveedor">
                                                                 <i class="bi bi-plus-lg"></i>
                                                             </button>
                                                         </div>
@@ -559,7 +558,7 @@ require_once __DIR__ . '/adquisiciones_controller.php';
                                          </div>
                                         </div>
 
-                                        <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold shadow d-flex align-items-center justify-content-center gap-2">
+                                        <button type="submit" class="btn btn-primary w-100 py-2.5 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-2">
                                             <span>Registrar OC y Esperar Aceptación</span>
                                             <i class="bi bi-cloud-arrow-up-fill fs-6"></i>
                                         </button>
@@ -569,30 +568,37 @@ require_once __DIR__ . '/adquisiciones_controller.php';
                             <!-- FASE 4: ESPERA ACEPTACIÓN DE PROVEEDOR -->
                             <?php elseif ($estado === 'ESPERANDO_ACEPTACION_OC'): ?>
                                 <div class="card-body p-4">
-                                    <h6 class="fw-bold text-dark mb-1">Confirmación de Aceptación del Proveedor</h6>
-                                    <p class="text-secondary small mb-4">Verifique el estado de la Orden de Compra en el portal de Mercado Público. Si fue aceptada por el proveedor o rechazada, márquelo aquí.</p>
-                                    
+                                    <div class="alert alert-warning border border-warning-subtle p-3 rounded-3 mb-4">
+                                        <div class="d-flex align-items-start gap-2">
+                                            <i class="bi bi-clock-history fs-5 shrink-0 text-warning"></i>
+                                            <div>
+                                                <strong class="d-block text-dark small">Esperando Respuesta del Proveedor</strong>
+                                                <p class="mb-0 small text-secondary">La Orden de Compra N° <strong><?= htmlspecialchars($exp['conv_marco_oc'] ?? $exp['orden_compra_numero']) ?></strong> fue emitida en Mercado Público. Confirme si fue aceptada o rechazada.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div class="row g-3">
-                                        <div class="col-sm-6">
-                                            <form method="POST" onsubmit="return confirm('¿Confirma que el proveedor ACEPTÓ la OC?')">
+                                        <div class="col-md-6">
+                                            <form method="POST">
                                                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                                 <input type="hidden" name="accion" value="oc_aceptada">
                                                 <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
-                                                <button type="submit" class="btn btn-success btn-lg w-100 py-3 fw-bold shadow-sm d-flex flex-column align-items-center gap-1">
-                                                    <i class="bi bi-check-circle-fill fs-4"></i>
-                                                    <span>Aceptar Compra</span>
+                                                <button type="submit" class="btn btn-primary py-2.5 w-100 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
+                                                    <i class="bi bi-check-circle-fill"></i>
+                                                    <span>OC Aceptada en Portal</span>
                                                 </button>
                                             </form>
                                         </div>
 
-                                        <div class="col-sm-6">
-                                            <form method="POST" onsubmit="return confirm('¿Rechazó la orden? Se devolverá el trámite a Evaluación. La OPI seguirá vigente.')">
+                                        <div class="col-md-6">
+                                            <form method="POST" onsubmit="return confirm('¿Confirma que la OC fue rechazada en portal?')">
                                                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                                 <input type="hidden" name="accion" value="oc_rechazada">
                                                 <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
-                                                <input type="text" name="motivo_rechazo_proveedor" required class="form-control form-control-sm text-center border-danger placeholder-danger-emphasis text-danger mb-2">
-                                                <button type="submit" class="btn btn-danger btn-lg w-100 py-3 fw-bold shadow-sm d-flex flex-column align-items-center gap-1">
-                                                    <i class="bi bi-x-circle-fill fs-4"></i>
+                                                <input type="text" name="motivo_rechazo_proveedor" required class="form-control form-control-sm text-center mb-2" placeholder="Motivo del rechazo...">
+                                                <button type="submit" class="btn btn-outline-danger py-2 w-100 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
+                                                    <i class="bi bi-x-circle"></i>
                                                     <span>Rechazar Compra</span>
                                                 </button>
                                             </form>
@@ -609,12 +615,12 @@ require_once __DIR__ . '/adquisiciones_controller.php';
                             
                             <!-- SECCIÓN PELIGRO: ANULACIÓN DE COMPRA -->
                             <?php if (!empty($exp['folio_opi'])): ?>
-                                <div class="card-footer bg-danger-subtle border-top border-danger-subtle p-4">
-                                    <h6 class="text-danger-emphasis fw-bold mb-2 d-flex align-items-center gap-2">
-                                        <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
-                                        Zona de Peligro: Anulación Definitiva (Caída de Compra)
+                                <div class="card-footer bg-light border-top p-4">
+                                    <h6 class="text-dark fw-bold mb-1 d-flex align-items-center gap-2">
+                                        <i class="bi bi-exclamation-triangle text-danger"></i>
+                                        Anulación Definitiva (Caída de Compra)
                                     </h6>
-                                    <p class="text-danger-emphasis small mb-4">Si la licitación quedó desierta o el proveedor desistió definitivamente y no habrá reintento, anule el requerimiento. <strong>El número de OPI quedará quemado y marcado como anulado en auditoría.</strong></p>
+                                    <p class="text-secondary small mb-3">Si la licitación quedó desierta o el proveedor desistió definitivamente, anule el requerimiento. <strong>El número de OPI quedará quemado y marcado como anulado en auditoría.</strong></p>
                                     
                                     <form method="POST" onsubmit="return confirm('ATENCIÓN: Esto ANULARÁ definitivamente la OPI. ¿Está completamente seguro?')">
                                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
@@ -622,11 +628,11 @@ require_once __DIR__ . '/adquisiciones_controller.php';
                                         <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
                                         
                                         <div class="mb-3">
-                                            <label class="form-label fw-bold text-danger small text-uppercase" style="font-size: 10px;">Motivo exacto de la anulación definitiva</label>
-                                            <input type="text" name="motivo_anulacion" required class="form-control form-control-sm border-danger bg-white">
+                                            <label class="form-label fw-semibold text-secondary small text-uppercase" style="font-size: 10px;">Motivo de la anulación definitiva</label>
+                                            <input type="text" name="motivo_anulacion" required class="form-control form-control-sm bg-white">
                                         </div>
                                         
-                                        <button type="submit" class="btn btn-danger w-100 py-2 fw-bold shadow-sm">
+                                        <button type="submit" class="btn btn-outline-danger w-100 py-2 fw-semibold shadow-sm">
                                             Anular Trámite Definitivamente
                                         </button>
                                     </form>

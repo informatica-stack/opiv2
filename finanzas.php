@@ -375,19 +375,24 @@ require_once __DIR__ . '/finanzas_controller.php';
                         </div>
                     </div>
 
-                    <!-- ACCIONES DE RESOLUCIÓN -->
-                    <div class="card shadow-lg border-light">
+                    <!-- ACCIONES DE RESOLUCIÓN SOBRIAS -->
+                    <div class="card shadow-sm border-light">
+                        <div class="card-header bg-white border-bottom py-3">
+                            <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                                <i class="bi bi-file-earmark-check text-primary"></i>
+                                Firma de CDP - Finanzas
+                            </h5>
+                        </div>
                         <div class="card-body p-4">
                             
                             <?php if($es_accionable): ?>
-                                <h5 class="fw-bold text-dark mb-1">Firma de CDP</h5>
                                 <p class="text-secondary small mb-4">Genere la plantilla de apoyo si es necesario, firme el certificado emitido por SMC y adjúntelo.</p>
                                 
                                 <?php 
                                 $transiciones = obtener_transiciones_disponibles($pdo, $expediente['id']); 
                                 ?>
                                 <form method="POST" enctype="multipart/form-data">
-    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                     <input type="hidden" name="expediente_id" value="<?= $expediente['id'] ?>">
                                     
                                     <?php
@@ -398,16 +403,16 @@ require_once __DIR__ . '/finanzas_controller.php';
                                         if ($d['tipo_doc'] === 'SITUACION_PRESUPUESTARIA') $doc_situacion = $d;
                                     }
                                     ?>
-                                    <div class="card border-primary bg-primary-subtle shadow-sm mb-4">
+                                    <div class="card border border-light-subtle bg-light shadow-sm mb-4">
                                         <div class="card-body p-3">
                                             <div class="mb-3">
-                                                <h6 class="text-primary-emphasis fw-bold mb-2 d-flex align-items-center gap-1.5" style="font-size: 11px;">
+                                                <h6 class="text-dark fw-bold mb-2 d-flex align-items-center gap-1.5" style="font-size: 11px;">
                                                     <i class="bi bi-download text-primary"></i>
                                                     Paso 1: Descargar Documentos Adjuntos del Analista
                                                 </h6>
-                                                <div class="d-flex flex-column gap-2 bg-white p-2.5 rounded border border-primary-subtle">
+                                                <div class="d-flex flex-column gap-2 bg-white p-2.5 rounded border">
                                                     <?php if($doc_borrador): ?>
-                                                        <a href="<?= htmlspecialchars($doc_borrador['ruta_archivo']) ?>" download target="_blank" class="btn btn-outline-primary btn-sm text-start fw-bold d-flex align-items-center justify-content-between px-3 py-2">
+                                                        <a href="<?= htmlspecialchars($doc_borrador['ruta_archivo']) ?>" download target="_blank" class="btn btn-outline-primary btn-sm text-start fw-semibold d-flex align-items-center justify-content-between px-3 py-2">
                                                             <span><i class="bi bi-file-earmark-pdf-fill me-1.5"></i> Descargar Borrador de CDP (Sin Firmar)</span>
                                                             <i class="bi bi-cloud-arrow-down-fill fs-5"></i>
                                                         </a>
@@ -416,7 +421,7 @@ require_once __DIR__ . '/finanzas_controller.php';
                                                     <?php endif; ?>
 
                                                     <?php if($doc_situacion): ?>
-                                                        <a href="<?= htmlspecialchars($doc_situacion['ruta_archivo']) ?>" target="_blank" class="btn btn-outline-secondary btn-sm text-start fw-bold d-flex align-items-center justify-content-between px-3 py-2">
+                                                        <a href="<?= htmlspecialchars($doc_situacion['ruta_archivo']) ?>" target="_blank" class="btn btn-outline-secondary btn-sm text-start fw-semibold d-flex align-items-center justify-content-between px-3 py-2">
                                                             <span><i class="bi bi-file-earmark-text-fill me-1.5"></i> Ver Situación Presupuestaria de Gastos</span>
                                                             <i class="bi bi-eye-fill fs-5"></i>
                                                         </a>
@@ -432,15 +437,15 @@ require_once __DIR__ . '/finanzas_controller.php';
                                                 </a>
                                             </div>
 
-                                            <div class="border-top border-primary-subtle pt-3">
+                                            <div class="border-top pt-3">
                                                 <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Paso 2: Adjuntar Certificado de Disponibilidad SMC Firmado (Obligatorio)</label>
-                                                <input type="file" name="archivo_cdp" accept="application/pdf" required class="form-control form-control bg-white">
+                                                <input type="file" name="archivo_cdp" accept="application/pdf" required class="form-control form-control-sm bg-white">
                                                 <p class="text-muted mt-1 mb-0" style="font-size: 9px;">Solo se permiten archivos en formato PDF.</p>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- BOTÓN DE APROBACIÓN PRINCIPAL (SUBIR CDP) -->
+                                    <!-- BOTÓN DE APROBACIÓN PRINCIPAL SOBRIO -->
                                     <?php 
                                     $t_aprobar = null;
                                     foreach ($transiciones as $t) {
@@ -448,16 +453,16 @@ require_once __DIR__ . '/finanzas_controller.php';
                                     }
                                     if ($t_aprobar):
                                     ?>
-                                        <button type="submit" name="transicion_id" value="<?= $t_aprobar['id'] ?>" onclick="return confirm('¿Confirma que ha subido el CDP correcto y firmado?')" class="btn btn-success btn-lg w-100 py-3 mb-4 shadow d-flex align-items-center justify-content-center gap-2 fw-bold text-white">
+                                        <button type="submit" name="transicion_id" value="<?= $t_aprobar['id'] ?>" onclick="return confirm('¿Confirma que ha subido el CDP correcto y firmado?')" class="btn btn-primary py-2.5 w-100 mb-4 shadow-sm d-flex align-items-center justify-content-center gap-2 fw-semibold">
                                             <i class="bi bi-check-circle-fill"></i>
                                             <?= htmlspecialchars($t_aprobar['accion_label']) ?>
                                         </button>
                                     <?php endif; ?>
 
                                     <!-- REPAROS Y OBS -->
-                                    <div class="border-top pt-4">
+                                    <div class="border-top pt-3.5">
                                         <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Reparos y Observaciones (Obligatorio para Devolver/Rechazar)</label>
-                                        <textarea name="motivo_rechazo" rows="3" class="form-control text-sm mb-4 bg-light"></textarea>
+                                        <textarea name="motivo_rechazo" rows="3" class="form-control text-sm mb-3 bg-light"></textarea>
                                         
                                         <div class="row g-2">
                                             <!-- Botones de Devolución -->
@@ -465,7 +470,7 @@ require_once __DIR__ . '/finanzas_controller.php';
                                                 if ($t['accion_codigo'] === 'DEVOLVER'):
                                             ?>
                                                 <div class="col-sm-6">
-                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma devolver la solicitud?')" class="btn btn-warning w-100 py-2.5 fw-bold text-dark shadow-sm d-flex align-items-center justify-content-center gap-2">
+                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma devolver la solicitud?')" class="btn btn-outline-secondary w-100 py-2 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
                                                         <i class="bi bi-arrow-counterclockwise"></i>
                                                         <?= htmlspecialchars($t['accion_label']) ?>
                                                     </button>
@@ -477,8 +482,8 @@ require_once __DIR__ . '/finanzas_controller.php';
                                                 if ($t['accion_codigo'] === 'RECHAZAR'):
                                             ?>
                                                 <div class="col-sm-6">
-                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma rechazar definitivamente la solicitud?')" class="btn btn-outline-danger w-100 py-2.5 fw-bold d-flex align-items-center justify-content-center gap-2">
-                                                        <i class="bi bi-x-circle-fill"></i>
+                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma rechazar definitivamente la solicitud?')" class="btn btn-outline-danger w-100 py-2 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
+                                                        <i class="bi bi-x-circle"></i>
                                                         <?= htmlspecialchars($t['accion_label']) ?>
                                                     </button>
                                                 </div>

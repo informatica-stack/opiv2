@@ -499,32 +499,36 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
                     </div>
                     <?php endif; ?>
 
-                    <!-- ACCIONES DE RESOLUCIÓN -->
-                    <div class="card shadow-lg border-light">
+                    <!-- ACCIONES DE RESOLUCIÓN SOBRIAS -->
+                    <div class="card shadow-sm border-light">
+                        <div class="card-header bg-white border-bottom py-3">
+                            <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                                <i class="bi bi-wallet2 text-primary"></i>
+                                Resolución Financiera
+                            </h5>
+                        </div>
                         <div class="card-body p-4">
                             
                             <?php if($es_accionable): ?>
-                                <h5 class="fw-bold text-dark mb-1">Resolución Financiera</h5>
                                 <p class="text-secondary small mb-4">Verifique la disponibilidad y emita su visación para el expediente.</p>
                                 
-
 
                                 <?php 
                                 $transiciones = obtener_transiciones_disponibles($pdo, $expediente['id']); 
                                 $es_reserva_inicial_compra_agil = ($expediente['estado_actual'] === 'EN_VALIDACION_PRESUPUESTARIA' && $expediente['tipo_compra_cod'] === 'COMPRA_AGIL');
                                 ?>
                                 <form method="POST" enctype="multipart/form-data">
-    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                     <input type="hidden" name="expediente_id" value="<?= $expediente['id'] ?>">
                                     
 
                                          <?php if(!$es_reserva_inicial_compra_agil): ?>
                                              <!-- PANEL EMISIÓN Y GESTIÓN DE CDP -->
-                                             <div class="card border-primary bg-primary-subtle shadow-sm mb-4">
-                                                 <div class="card-header bg-primary text-white py-2 fw-bold text-sm d-flex justify-content-between align-items-center" style="background-color: #3b82f6 !important;">
-                                                     <span class="text-white"><i class="bi bi-file-earmark-check-fill me-1"></i> Certificado de Disponibilidad Presupuestaria (CDP)</span>
+                                             <div class="card border border-light-subtle bg-light shadow-sm mb-4">
+                                                 <div class="card-header bg-white border-bottom py-2.5 fw-bold text-sm d-flex justify-content-between align-items-center">
+                                                     <span class="text-dark"><i class="bi bi-file-earmark-check text-primary me-1"></i> Certificado de Disponibilidad Presupuestaria (CDP)</span>
                                                      <?php if($expediente['estado_actual'] !== 'EN_VALIDACION_PRESUPUESTARIA_FINAL'): ?>
-                                                         <a href="cdp.php?id=<?= $expediente['id'] ?>" target="_blank" class="btn btn-light btn-xs fw-bold px-2 py-0.5" style="font-size: 10px; color: #1e3a8a;">
+                                                         <a href="cdp.php?id=<?= $expediente['id'] ?>" target="_blank" class="btn btn-outline-primary btn-xs fw-bold px-2 py-0.5" style="font-size: 10px;">
                                                              <i class="bi bi-filetype-pdf"></i> Confeccionar CDP
                                                          </a>
                                                      <?php endif; ?>
@@ -532,8 +536,8 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
                                                  <div class="card-body p-3">
                                                      
                                                      <!-- SOLICITAR FIRMA A FINANZAS -->
-                                                     <div class="p-3 bg-white border border-primary-subtle rounded-3">
-                                                         <h6 class="text-primary fw-bold mb-2 uppercase tracking-wider" style="font-size: 10px;">Solicitud de Firma a Finanzas</h6>
+                                                     <div class="p-3 bg-white border rounded-3">
+                                                         <h6 class="text-secondary fw-bold mb-2 uppercase tracking-wider" style="font-size: 10px;">Solicitud de Firma a Finanzas</h6>
                                                          
                                                          <div class="mb-2">
                                                              <label class="form-label text-secondary fw-bold mb-1" style="font-size: 8.5px; text-transform: uppercase;">1. Adjuntar Borrador de CDP (PDF)</label>
@@ -552,9 +556,9 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
 
                                          <!-- BADGE CDP FIRMADO (SI EXISTE) -->
                                          <?php if($doc_cdp_firmado): ?>
-                                             <div class="alert alert-success d-flex align-items-center justify-content-between gap-3 mb-4 shadow-sm">
+                                             <div class="alert alert-success d-flex align-items-center justify-content-between gap-3 mb-4 shadow-sm py-2.5">
                                                  <div class="d-flex align-items-center gap-2">
-                                                     <i class="bi bi-patch-check-fill fs-4 text-success shrink-0"></i>
+                                                     <i class="bi bi-patch-check-fill fs-5 text-success shrink-0"></i>
                                                      <div>
                                                          <strong class="d-block text-dark small">CDP Firmado por Finanzas Adjunto</strong>
                                                          <span class="text-muted" style="font-size: 11px;"><?= htmlspecialchars($doc_cdp_firmado['nombre_original']) ?></span>
@@ -566,14 +570,14 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
                                              </div>
                                          <?php endif; ?>
 
-                                         <!-- BOTÓN DE APROBACIÓN PRINCIPAL -->
+                                         <!-- BOTÓN DE APROBACIÓN PRINCIPAL SOBRIO -->
                                          <?php 
                                          $has_approvals = false;
                                          foreach ($transiciones as $t): 
                                              if ($t['accion_codigo'] === 'APROBAR'):
                                                  $has_approvals = true;
                                          ?>
-                                             <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return <?= $es_fase_final ? 'validarSolicitudCDP(event)' : "confirm('¿Confirma la acción de: " . htmlspecialchars($t['accion_label']) . "?')" ?>" class="btn btn-indigo btn-lg w-100 py-3 mb-4 shadow d-flex align-items-center justify-content-center gap-2 fw-bold text-white">
+                                             <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return <?= $es_fase_final ? 'validarSolicitudCDP(event)' : "confirm('¿Confirma la acción de: " . htmlspecialchars($t['accion_label']) . "?')" ?>" class="btn btn-primary py-2.5 w-100 mb-4 shadow-sm d-flex align-items-center justify-content-center gap-2 fw-semibold">
                                                  <i class="bi bi-check-circle-fill"></i>
                                                  <?= htmlspecialchars($t['accion_label']) ?>
                                              </button>
@@ -584,9 +588,9 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
 
 
                                     <!-- REPAROS Y OBS -->
-                                    <div class="border-top pt-4">
+                                    <div class="border-top pt-3.5">
                                         <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Reparos y Observaciones (Obligatorio para Devolver/Rechazar)</label>
-                                        <textarea name="motivo_rechazo" rows="3" class="form-control text-sm mb-4 bg-light"></textarea>
+                                        <textarea name="motivo_rechazo" rows="3" class="form-control text-sm mb-3 bg-light"></textarea>
                                         
                                         <div class="row g-2">
                                             <!-- Botones de Devolución -->
@@ -597,7 +601,7 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
                                                     $has_return = true;
                                             ?>
                                                 <div class="col-sm-6">
-                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de: <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn btn-warning w-100 py-2.5 fw-bold text-dark shadow-sm d-flex align-items-center justify-content-center gap-2">
+                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de: <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn btn-outline-secondary w-100 py-2 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
                                                         <i class="bi bi-arrow-counterclockwise"></i>
                                                         <?= htmlspecialchars($t['accion_label']) ?>
                                                     </button>
@@ -614,8 +618,8 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
                                                     $has_reject = true;
                                             ?>
                                                 <div class="col-sm-6">
-                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de: <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn btn-outline-danger w-100 py-2.5 fw-bold d-flex align-items-center justify-content-center gap-2">
-                                                        <i class="bi bi-x-circle-fill"></i>
+                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de: <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn btn-outline-danger w-100 py-2 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
+                                                        <i class="bi bi-x-circle"></i>
                                                         <?= htmlspecialchars($t['accion_label']) ?>
                                                     </button>
                                                 </div>

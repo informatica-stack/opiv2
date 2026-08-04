@@ -462,10 +462,13 @@ require_once __DIR__ . '/jefatura_controller.php';
                     </div>
                     <?php endif; ?>
 
-                    <!-- TARJETA DE RESOLUCIÓN -->
-                    <div class="card shadow-lg border-primary">
-                        <div class="card-header bg-primary text-white py-3">
-                            <h5 class="fw-bold mb-0">Resolución de Jefatura</h5>
+                    <!-- TARJETA DE RESOLUCIÓN SOBRIA -->
+                    <div class="card shadow-sm border-light">
+                        <div class="card-header bg-white border-bottom py-3">
+                            <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                                <i class="bi bi-shield-check text-primary"></i>
+                                Resolución de Jefatura
+                            </h5>
                         </div>
                         <div class="card-body p-4">
                             <?php if (!empty($es_accionable)): ?>
@@ -478,14 +481,14 @@ require_once __DIR__ . '/jefatura_controller.php';
                                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                     <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
                                     
-                                    <!-- ACCIONES DE APROBACIÓN (BOTÓN VERDE PRINCIPAL) -->
+                                    <!-- ACCIONES DE APROBACIÓN (BOTÓN SOBRIO PRINCIPAL) -->
                                     <?php 
                                     $has_approvals = false;
                                     foreach ($transiciones as $t): 
                                         if ($t['accion_codigo'] === 'APROBAR'): 
                                             $has_approvals = true;
                                     ?>
-                                        <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn btn-success btn-lg w-100 py-3 mb-4 shadow d-flex align-items-center justify-content-center gap-2 fw-bold">
+                                        <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn btn-primary py-2.5 w-100 mb-4 shadow-sm d-flex align-items-center justify-content-center gap-2 fw-semibold">
                                             <i class="bi bi-check-circle-fill"></i>
                                             <?= htmlspecialchars($t['accion_label']) ?>
                                         </button>
@@ -494,13 +497,13 @@ require_once __DIR__ . '/jefatura_controller.php';
                                     endforeach; 
                                     if (!$has_approvals):
                                     ?>
-                                        <div class="alert alert-secondary text-center small py-2.5 mb-4">No hay transiciones de aprobación disponibles.</div>
+                                        <div class="alert alert-secondary text-center small py-2 mb-4">No hay transiciones de aprobación disponibles.</div>
                                     <?php endif; ?>
 
                                     <!-- ÁREA DE COMENTARIOS (OBLIGATORIA PARA RETORNAR O RECHAZAR) -->
-                                    <div class="border-top pt-4">
+                                    <div class="border-top pt-3.5">
                                         <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Comentario / Motivo de la Observación (Obligatorio para Devolver/Rechazar)</label>
-                                        <textarea name="motivo_rechazo" rows="3" class="form-control text-sm mb-4 bg-light"></textarea>
+                                        <textarea name="motivo_rechazo" rows="3" class="form-control text-sm mb-3 bg-light"></textarea>
                                         
                                         <div class="row g-2">
                                             <!-- BOTONES DE DEVOLUCIÓN -->
@@ -508,7 +511,7 @@ require_once __DIR__ . '/jefatura_controller.php';
                                                 if ($t['accion_codigo'] === 'DEVOLVER'):
                                             ?>
                                                 <div class="col-sm-6">
-                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn btn-warning w-100 py-2.5 fw-bold text-dark shadow-sm d-flex align-items-center justify-content-center gap-2">
+                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn btn-outline-secondary w-100 py-2 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
                                                         <i class="bi bi-arrow-counterclockwise"></i>
                                                         <?= htmlspecialchars($t['accion_label']) ?>
                                                     </button>
@@ -522,8 +525,8 @@ require_once __DIR__ . '/jefatura_controller.php';
                                                 if ($t['accion_codigo'] === 'RECHAZAR'):
                                             ?>
                                                 <div class="col-sm-6">
-                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn btn-outline-danger w-100 py-2.5 fw-bold d-flex align-items-center justify-content-center gap-2">
-                                                        <i class="bi bi-x-circle-fill"></i>
+                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn btn-outline-danger w-100 py-2 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
+                                                        <i class="bi bi-x-circle"></i>
                                                         <?= htmlspecialchars($t['accion_label']) ?>
                                                     </button>
                                                 </div>
