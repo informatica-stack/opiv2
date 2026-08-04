@@ -188,6 +188,13 @@ require_once __DIR__ . '/jefatura_controller.php';
                                         <span class="badge px-2.5 py-1.5 <?= color_estado($row['estado_actual']) ?>" style="font-size: 11px;">
                                             <?= htmlspecialchars($row['estado_nombre']) ?>
                                         </span>
+
+                                        <div class="mt-1.5">
+                                            <button type="button" onclick="verTrazabilidad(<?= (int)$row['id'] ?>)" class="btn btn-link p-0 text-decoration-none text-secondary d-flex align-items-center gap-1" style="font-size: 11px;">
+                                                <i class="bi bi-clock-history text-primary"></i>
+                                                Ver Historial
+                                            </button>
+                                        </div>
                                     </td>
 
                                     <td class="p-3 text-end font-monospace fw-bold text-dark text-nowrap">
@@ -553,59 +560,65 @@ require_once __DIR__ . '/jefatura_controller.php';
 
     </div>
 
-    <!-- MODAL: VER ARCHIVOS ADJUNTOS -->
+    <!-- MODAL ADJUNTOS (BOOTSTRAP 5) -->
     <div class="modal fade" id="modalAdjuntos" tabindex="-1" aria-labelledby="modalAdjuntosLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content shadow-lg border-0">
-                <div class="modal-header bg-light">
-                    <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="modalAdjuntosLabel">
-                        <i class="bi bi-folder-symlink text-primary"></i>
-                        Archivos de <span id="modalAdjuntosCodigo" class="font-monospace text-primary"></span>
-                    </h5>
+            <div class="modal-content rounded-3 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold text-dark" id="modalAdjuntosLabel">Documentos Adjuntos</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <div id="modalAdjuntosLista" class="d-flex flex-column gap-2">
-                        <!-- Se llena dinámicamente con JavaScript -->
+                    <div class="bg-light border p-3 rounded-3 mb-3 d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+                        <div>
+                            <span class="text-uppercase text-muted fw-bold" style="font-size: 9px; letter-spacing: 0.5px;">Expediente:</span>
+                            <div id="modalAdjuntosCodigo" class="font-monospace fw-bold text-dark"></div>
+                        </div>
+                        <a id="btnDescargarZip" href="#" class="btn btn-primary btn-sm fw-bold shadow-sm d-flex align-items-center gap-1.5 w-100 w-sm-auto justify-content-center">
+                            <i class="bi bi-download"></i>
+                            Bajar ZIP
+                        </a>
                     </div>
+                    
+                    <div id="modalAdjuntosLista" class="d-flex flex-column gap-2 overflow-y-auto" style="max-height: 350px;"></div>
                 </div>
-                <div class="modal-footer bg-light py-2">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar Visor</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: VER ÍTEMS DE LA SOLICITUD -->
+    <!-- MODAL DETALLE ÍTEMS (BOOTSTRAP 5) -->
     <div class="modal fade" id="modalVerItems" tabindex="-1" aria-labelledby="modalVerItemsLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content shadow-lg border-0">
-                <div class="modal-header bg-light">
-                    <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="modalVerItemsLabel">
-                        <i class="bi bi-cart-check text-primary"></i>
-                        Detalle de Ítems de <span id="modalVerItemsCodigo" class="font-monospace text-primary"></span>
-                    </h5>
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-3 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold text-dark" id="modalVerItemsLabel">Detalle de Ítems del Requerimiento</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body p-0">
-                    <div class="table-responsive">
+                <div class="modal-body p-4">
+                    <div class="bg-light border p-3 rounded-3 mb-3">
+                        <span class="text-uppercase text-muted fw-bold" style="font-size: 9px; letter-spacing: 0.5px;">Expediente:</span>
+                        <div id="modalVerItemsCodigo" class="font-monospace fw-bold text-primary"></div>
+                    </div>
+                    
+                    <div class="table-responsive rounded-3 border">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light text-uppercase small text-secondary">
                                 <tr>
-                                    <th class="p-3">Descripción</th>
-                                    <th class="p-3 text-center" style="width: 100px;">Cantidad</th>
-                                    <th class="p-3 text-end" style="width: 130px;">Precio Unit.</th>
-                                    <th class="p-3 text-end" style="width: 130px;">Total</th>
+                                    <th class="p-3">Descripción del Producto/Servicio</th>
+                                    <th class="p-3 text-center" style="width: 100px;">Cant.</th>
+                                    <th class="p-3 text-end" style="width: 150px;">Valor Unit. Ingresado</th>
+                                    <th class="p-3 text-end" style="width: 160px;">Total Línea</th>
                                 </tr>
                             </thead>
-                            <tbody id="modalVerItemsBody" class="divide-y divide-slate-100">
-                                <!-- Se llena dinámicamente con JavaScript -->
-                            </tbody>
+                            <tbody id="modalVerItemsBody"></tbody>
                         </table>
                     </div>
                 </div>
-                <div class="modal-footer bg-light py-2">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar Visor</button>
                 </div>
             </div>
         </div>
