@@ -382,7 +382,7 @@ require_once __DIR__ . '/admin_controller.php';
                                             </div>
                                             <?php if($exp['tipo_compra_cod'] === 'CONVENIO_MARCO'): ?>
                                                 <div class="text-end">
-                                                    <span class="text-muted" style="font-size: 10px;">ID CM:</span>
+                                                     <span class="text-muted" style="font-size: 10px;">ID Convenio Marco:</span>
                                                     <span class="font-monospace text-primary fw-bold" style="font-size: 11px;"><?= htmlspecialchars($it['id_producto_cm']) ?></span>
                                                 </div>
                                             <?php endif; ?>

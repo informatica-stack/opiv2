@@ -486,13 +486,13 @@ $id_cm_usados = array_unique(array_filter(array_column($items, 'id_producto_cm')
                 <td class="fw-bold">C. SUMINISTROS ID:</td>
                 <td colspan="2"><span class="font-monospace"><?= htmlspecialchars($exp['id_contrato_suministro'] ?? '-') ?></span></td>
                 <td class="fw-bold">CONV. MARCO O°C:</td>
-                <td><span class="font-monospace"><?= empty($id_cm_usados) ? '-' : implode(", ", $id_cm_usados) ?></span></td>
+                <td><span class="font-monospace"><?= htmlspecialchars(!empty($exp['conv_marco_oc']) ? $exp['conv_marco_oc'] : (!empty($exp['orden_compra_numero']) ? $exp['orden_compra_numero'] : '-')) ?></span></td>
             </tr>
             <tr>
                 <td class="fw-bold">COMPRA ÁGIL ID:</td>
                 <td colspan="2"><span class="font-monospace"><?= htmlspecialchars($exp['id_compra_agil'] ?? '-') ?></span></td>
-                <td class="fw-bold">TRATO DIRECTO:</td>
-                <td><span class="font-monospace"><?= ($exp['tipo_compra_cod'] === 'TRATO_DIRECTO') ? 'ARTICULO 60 LEY 19.886' : '-' ?></span></td>
+                <td class="fw-bold">DECRETO ALCALDICIO N°:</td>
+                <td><span class="font-monospace"><?= htmlspecialchars($exp['decreto_alcaldicio_numero'] ?? '-') ?></span></td>
             </tr>
         </table>
     </div>

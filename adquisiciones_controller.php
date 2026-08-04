@@ -104,6 +104,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
+            if (isset($_FILES['archivo_decreto']) && $_FILES['archivo_decreto']['error'] !== UPLOAD_ERR_NO_FILE) {
+                $ext = validar_subida_archivo($_FILES['archivo_decreto'], null, ['pdf']);
+                if ($ext) {
+                    $name = "DECRETO_ALCALDICIO_" . time() . ".pdf";
+                    if(move_uploaded_file($_FILES['archivo_decreto']['tmp_name'], $dir . $name)){
+                        $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'DECRETO_ALCALDICIO', ?, ?)")
+                            ->execute([$exp_id, $user_id, "uploads/$anio/exp_$exp_id/$name", $_FILES['archivo_decreto']['name']]);
+                    }
+                }
+            }
+
             if (isset($_FILES['archivo_bases']) && $_FILES['archivo_bases']['error'] !== UPLOAD_ERR_NO_FILE) {
                 $ext = validar_subida_archivo($_FILES['archivo_bases'], null, ['pdf', 'zip', 'rar', 'doc', 'docx']);
                 if ($ext) {
@@ -122,9 +133,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->prepare("UPDATE expedientes SET proveedor_adjudicado_id = ?, monto_definitivo = ?, fecha_adjudicacion = NOW() WHERE id = ?")->execute([$prov_id, $monto_final, $exp_id]);
             }
 
-            // 3. Guardar Número de Orden de Compra
-            if ($accion === 'emitir_oc' && !empty($_POST['orden_compra_numero'])) {
-                $pdo->prepare("UPDATE expedientes SET orden_compra_numero = ? WHERE id = ?")->execute([trim($_POST['orden_compra_numero']), $exp_id]);
+            // 3. Guardar Número de Orden de Compra, Decreto Alcaldicio y Conv. Marco OC
+            if ($accion === 'emitir_oc') {
+                $oc_num = trim($_POST['orden_compra_numero'] ?? $_POST['conv_marco_oc'] ?? '');
+                $dec_num = trim($_POST['decreto_alcaldicio_numero'] ?? '');
+                $conv_oc = trim($_POST['conv_marco_oc'] ?? $oc_num);
+
+                $pdo->prepare("UPDATE expedientes SET orden_compra_numero = ?, decreto_alcaldicio_numero = ?, conv_marco_oc = ? WHERE id = ?")
+                    ->execute([$oc_num, $dec_num, $conv_oc, $exp_id]);
             }
 
             $comentario = $_POST['comentario_flujo'] ?? 'Gestión de Adquisiciones completada. Archivos subidos.';

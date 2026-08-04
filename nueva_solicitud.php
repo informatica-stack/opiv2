@@ -352,7 +352,7 @@ foreach($otros_proveedores as $p) {
                                 <tr>
                                     <th class="p-3 w-25">Cuenta de Gasto</th>
                                     <th class="p-3">Descripción del Producto / Servicio</th>
-                                    <th class="p-3 col-cm d-none text-primary" style="width: 130px;">ID CM</th>
+                                    <th class="p-3 col-cm d-none text-primary" style="width: 140px;">ID Convenio Marco</th>
                                     <th class="p-3" style="width: 120px;">Unidad</th>
                                     <th class="p-3 text-center" style="width: 90px;">Cant.</th>
                                     <th class="p-3 text-end col-precio" style="width: 135px;">Precio Unit.</th>
@@ -1086,7 +1086,7 @@ foreach($otros_proveedores as $p) {
                     <td class="p-2"><select name="cuenta_id[]" class="form-select form-select-sm font-monospace select-cuenta" style="max-width: 250px;">${options}</select></td>
                     <td class="p-2"><textarea name="desc[]" rows="1" class="form-control form-control-sm bg-transparent" style="min-height: 38px; resize: none;">${valDesc}</textarea></td>
                     
-                    <td class="p-2 col-cm d-none"><input type="text" name="id_producto_cm[]" value="${valIdCm}" class="form-control form-control-sm font-monospace text-center input-cm text-primary bg-primary-subtle"></td>
+                    <td class="p-2 col-cm d-none"><input type="number" inputmode="numeric" pattern="[0-9]*" min="1" step="1" name="id_producto_cm[]" value="${valIdCm}" placeholder="Numérico" class="form-control form-control-sm font-monospace text-center input-cm text-primary bg-primary-subtle"></td>
                     
                     <td class="p-2"><select name="uni[]" class="form-select form-select-sm">${uniOptions}</select></td>
                     <td class="p-2"><input type="number" name="cant[]" value="${valCant}" min="1" step="1" class="form-control form-control-sm text-center fw-bold input-cant bg-transparent" oninput="calc()" style="width: 80px; margin: 0 auto;"></td>
@@ -1183,13 +1183,16 @@ foreach($otros_proveedores as $p) {
                     if (parseFloat(prec.value) <= 0 || !prec.value) { prec.classList.add('is-invalid'); errorItems = true; }
                 }
                 if (cuenta.value === "") { cuenta.classList.add('is-invalid'); errorItems = true; }
-                if (codigoTC === 'CONVENIO_MARCO' && inpCm.value.trim() === "") {
-                    inpCm.classList.add('is-invalid'); errorItems = true;
+                if (codigoTC === 'CONVENIO_MARCO') {
+                    const valCm = inpCm.value.trim();
+                    if (valCm === "" || !/^\d+$/.test(valCm)) {
+                        inpCm.classList.add('is-invalid'); errorItems = true;
+                    }
                 }
             });
 
             if (errorItems) {
-                divError.innerHTML = "<strong>⚠️ Faltan datos requeridos:</strong> Por favor complete todos los campos obligatorios del detalle de productos.";
+                divError.innerHTML = "<strong>⚠️ Faltan datos requeridos:</strong> Por favor complete todos los campos obligatorios del detalle de productos (en Convenio Marco, el ID Convenio Marco debe ser únicamente numérico).";
                 divError.classList.remove('d-none');
                 divError.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return false;

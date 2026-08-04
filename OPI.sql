@@ -193,6 +193,8 @@ CREATE TABLE `expedientes` (
   `proveedor_adjudicado_id` int DEFAULT NULL,
   `id_contrato_suministro` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `orden_compra_numero` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `decreto_alcaldicio_numero` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `conv_marco_oc` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `id_licitacion` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `monto_estimado` decimal(15,2) NOT NULL,
   `monto_definitivo` decimal(15,2) DEFAULT NULL,
@@ -233,7 +235,7 @@ CREATE TABLE `expedientes_documentos` (
   `id` int NOT NULL,
   `expediente_id` int NOT NULL,
   `subido_por_id` int NOT NULL,
-  `tipo_doc` enum('TDR_ESPECIFICACIONES','COTIZACION_RESPALDO','CUADRO_COMPARATIVO','OPI_FIRMADA_PDF','OPI_ANULADA','FICHA_PROVEEDOR','CDP_BORRADOR','SITUACION_PRESUPUESTARIA','OTRO') COLLATE utf8mb4_general_ci NOT NULL,
+  `tipo_doc` enum('TDR_ESPECIFICACIONES','COTIZACION_RESPALDO','CUADRO_COMPARATIVO','OPI_FIRMADA_PDF','OPI_ANULADA','FICHA_PROVEEDOR','CDP_BORRADOR','SITUACION_PRESUPUESTARIA','DECRETO_ALCALDICIO','OTRO') COLLATE utf8mb4_general_ci NOT NULL,
   `ruta_archivo` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `nombre_original` varchar(150) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `fecha_subida` datetime DEFAULT CURRENT_TIMESTAMP

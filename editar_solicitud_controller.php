@@ -275,7 +275,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
             } else {
                 $p_final = floatval($prec[$i]) * $iva_pct; // Forzado a neto
             }
-            $val_cm = ($codigo_tc === 'CONVENIO_MARCO') ? trim($id_cm[$i] ?? '') : null; 
+            if ($codigo_tc === 'CONVENIO_MARCO') {
+                $val_cm = trim($id_cm[$i] ?? '');
+                if ($val_cm === '' || !ctype_digit($val_cm)) {
+                    throw new Exception("El ID Convenio Marco para el ítem '" . htmlspecialchars($d) . "' debe ser exclusivamente numérico.");
+                }
+            } else {
+                $val_cm = null;
+            }
             $stmtItem->execute([$id, $d, $val_cm, $uni[$i], floatval($cant[$i]), $p_final, $cuenta_ids[$i]]);
         }
 

@@ -454,7 +454,7 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
                                         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-2 border-top border-light-subtle small">
                                             <?php if($expediente['tipo_compra_cod'] === 'CONVENIO_MARCO'): ?>
                                                 <div class="text-end">
-                                                    <span class="text-muted" style="font-size: 10px;">ID CM:</span>
+                                                     <span class="text-muted" style="font-size: 10px;">ID Convenio Marco:</span>
                                                     <span class="font-monospace text-primary fw-bold" style="font-size: 11px;"><?= htmlspecialchars($it['id_producto_cm']) ?></span>
                                                 </div>
                                             <?php endif; ?>

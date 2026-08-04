@@ -312,10 +312,17 @@ require_once __DIR__ . '/adquisiciones_controller.php';
                                         </div>
                                     <?php endif; ?>
                                     
-                                    <?php if($exp['orden_compra_numero']): ?>
+                                    <?php if(!empty($exp['decreto_alcaldicio_numero'])): ?>
+                                        <div class="d-flex justify-content-between align-items-center bg-secondary text-white p-2 rounded-3">
+                                            <span class="fw-bold text-uppercase" style="font-size: 9px;">N° Decreto Alcaldicio:</span> 
+                                            <span class="font-monospace fw-bold"><?= htmlspecialchars($exp['decreto_alcaldicio_numero']) ?></span>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if(!empty($exp['orden_compra_numero']) || !empty($exp['conv_marco_oc'])): ?>
                                         <div class="d-flex justify-content-between align-items-center bg-dark text-white p-2 rounded-3">
-                                            <span class="fw-bold text-uppercase" style="font-size: 9px;">N° Orden de Compra:</span> 
-                                            <span class="font-monospace fw-bold"><?= htmlspecialchars($exp['orden_compra_numero']) ?></span>
+                                            <span class="fw-bold text-uppercase" style="font-size: 9px;"><?= ($exp['tipo_compra_cod'] === 'CONVENIO_MARCO') ? 'CONV. MARCO O°C:' : 'N° Orden de Compra:' ?></span> 
+                                            <span class="font-monospace fw-bold"><?= htmlspecialchars($exp['conv_marco_oc'] ?? $exp['orden_compra_numero']) ?></span>
                                         </div>
                                     <?php endif; ?>
                                 </div>
@@ -530,16 +537,26 @@ require_once __DIR__ . '/adquisiciones_controller.php';
                                                     </div>
                                                 </div>
                                             <?php endif; ?>
-                                        </div>
 
-                                        <div class="mb-3">
-                                            <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Número de Orden de Compra <span class="text-danger">*</span></label>
-                                            <input type="text" name="orden_compra_numero" required class="form-control">
-                                        </div>
+                                            <div class="mb-3">
+                                             <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;"><?= ($exp['tipo_compra_cod'] === 'CONVENIO_MARCO') ? 'CONV. MARCO O°C:' : 'Número de Orden de Compra' ?> <span class="text-danger">*</span></label>
+                                             <input type="text" name="<?= ($exp['tipo_compra_cod'] === 'CONVENIO_MARCO') ? 'conv_marco_oc' : 'orden_compra_numero' ?>" required class="form-control" placeholder="<?= ($exp['tipo_compra_cod'] === 'CONVENIO_MARCO') ? 'Ej: 1234-56-CM24' : '' ?>" value="<?= htmlspecialchars($exp['conv_marco_oc'] ?? $exp['orden_compra_numero'] ?? '') ?>">
+                                         </div>
 
-                                        <div class="mb-4">
-                                            <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Subir Orden de Compra Firmada (PDF) <span class="text-danger">*</span></label>
-                                            <input type="file" name="archivo_oc" accept="application/pdf" required class="form-control form-control-sm">
+                                         <div class="mb-3">
+                                             <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Número de Decreto Alcaldicio <span class="text-danger">*</span></label>
+                                             <input type="text" name="decreto_alcaldicio_numero" required class="form-control" placeholder="Ej: DA887" value="<?= htmlspecialchars($exp['decreto_alcaldicio_numero'] ?? '') ?>">
+                                         </div>
+
+                                         <div class="mb-3">
+                                             <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Subir Decreto Alcaldicio (PDF) <span class="text-danger">*</span></label>
+                                             <input type="file" name="archivo_decreto" accept="application/pdf" required class="form-control form-control-sm">
+                                         </div>
+
+                                         <div class="mb-4">
+                                             <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Subir Orden de Compra Firmada (PDF) <span class="text-danger">*</span></label>
+                                             <input type="file" name="archivo_oc" accept="application/pdf" required class="form-control form-control-sm">
+                                         </div>
                                         </div>
 
                                         <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold shadow d-flex align-items-center justify-content-center gap-2">
