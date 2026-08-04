@@ -219,7 +219,8 @@ $f_desde = trim($_GET['f_desde'] ?? '');
 $f_hasta = trim($_GET['f_hasta'] ?? '');
 
 // CONTADORES PARA PESTAÑAS
-$count_pendientes = $pdo->query("SELECT COUNT(*) FROM expedientes WHERE estado_actual IN ('EN_VALIDACION_PRESUPUESTARIA', 'EN_VALIDACION_PRESUPUESTARIA_FINAL', 'ESPERANDO_CDP_FINANZAS', 'ESPERANDO_CDP_FINANZAS_FINAL')")->fetchColumn();
+$count_pendientes_inicial = $pdo->query("SELECT COUNT(*) FROM expedientes WHERE estado_actual = 'EN_VALIDACION_PRESUPUESTARIA'")->fetchColumn();
+$count_pendientes_final = $pdo->query("SELECT COUNT(*) FROM expedientes WHERE estado_actual IN ('EN_VALIDACION_PRESUPUESTARIA_FINAL', 'ESPERANDO_CDP_FINANZAS', 'ESPERANDO_CDP_FINANZAS_FINAL')")->fetchColumn();
 
 $stmtProcCount = $pdo->prepare("SELECT COUNT(DISTINCT e.id) FROM expedientes e JOIN expedientes_historial eh ON e.id = eh.expediente_id WHERE eh.usuario_id = ? AND eh.accion IN ('APROBAR', 'RECHAZAR', 'DEVOLVER') AND eh.estado_anterior LIKE '%PRESUPUESTARIA%'");
 $stmtProcCount->execute([$user_id]);
@@ -235,14 +236,16 @@ if ($vista !== 'revisar') {
     $where = [];
     $params = [];
 
-    if ($vista === 'procesados') {
+    if ($vista === 'pendientes_final') {
+        $where[] = "e.estado_actual IN ('EN_VALIDACION_PRESUPUESTARIA_FINAL', 'ESPERANDO_CDP_FINANZAS', 'ESPERANDO_CDP_FINANZAS_FINAL')";
+    } elseif ($vista === 'procesados') {
         $where[] = "EXISTS (SELECT 1 FROM expedientes_historial eh WHERE eh.expediente_id = e.id AND eh.usuario_id = :hist_uid AND eh.accion IN ('APROBAR', 'RECHAZAR', 'DEVOLVER') AND eh.estado_anterior LIKE '%PRESUPUESTARIA%')";
         $params[':hist_uid'] = $user_id;
     } elseif ($vista === 'todas') {
         $where[] = "(e.estado_actual LIKE '%PRESUPUESTARIA%' OR e.estado_actual LIKE '%CDP%' OR EXISTS (SELECT 1 FROM expedientes_historial eh WHERE eh.expediente_id = e.id AND eh.estado_anterior LIKE '%PRESUPUESTARIA%'))";
     } else {
-        $vista = 'pendientes';
-        $where[] = "e.estado_actual IN ('EN_VALIDACION_PRESUPUESTARIA', 'EN_VALIDACION_PRESUPUESTARIA_FINAL', 'ESPERANDO_CDP_FINANZAS', 'ESPERANDO_CDP_FINANZAS_FINAL')";
+        if ($vista !== 'pendientes_inicial') $vista = 'pendientes_inicial';
+        $where[] = "e.estado_actual = 'EN_VALIDACION_PRESUPUESTARIA'";
     }
 
     if ($f_q) {
@@ -294,7 +297,7 @@ if ($vista !== 'revisar') {
     unset($row);
 
     // Asignación para compatibilidad
-    if ($vista === 'pendientes') $pendientes = $solicitudes;
+    if (in_array($vista, ['pendientes', 'pendientes_inicial', 'pendientes_final'])) $pendientes = $solicitudes;
     if ($vista === 'procesados') $procesados = $solicitudes;
 }
 

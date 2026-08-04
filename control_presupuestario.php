@@ -53,10 +53,15 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
 
             <!-- PESTAÑAS NAVEGABLES (TABS) HOMOLOGADAS -->
             <div class="d-flex border-bottom mb-4 overflow-x-auto">
-                <a href="control_presupuestario.php?view=pendientes" class="px-4 py-2.5 text-decoration-none fw-bold small border-bottom border-2 <?= $vista === 'pendientes' ? 'border-primary text-primary bg-white rounded-top' : 'border-transparent text-secondary hover-text-dark' ?> text-nowrap d-flex align-items-center gap-2">
-                    <i class="bi bi-clock-history"></i>
-                    Pendientes de Visación
-                    <span class="badge rounded-pill <?= $vista === 'pendientes' ? 'bg-primary text-white' : 'bg-secondary-subtle text-secondary-emphasis' ?>"><?= $count_pendientes ?></span>
+                <a href="control_presupuestario.php?view=pendientes_inicial" class="px-4 py-2.5 text-decoration-none fw-bold small border-bottom border-2 <?= ($vista === 'pendientes_inicial' || $vista === 'pendientes') ? 'border-primary text-primary bg-white rounded-top' : 'border-transparent text-secondary hover-text-dark' ?> text-nowrap d-flex align-items-center gap-2">
+                    <i class="bi bi-hourglass-split"></i>
+                    Pendientes de Visación Inicial
+                    <span class="badge rounded-pill <?= ($vista === 'pendientes_inicial' || $vista === 'pendientes') ? 'bg-primary text-white' : 'bg-secondary-subtle text-secondary-emphasis' ?>"><?= $count_pendientes_inicial ?></span>
+                </a>
+                <a href="control_presupuestario.php?view=pendientes_final" class="px-4 py-2.5 text-decoration-none fw-bold small border-bottom border-2 <?= $vista === 'pendientes_final' ? 'border-primary text-primary bg-white rounded-top' : 'border-transparent text-secondary hover-text-dark' ?> text-nowrap d-flex align-items-center gap-2">
+                    <i class="bi bi-check-circle"></i>
+                    Pendientes de Visación Final
+                    <span class="badge rounded-pill <?= $vista === 'pendientes_final' ? 'bg-primary text-white' : 'bg-secondary-subtle text-secondary-emphasis' ?>"><?= $count_pendientes_final ?></span>
                 </a>
                 <a href="control_presupuestario.php?view=procesados" class="px-4 py-2.5 text-decoration-none fw-bold small border-bottom border-2 <?= $vista === 'procesados' ? 'border-primary text-primary bg-white rounded-top' : 'border-transparent text-secondary hover-text-dark' ?> text-nowrap d-flex align-items-center gap-2">
                     <i class="bi bi-check2-square"></i>
