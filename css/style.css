@@ -882,6 +882,92 @@ select.input-tabla {
     flex-shrink: 0;
 }
 
+/* COMPONENTE SELECT DESPLEGABLE PERSONALIZADO (AUTOCOMPLETE) */
+.custom-select-container {
+    position: relative;
+    width: 100%;
+}
+
+.custom-select-input {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    padding-right: 2.25rem;
+    cursor: pointer !important;
+}
+
+.custom-select-input:focus {
+    cursor: text !important;
+}
+
+.custom-select-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    z-index: 1060;
+    max-height: 260px;
+    overflow-y: auto;
+    background: #ffffff;
+    border: 1px solid var(--border-color, #cbd5e1);
+    border-radius: var(--radius-md, 0.5rem);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    display: none;
+    padding: 0.25rem 0;
+}
+
+.custom-select-dropdown.show {
+    display: block;
+}
+
+.custom-select-option,
+.custom-select-option * {
+    cursor: pointer !important;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+}
+
+.custom-select-option {
+    padding: 0.5rem 0.85rem;
+    transition: background 0.15s ease, color 0.15s ease;
+    font-size: 0.8125rem;
+    margin: 0 0.25rem;
+    border-radius: var(--radius-sm, 0.25rem);
+}
+
+.custom-select-option:hover,
+.custom-select-option.active {
+    background-color: var(--color-primary-light, #eff6ff);
+    color: var(--color-primary, #2563eb);
+}
+
+.custom-select-option.text-primary-emphasis {
+    background-color: #e8f4fd;
+    color: var(--color-primary, #1d4ed8);
+}
+
+.custom-select-group-header,
+.custom-select-group-header * {
+    cursor: default !important;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.custom-select-group-header {
+    padding: 0.4rem 0.85rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background-color: var(--bg-subtle, #f8fafc);
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    margin: 0.25rem 0;
+}
+
 /* PANELES CON TRANSICIONES SUAVES */
 .panel-slide {
     max-height: 0;
