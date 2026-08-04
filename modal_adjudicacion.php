@@ -24,7 +24,7 @@ if (isset($proveedores_db)) {
                 <input type="hidden" name="accion" value="adjudicar">
                 <input type="hidden" name="expediente_id" id="modalId">
                 
-                <div class="modal-body p-4">
+                <div class="modal-body p-4 overflow-visible">
                     <div class="bg-light border p-3 rounded-3 mb-4 text-center shadow-sm">
                         <p class="text-uppercase text-muted fw-bold mb-1" style="font-size: 9px; letter-spacing: 0.5px;">Expediente a evaluar:</p>
                         <h5 id="modalCodigo" class="font-monospace fw-bold text-primary mb-0"></h5>
@@ -33,11 +33,11 @@ if (isset($proveedores_db)) {
                     <div class="row g-4">
                         <!-- 1. Seleccione el Proveedor Ganador -->
                         <div class="col-12">
-                            <div class="card border border-light-subtle shadow-sm">
+                            <div class="card border border-light-subtle shadow-sm overflow-visible">
                                 <div class="card-header bg-white py-2.5">
                                     <h6 class="fw-bold mb-0 text-dark">1. Seleccione el Proveedor Ganador</h6>
                                 </div>
-                                <div class="card-body p-3">
+                                <div class="card-body p-3 overflow-visible">
                                     <div class="row g-3">
                                         <div class="col-md-12">
                                             <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px; letter-spacing: 0.5px;">🔎 Buscar y Seleccionar Proveedor (RUT o Razón Social)</label>

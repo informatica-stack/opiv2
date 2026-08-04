@@ -248,7 +248,7 @@ foreach($otros_proveedores as $p) {
                                         </h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
-                                    <div class="modal-body p-4">
+                                    <div class="modal-body p-4 overflow-visible">
                                         
                                         <!-- Buscador Autocomplete -->
                                         <div class="mb-4">
