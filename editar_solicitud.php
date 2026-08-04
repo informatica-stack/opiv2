@@ -254,7 +254,7 @@ foreach($otros_proveedores as $p) {
                                         <div class="mb-4">
                                             <label class="form-label fw-bold text-secondary small uppercase" style="font-size: 10px; letter-spacing: 0.5px;">🔎 Buscar Proveedor (RUT o Razón Social)</label>
                                             <div class="custom-select-container" id="containerProveedor">
-                                                <input type="text" id="buscadorProv" class="form-control bg-white custom-select-input fw-bold" autocomplete="off" onfocus="showProvDropdown()" oninput="filterProvDropdown()">
+                                                <input type="text" id="buscadorProv" class="form-control bg-white custom-select-input fw-bold" placeholder="🔎 Escriba RUT o Razón Social para buscar..." autocomplete="off" onfocus="showProvDropdown()" oninput="filterProvDropdown()">
                                                 <input type="hidden" name="proveedor_id" id="selProveedor" value="<?= htmlspecialchars($post_proveedor_id) ?>">
                                                 <div class="custom-select-dropdown" id="dropdownProv">
                                                     <!-- Opciones dinámicas renderizadas por JS -->
