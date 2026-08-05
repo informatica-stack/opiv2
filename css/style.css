@@ -1444,45 +1444,57 @@ select.input-tabla {
 }
 
 /* --------------------------------------------------------------------------
-   BOTÓN OFICIAL DE CLAVEÚNICA (Gobierno Digital v5.5)
+   BOTÓN OFICIAL DE CLAVEÚNICA (Secretaría de Gobierno Digital - wikiguias)
    -------------------------------------------------------------------------- */
-.btn-claveunica {
+.btn-claveunica,
+.btn-cu {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 100%;
-    padding: 0.65rem 1.25rem;
-    font-size: 0.95rem;
-    font-weight: 500;
+    min-height: 48px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.25;
     color: #ffffff !important;
-    background-color: #0b5e9e;
-    background-image: linear-gradient(180deg, #0b6cb3 0%, #08538c 100%);
-    border: 1px solid #074778;
-    border-radius: var(--radius-md);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+    background-color: #0F69B4;
+    border: none;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: background-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
     text-decoration: none !important;
     user-select: none;
+    gap: 12px;
 }
 
-.btn-claveunica:hover {
-    background-color: #074a7d;
-    background-image: linear-gradient(180deg, #085994 0%, #06406c 100%);
-    border-color: #053357;
+.btn-claveunica:hover,
+.btn-cu:hover {
+    background-color: #0B5490;
     color: #ffffff !important;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 4px 8px rgba(15, 105, 180, 0.25);
 }
 
-.btn-claveunica:active {
+.btn-claveunica:focus-visible,
+.btn-cu:focus-visible {
+    outline: 3px solid #0F69B4;
+    outline-offset: 2px;
+}
+
+.btn-claveunica:active,
+.btn-cu:active {
+    background-color: #083E6B;
     transform: translateY(1px);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-.btn-claveunica svg.cu-icon {
-    width: 22px;
-    height: 22px;
-    fill: currentColor;
+.btn-claveunica svg.cu-icon,
+.btn-cu svg.cu-icon {
+    width: 26px;
+    height: 26px;
     flex-shrink: 0;
+    display: block;
 }
+
 

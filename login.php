@@ -226,10 +226,13 @@ function redirectBasedOnRole($role) {
                 <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small fw-semibold text-uppercase" style="font-size: 11px;">o bien</span>
             </div>
 
-            <!-- BOTÓN OFICIAL CLAVEÚNICA -->
-            <a href="<?= obtener_url_claveunica() ?>" class="btn-claveunica shadow-sm py-2.5">
-                <svg class="cu-icon me-2" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2A10 10 0 1 0 22 12 10.011 10.011 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8.009 8.009 0 0 1-8 8zm-1-13h2v7h-2zm0 9h2v2h-2z"/>
+            <!-- BOTÓN OFICIAL CLAVEÚNICA (Gobierno Digital) -->
+            <a href="<?= obtener_url_claveunica() ?>" class="btn-cu btn-claveunica shadow-sm" id="btn-claveunica" title="Iniciar sesión con ClaveÚnica">
+                <svg class="cu-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" stroke="white" stroke-width="2"/>
+                    <circle cx="12" cy="12" r="5" stroke="white" stroke-width="2"/>
+                    <circle cx="12" cy="12" r="2" fill="white"/>
+                    <line x1="12" y1="1" x2="12" y2="4" stroke="white" stroke-width="2" stroke-linecap="round"/>
                 </svg>
                 <span>Iniciar sesión con <strong>ClaveÚnica</strong></span>
             </a>
