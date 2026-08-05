@@ -228,11 +228,29 @@ $f_hasta = trim($_GET['f_hasta'] ?? '');
 // CONTADORES PARA PESTAÑAS
 $count_pendientes = $pdo->query("SELECT COUNT(*) FROM expedientes e JOIN estados_tramite et ON e.estado_actual = et.codigo WHERE et.rol_responsable = 'ADQUISICIONES'")->fetchColumn();
 
-$stmtProcCount = $pdo->prepare("SELECT COUNT(DISTINCT e.id) FROM expedientes e JOIN expedientes_historial eh ON e.id = eh.expediente_id WHERE eh.usuario_id = ? AND eh.accion IN ('INGRESAR_ID_PORTAL', 'SUBIR_COTIZACIONES', 'EMITIR_OC', 'PUBLICAR_LICITACION', 'APROBAR', 'GESTION_ADQUISICIONES')");
+$stmtProcCount = $pdo->prepare("
+    SELECT COUNT(DISTINCT e.id) 
+    FROM expedientes e 
+    JOIN expedientes_historial eh ON e.id = eh.expediente_id 
+    JOIN estados_tramite et ON e.estado_actual = et.codigo 
+    WHERE eh.usuario_id = ? 
+      AND et.rol_responsable != 'ADQUISICIONES' 
+      AND (eh.estado_anterior IN ('EN_COTIZACION_ADQ', 'EN_GESTION_ADQUISICIONES', 'EN_EMISION_OC', 'ESPERANDO_ACEPTACION_OC') OR eh.accion IN ('INGRESAR_ID_PORTAL', 'SUBIR_COTIZACIONES', 'EMITIR_OC', 'PUBLICAR_LICITACION', 'GESTION_ADQUISICIONES'))
+");
 $stmtProcCount->execute([$user_id]);
 $count_procesadas = $stmtProcCount->fetchColumn();
 
-$count_todas = $pdo->query("SELECT COUNT(*) FROM expedientes e JOIN estados_tramite et ON e.estado_actual = et.codigo WHERE et.rol_responsable = 'ADQUISICIONES' OR e.id IN (SELECT expediente_id FROM expedientes_historial WHERE accion IN ('INGRESAR_ID_PORTAL', 'SUBIR_COTIZACIONES', 'EMITIR_OC', 'PUBLICAR_LICITACION'))")->fetchColumn();
+$count_todas = $pdo->query("
+    SELECT COUNT(DISTINCT e.id) 
+    FROM expedientes e 
+    JOIN estados_tramite et ON e.estado_actual = et.codigo 
+    WHERE et.rol_responsable = 'ADQUISICIONES' 
+       OR e.id IN (
+           SELECT expediente_id FROM expedientes_historial 
+           WHERE estado_anterior IN ('EN_COTIZACION_ADQ', 'EN_GESTION_ADQUISICIONES', 'EN_EMISION_OC', 'ESPERANDO_ACEPTACION_OC') 
+              OR accion IN ('INGRESAR_ID_PORTAL', 'SUBIR_COTIZACIONES', 'EMITIR_OC', 'PUBLICAR_LICITACION', 'GESTION_ADQUISICIONES')
+       )
+")->fetchColumn();
 
 $solicitudes = [];
 $pendientes = [];
@@ -242,10 +260,20 @@ if ($vista !== 'gestionar') {
     $params = [];
 
     if ($vista === 'procesadas') {
-        $where[] = "EXISTS (SELECT 1 FROM expedientes_historial eh WHERE eh.expediente_id = e.id AND eh.usuario_id = :hist_uid AND eh.accion IN ('INGRESAR_ID_PORTAL', 'SUBIR_COTIZACIONES', 'EMITIR_OC', 'PUBLICAR_LICITACION', 'APROBAR', 'GESTION_ADQUISICIONES'))";
+        $where[] = "et.rol_responsable != 'ADQUISICIONES'";
+        $where[] = "EXISTS (
+            SELECT 1 FROM expedientes_historial eh 
+            WHERE eh.expediente_id = e.id 
+              AND eh.usuario_id = :hist_uid 
+              AND (eh.estado_anterior IN ('EN_COTIZACION_ADQ', 'EN_GESTION_ADQUISICIONES', 'EN_EMISION_OC', 'ESPERANDO_ACEPTACION_OC') OR eh.accion IN ('INGRESAR_ID_PORTAL', 'SUBIR_COTIZACIONES', 'EMITIR_OC', 'PUBLICAR_LICITACION', 'GESTION_ADQUISICIONES'))
+        )";
         $params[':hist_uid'] = $user_id;
     } elseif ($vista === 'todas') {
-        $where[] = "(et.rol_responsable = 'ADQUISICIONES' OR EXISTS (SELECT 1 FROM expedientes_historial eh WHERE eh.expediente_id = e.id AND eh.accion IN ('INGRESAR_ID_PORTAL', 'SUBIR_COTIZACIONES', 'EMITIR_OC', 'PUBLICAR_LICITACION')))";
+        $where[] = "(et.rol_responsable = 'ADQUISICIONES' OR EXISTS (
+            SELECT 1 FROM expedientes_historial eh 
+            WHERE eh.expediente_id = e.id 
+              AND (eh.estado_anterior IN ('EN_COTIZACION_ADQ', 'EN_GESTION_ADQUISICIONES', 'EN_EMISION_OC', 'ESPERANDO_ACEPTACION_OC') OR eh.accion IN ('INGRESAR_ID_PORTAL', 'SUBIR_COTIZACIONES', 'EMITIR_OC', 'PUBLICAR_LICITACION', 'GESTION_ADQUISICIONES'))
+        ))";
     } else {
         if (!in_array($vista, ['lista', 'pendientes'])) $vista = 'pendientes';
         $where[] = "et.rol_responsable = 'ADQUISICIONES'";
