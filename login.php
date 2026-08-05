@@ -1,6 +1,7 @@
 <?php
 // login.php - Acceso Principal con Redirección Inteligente
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/claveunica_helper.php';
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 
@@ -10,6 +11,10 @@ if (isset($_SESSION['user_id'])) {
 }
 
 $error = '';
+if (!empty($_SESSION['login_error'])) {
+    $error = $_SESSION['login_error'];
+    unset($_SESSION['login_error']);
+}
 
 // --- PROCESO DE LOGIN ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -203,13 +208,27 @@ function redirectBasedOnRole($role) {
                 </div>
 
                 <!-- BOTÓN DE INGRESO -->
-                <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2">
+                <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 mb-3">
                     Iniciar Sesión
                     <i class="bi bi-box-arrow-in-right"></i>
                 </button>
-
             </form>
+
+            <!-- DIVISOR "O BIEN" -->
+            <div class="position-relative text-center my-4">
+                <hr class="text-secondary opacity-25 m-0">
+                <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small fw-semibold text-uppercase" style="font-size: 11px;">o bien</span>
+            </div>
+
+            <!-- BOTÓN OFICIAL CLAVEÚNICA -->
+            <a href="<?= obtener_url_claveunica() ?>" class="btn-claveunica shadow-sm py-2.5">
+                <svg class="cu-icon me-2" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2A10 10 0 1 0 22 12 10.011 10.011 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8.009 8.009 0 0 1-8 8zm-1-13h2v7h-2zm0 9h2v2h-2z"/>
+                </svg>
+                <span>Iniciar sesión con <strong>ClaveÚnica</strong></span>
+            </a>
         </div>
+
         
         <!-- FOOTER DE TARJETA -->
         <div class="bg-light p-3 text-center border-top border-light-subtle">
