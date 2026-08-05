@@ -29,10 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = trim($_POST['email'] ?? '');
         $unidad_id = intval($_POST['unidad_id'] ?? 0);
         $cargo = trim($_POST['cargo'] ?? '');
-        $password_raw = $_POST['password'] ?? '';
 
         // 1. Validaciones de Campos Obligatorios
-        if (empty($rut_raw) || empty($nombre) || empty($email) || empty($unidad_id) || empty($cargo) || empty($password_raw)) {
+        if (empty($rut_raw) || empty($nombre) || empty($email) || empty($unidad_id) || empty($cargo)) {
             throw new Exception("Todos los campos marcados con asterisco son obligatorios.");
         }
 
@@ -60,17 +59,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("El correo electrónico $email ya se encuentra registrado.");
         }
 
-        // 5. Hash de Contraseña y Token de Verificación
-        $hash = password_hash($password_raw, PASSWORD_DEFAULT);
+        // 5. Token de Verificación (Sin contraseña local, autenticación por ClaveÚnica)
         $token = bin2hex(random_bytes(32));
 
-        // 6. Insertar Usuario (Inactivo / Pendiente de verificación)
+        // 6. Insertar Usuario (password_hash = NULL, Inactivo / Pendiente de verificación)
         $stmtIns = $pdo->prepare("
             INSERT INTO usuarios 
             (nombre_completo, email, rut, rol_id, unidad_id, es_jefe_unidad, cargo, password_hash, activo, token_verificacion, email_verificado, estado_aprobacion, fecha_registro) 
-            VALUES (?, ?, ?, ?, ?, 0, ?, ?, 0, ?, 0, 'PENDIENTE_VERIFICACION', NOW())
+            VALUES (?, ?, ?, ?, ?, 0, ?, NULL, 0, ?, 0, 'PENDIENTE_VERIFICACION', NOW())
         ");
-        $stmtIns->execute([$nombre, $email, $rut, $default_rol_id, $unidad_id, $cargo, $hash, $token]);
+        $stmtIns->execute([$nombre, $email, $rut, $default_rol_id, $unidad_id, $cargo, $token]);
 
         // 7. Enviar Correo de Verificación
         $link_verificacion = obtener_base_url() . "/verificar_email.php?token=$token";
@@ -198,12 +196,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                             </div>
 
-                            <!-- CONTRASEÑA -->
+                            <!-- INFORMACIÓN AUTENTICACIÓN CLAVEÚNICA -->
                             <div class="col-md-12">
-                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Contraseña de Acceso *</label>
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text bg-light"><i class="bi bi-lock-fill"></i></span>
-                                    <input type="password" name="password" required class="form-control" minlength="6" placeholder="Mínimo 6 caracteres">
+                                <div class="alert alert-info border-0 shadow-sm d-flex align-items-center gap-2 m-0 p-3" role="alert">
+                                    <i class="bi bi-shield-check text-primary fs-4 shrink-0"></i>
+                                    <div class="small">
+                                        <strong>Autenticación Segura:</strong> Su acceso al sistema se realizará exclusivamente a través de <strong>ClaveÚnica del Estado</strong>, por lo que no es necesario crear ni ingresar una contraseña local.
+                                    </div>
                                 </div>
                             </div>
 

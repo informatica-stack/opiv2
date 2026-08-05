@@ -22,98 +22,8 @@ if (!empty($_SESSION['login_error'])) {
     unset($_SESSION['login_error']);
 }
 
-// --- PROCESO DE LOGIN ---
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
-    $password = $_POST['password'] ?? '';
+// Toda autenticación regular es gestionada mediante ClaveÚnica (OpenID Connect)
 
-    if ($email && $password) {
-        try {
-            // 1. Buscar Usuario
-            $stmt = $pdo->prepare("
-                SELECT u.id, u.nombre_completo, u.password_hash, u.unidad_id, u.es_jefe_unidad, u.activo, u.email_verificado, u.estado_aprobacion, r.nombre as rol_nombre 
-                FROM usuarios u
-                JOIN roles r ON u.rol_id = r.id
-                WHERE u.email = ?
-            ");
-            $stmt->execute([$email]);
-            $user = $stmt->fetch();
-
-            // 2. Verificar Contraseña y Estado de Cuenta
-            if ($user && password_verify($password, $user['password_hash'])) {
-                
-                if ($user['email_verificado'] == 0 || $user['estado_aprobacion'] === 'PENDIENTE_VERIFICACION') {
-                    $error = 'Su cuenta está pendiente de verificación por correo electrónico. Por favor revise su casilla de correo.';
-                } elseif ($user['estado_aprobacion'] === 'PENDIENTE_APROBACION') {
-                    $error = 'Su cuenta ha sido verifiada y está pendiente de aprobación por el Administrador del Sistema (SYSADMIN).';
-                } elseif ($user['estado_aprobacion'] === 'RECHAZADO') {
-                    $error = 'Su solicitud de registro en el sistema fue rechazada por la administración.';
-                } elseif ($user['activo'] == 0) {
-                    $error = 'Su cuenta de usuario se encuentra desactivada.';
-                } else {
-                    // Seguridad: Regenerar ID de sesión
-                    session_regenerate_id(true);
-
-                    // 3. Guardar Sesión Base
-                    $_SESSION['user_id'] = $user['id'];
-                    $_SESSION['user_name'] = $user['nombre_completo'];
-                    $_SESSION['user_rol'] = $user['rol_nombre'];
-                    $_SESSION['user_unidad'] = $user['unidad_id'];
-
-                    // 4. Lógica de Subrogancia (Heredar Jefatura, Rol y Unidad del Titular - Excluyendo SYSADMIN)
-                    $es_jefe = $user['es_jefe_unidad'];
-                    $soy_subrogante = false;
-                    $subrogado_id = null;
-                    $subrogado_nombre = null;
-                    $hoy = date('Y-m-d');
-                    
-                    // Buscar si estoy subrogando a alguien HOY (salvo que sea SYSADMIN)
-                    if ($user['rol_nombre'] !== 'SYSADMIN') {
-                        $stmtSub = $pdo->prepare("
-                            SELECT s.usuario_titular_id, u.nombre_completo as titular_nombre, u.unidad_id as titular_unidad, u.es_jefe_unidad as titular_es_jefe, r.nombre as titular_rol
-                            FROM subrogancias s
-                            JOIN usuarios u ON s.usuario_titular_id = u.id
-                            JOIN roles r ON u.rol_id = r.id
-                            WHERE s.usuario_subrogante_id = ? 
-                            AND s.activo = 1 
-                            AND ? BETWEEN s.fecha_inicio AND s.fecha_fin
-                            LIMIT 1
-                        ");
-                        $stmtSub->execute([$user['id'], $hoy]);
-                        $sub = $stmtSub->fetch();
-
-                        if ($sub) {
-                            $soy_subrogante = true;
-                            $subrogado_id = $sub['usuario_titular_id'];
-                            $subrogado_nombre = $sub['titular_nombre'];
-                            $es_jefe = $sub['titular_es_jefe'];
-                            
-                            // Sobrescribir Rol y Unidad para el flujo y accesos
-                            $_SESSION['user_rol'] = $sub['titular_rol'];
-                            $_SESSION['user_unidad'] = $sub['titular_unidad'];
-                        }
-                    }
-
-                    $_SESSION['es_jefe'] = $es_jefe;
-                    $_SESSION['es_subrogante'] = $soy_subrogante;
-                    $_SESSION['subrogado_id'] = $subrogado_id;
-                    $_SESSION['subrogado_nombre'] = $subrogado_nombre;
-
-                    // 5. Redirigir
-                    redirectBasedOnRole($_SESSION['user_rol']);
-                }
-
-            } else {
-                $error = 'Credenciales incorrectas o cuenta no registrada.';
-            }
-        } catch (PDOException $e) {
-            error_log("Login Error: " . $e->getMessage());
-            $error = 'Error de conexión con la base de datos.';
-        }
-    } else {
-        $error = 'Por favor complete todos los campos.';
-    }
-}
 
 // Función Helper de Redirección
 function redirectBasedOnRole($role) {
@@ -169,66 +79,19 @@ function redirectBasedOnRole($role) {
             <!--  <p class="text-info small mb-0">Plataforma de Orden de Pedido Interno</p>-->
         </div>
 
-        <div class="card-body p-4 p-sm-5">
+        <div class="card-body p-4 p-sm-5 text-center">
             <?php if(!empty($error)): ?>
-                <div class="alert alert-danger d-flex align-items-center gap-2 mb-4" role="alert">
+                <div class="alert alert-danger d-flex align-items-center gap-2 mb-4 text-start" role="alert">
                     <i class="bi bi-exclamation-triangle-fill shrink-0"></i>
                     <div class="small fw-semibold"><?= htmlspecialchars($error) ?></div>
                 </div>
             <?php endif; ?>
 
-            <form action="" method="POST">
-                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                
-                <!-- CORREO INSTITUCIONAL -->
-                <div class="mb-3">
-                    <label for="email" class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Correo</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light text-secondary border-end-0">
-                            <i class="bi bi-envelope-fill"></i>
-                        </span>
-                        <input type="email" name="email" id="email" required 
-                            class="form-control bg-light border-start-0 py-2.5">
-                    </div>
-                </div>
+            <p class="text-secondary small fw-bold mb-4 uppercase tracking-wide">
+                Identifíquese de forma segura utilizando su ClaveÚnica del Estado
+            </p>
 
-                <!-- CONTRASEÑA -->
-                <div class="mb-3">
-                    <label for="password" class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Contraseña</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light text-secondary border-end-0">
-                            <i class="bi bi-lock-fill"></i>
-                        </span>
-                        <input type="password" name="password" id="password" required 
-                            class="form-control bg-light border-start-0 py-2.5">
-                    </div>
-                </div>
-
-                <!-- RECORDARME Y SOPORTE -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div class="form-check">
-                        <input type="checkbox" class="form-check-input" id="recordarme">
-                        <label class="form-check-label text-secondary small cursor-pointer" for="recordarme">Recordarme</label>
-                    </div>
-                    <a href="#" class="text-decoration-none small fw-bold text-primary">¿Ayuda?</a>
-                </div>
-
-                <!-- BOTÓN DE INGRESO -->
-                <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 mb-3">
-                    Iniciar Sesión
-                    <i class="bi bi-box-arrow-in-right"></i>
-                </button>
-            </form>
-
-            <!-- DIVISOR "O BIEN" -->
-            <div class="position-relative text-center my-4">
-                <hr class="text-secondary opacity-25 m-0">
-                <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small fw-semibold text-uppercase" style="font-size: 11px;">o bien</span>
-            </div>
-
-            <p class="text-center text-secondary small fw-semibold mb-3">Ingresa con tu ClaveÚnica</p>
-
-            <div class="d-flex justify-content-center">
+            <div class="d-flex justify-content-center my-3">
                 <!-- BOTÓN OFICIAL CLAVEÚNICA (Ejemplo Institucional Lebu) -->
                 <a class="btn-cu btn-m btn-color-estandar shadow-sm" href="<?= obtener_url_claveunica() ?>" aria-label="Iniciar sesión con ClaveÚnica">
                     <svg class="cl-claveunica-svg" width="24" height="24" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -239,6 +102,10 @@ function redirectBasedOnRole($role) {
                     <span class="texto" aria-hidden="true">Iniciar sesión</span>
                 </a>
             </div>
+
+            <p class="mt-4 text-muted small mb-0" style="font-size: 11px;">
+                Usted será redirigido al sitio seguro del Gobierno de Chile.
+            </p>
         </div>
 
         
