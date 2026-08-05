@@ -117,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="card card-registro mx-auto bg-white overflow-hidden">
             
             <div class="card-header bg-dark text-white text-center py-4 px-4">
-                <img src="logo.png" alt="Municipalidad de Lebu" style="max-height: 55px;" class="mb-2">
+                <img src="logo.png" alt="Logo Institucional" class="img-fluid rounded bg-white p-2 shadow-sm" style="max-height: 96px; width: auto;">
                 <h4 class="fw-bold mb-1">Registro de Funcionario</h4>
                 <p class="small text-white-50 mb-0">Sistema de Órdenes de Pedido Interno</p>
             </div>
