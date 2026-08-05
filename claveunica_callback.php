@@ -134,33 +134,35 @@ try {
 /**
  * Función Helper de Redirección según Rol
  */
-function redirectBasedOnRole($role) {
-    switch ($role) {
-        case 'SYSADMIN':
-            header('Location: mis_solicitudes.php');
-            break;
-        case 'PRESUPUESTO': 
-            header('Location: control_presupuestario.php'); 
-            break;
-        case 'FINANZAS': 
-            header('Location: finanzas.php'); 
-            break;
-        case 'ADQUISICIONES': 
-            header('Location: adquisiciones.php'); 
-            break;
-        case 'ADMIN_MUNICIPAL': 
-            header('Location: administrador.php'); 
-            break;
-        case 'JEFE_UNIDAD': 
-            header('Location: jefatura.php'); 
-            break;
-        default: 
-            if(isset($_SESSION['es_jefe']) && $_SESSION['es_jefe'] == 1) {
-                header('Location: jefatura.php');
-            } else {
+if (!function_exists('redirectBasedOnRole')) {
+    function redirectBasedOnRole($role) {
+        switch ($role) {
+            case 'SYSADMIN':
                 header('Location: mis_solicitudes.php');
-            }
-            break;
+                break;
+            case 'PRESUPUESTO': 
+                header('Location: control_presupuestario.php'); 
+                break;
+            case 'FINANZAS': 
+                header('Location: finanzas.php'); 
+                break;
+            case 'ADQUISICIONES': 
+                header('Location: adquisiciones.php'); 
+                break;
+            case 'ADMIN_MUNICIPAL': 
+                header('Location: administrador.php'); 
+                break;
+            case 'JEFE_UNIDAD': 
+                header('Location: jefatura.php'); 
+                break;
+            default: 
+                if(isset($_SESSION['es_jefe']) && $_SESSION['es_jefe'] == 1) {
+                    header('Location: jefatura.php');
+                } else {
+                    header('Location: mis_solicitudes.php');
+                }
+                break;
+        }
+        exit;
     }
-    exit;
 }

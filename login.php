@@ -5,6 +5,12 @@ require_once __DIR__ . '/claveunica_helper.php';
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 
+// Si ClaveÚnica redirige directamente a login.php con 'code' y 'state', procesar mediante el callback
+if (isset($_GET['code']) && isset($_GET['state'])) {
+    require_once __DIR__ . '/claveunica_callback.php';
+    exit;
+}
+
 // Si ya está logueado, redirigir según su rol
 if (isset($_SESSION['user_id'])) {
     redirectBasedOnRole($_SESSION['user_rol']);

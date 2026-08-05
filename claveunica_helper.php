@@ -18,7 +18,7 @@ function obtener_configuracion_claveunica() {
     // Auto-detectar protocolo y host para construir Redirect URI por defecto si no está definida en env
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'] ?? 'testopi.munilebu.gob.cl';
-    $default_redirect = $protocol . '://' . $host . '/claveunica_callback.php';
+    $default_redirect = $protocol . '://' . $host . '/login.php';
     $default_logout_redirect = $protocol . '://' . $host . '/logout.php';
 
     $redirect_uri = getenv('CLAVEUNICA_REDIRECT_URI') ?: ($_ENV['CLAVEUNICA_REDIRECT_URI'] ?? ($_SERVER['CLAVEUNICA_REDIRECT_URI'] ?? $default_redirect));
