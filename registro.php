@@ -200,7 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="col-md-12">
                                 <div class="alert alert-info border-0 shadow-sm d-flex align-items-center gap-2 m-0 p-3" role="alert">
                                     <div class="small">
-                                        Su acceso al sistema se realizará exclusivamente a través de ClaveÚnica del Estado, por lo que no es necesario crear ni ingresar una contraseña local.
+                                        Su acceso al sistema se realizará exclusivamente a través de ClaveÚnica del Estado, por lo que no es necesario crear una contraseña.
                                     </div>
                                 </div>
                             </div>
