@@ -118,8 +118,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             <div class="card-header bg-dark text-white text-center py-4 px-4">
                 <img src="logo.png" alt="Logo Institucional" class="img-fluid rounded bg-white p-2 shadow-sm" style="max-height: 96px; width: auto;">
-                <h4 class="fw-bold mb-1">Registro de Funcionario</h4>
-                <p class="small text-white-50 mb-0">Sistema de Órdenes de Pedido Interno</p>
+                <h4 class="fw-bold mb-1">Registro de Funcionario - Sistema de ordenes de pedido interno (SOPI)</h4>
+                
             </div>
 
             <div class="card-body p-4 p-md-5">
