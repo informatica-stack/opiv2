@@ -216,7 +216,7 @@ if (!function_exists('color_estado')) {
         if (in_array($estado_codigo, ['BORRADOR', 'EN_REVISION_JEFATURA'])) return 'bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle';
         if (in_array($estado_codigo, ['RECHAZADO', 'ANULADO'])) return 'bg-danger-subtle text-danger-emphasis text-decoration-line-through border border-danger-subtle';
         if ($estado_codigo === 'FINALIZADO') return 'bg-success-subtle text-success-emphasis fw-bold border border-success-subtle';
-        if ($estado_codigo === 'RECEPCIONADO_POR_ADQUISICIONES') return 'bg-info-subtle text-info-emphasis fw-bold border border-info-subtle';
+        if (in_array($estado_codigo, ['EN_COTIZACION_ADQ', 'EN_GESTION_ADQUISICIONES'])) return 'bg-info-subtle text-info-emphasis fw-bold border border-info-subtle';
         if (in_array($estado_codigo, ['EN_VALIDACION_PRESUPUESTARIA', 'EN_VALIDACION_PRESUPUESTARIA_FINAL'])) return 'bg-primary-subtle text-primary-emphasis fw-bold border border-primary-subtle';
         if (in_array($estado_codigo, ['ESPERANDO_CDP_FINANZAS', 'ESPERANDO_CDP_FINANZAS_FINAL'])) return 'bg-warning-subtle text-warning-emphasis fw-bold border border-warning-subtle';
         return 'bg-primary-subtle text-primary-emphasis border border-primary-subtle';
