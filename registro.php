@@ -199,9 +199,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <!-- INFORMACIÓN AUTENTICACIÓN CLAVEÚNICA -->
                             <div class="col-md-12">
                                 <div class="alert alert-info border-0 shadow-sm d-flex align-items-center gap-2 m-0 p-3" role="alert">
-                                    <i class="bi bi-shield-check text-primary fs-4 shrink-0"></i>
                                     <div class="small">
-                                        <strong>Autenticación Segura:</strong> Su acceso al sistema se realizará exclusivamente a través de <strong>ClaveÚnica del Estado</strong>, por lo que no es necesario crear ni ingresar una contraseña local.
+                                        Su acceso al sistema se realizará exclusivamente a través de ClaveÚnica del Estado, por lo que no es necesario crear ni ingresar una contraseña local.
                                     </div>
                                 </div>
                             </div>

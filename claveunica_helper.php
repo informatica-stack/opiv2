@@ -7,7 +7,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 /**
- * Obtiene la configuración de ClaveÚnica desde Variables de Entorno de Dockploy (o fallbacks local/servidor).
+ * Obtiene la configuración de ClaveÚnica desde Variables de Entorno de Dockploy.
  * 
  * @return array
  */

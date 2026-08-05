@@ -102,10 +102,6 @@ function redirectBasedOnRole($role) {
                     <span class="texto" aria-hidden="true">Iniciar sesión</span>
                 </a>
             </div>
-
-            <p class="mt-4 text-muted small mb-0" style="font-size: 11px;">
-                Usted será redirigido al sitio seguro del Gobierno de Chile.
-            </p>
         </div>
 
         
