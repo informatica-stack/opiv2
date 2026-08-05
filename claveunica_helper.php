@@ -17,7 +17,7 @@ function obtener_configuracion_claveunica() {
     
     // Auto-detectar protocolo y host para construir Redirect URI por defecto si no está definida en env
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'] ?? 'testopi.munilebu.gob.cl';
+    $host = $_SERVER['HTTP_HOST'] ?? 'opi.munilebu.gob.cl';
     $default_redirect = $protocol . '://' . $host . '/login.php';
     $default_logout_redirect = $protocol . '://' . $host . '/logout.php';
 
