@@ -1444,57 +1444,74 @@ select.input-tabla {
 }
 
 /* --------------------------------------------------------------------------
-   BOTÓN OFICIAL DE CLAVEÚNICA (Secretaría de Gobierno Digital - wikiguias)
+   BOTÓN OFICIAL DE CLAVEÚNICA (Secretaría de Gobierno Digital - MUNICIPAL)
    -------------------------------------------------------------------------- */
-.btn-claveunica,
 .btn-cu {
-    display: inline-flex;
-    align-items: center;
+    display: flex;
     justify-content: center;
+    align-items: center;
+    font-family: "Roboto", system-ui, -apple-system, sans-serif;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none !important;
+    vertical-align: middle;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    border-radius: 4px;
+    border: 0;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
     width: 100%;
     min-height: 48px;
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    font-weight: 700;
-    line-height: 1.25;
-    color: #ffffff !important;
-    background-color: #0F69B4;
-    border: none;
-    border-radius: 6px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    cursor: pointer;
-    transition: background-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
-    text-decoration: none !important;
-    user-select: none;
-    gap: 12px;
+    padding: 8px 14px !important;
+    font-size: 16px;
 }
 
-.btn-claveunica:hover,
 .btn-cu:hover {
-    background-color: #0B5490;
-    color: #ffffff !important;
-    box-shadow: 0 4px 8px rgba(15, 105, 180, 0.25);
+    text-decoration: none !important;
 }
 
-.btn-claveunica:focus-visible,
-.btn-cu:focus-visible {
-    outline: 3px solid #0F69B4;
-    outline-offset: 2px;
-}
-
-.btn-claveunica:active,
-.btn-cu:active {
-    background-color: #083E6B;
-    transform: translateY(1px);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-}
-
-.btn-claveunica svg.cu-icon,
-.btn-cu svg.cu-icon {
-    width: 26px;
-    height: 26px;
+/* Icono ClaveÚnica */
+.btn-cu .cl-claveunica-svg {
+    width: 24px;
+    height: 24px;
+    margin: auto 4px auto 0px;
     flex-shrink: 0;
-    display: block;
 }
+
+/* Texto ClaveÚnica */
+.btn-cu .texto {
+    padding-left: 4px;
+    text-decoration: none;
+    font-size: 16px;
+    line-height: 2rem;
+    text-rendering: geometricPrecision;
+}
+
+/* Color Estándar */
+.btn-cu.btn-color-estandar {
+    background-color: #0F69C4;
+    color: #FFF !important;
+}
+
+.btn-cu.btn-color-estandar:hover {
+    background-color: #0B4E91;
+    color: #FFF !important;
+}
+
+.btn-cu.btn-color-estandar:active {
+    background-color: #07305A;
+    color: #FFF !important;
+}
+
+.btn-cu.btn-color-estandar:focus {
+    background-color: #0B4E91;
+    color: #FFF !important;
+    outline: 4px solid #FFBE5C;
+    outline-offset: 0;
+}
+
 
 
