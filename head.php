@@ -1,7 +1,7 @@
 <?php
 // head.php - Encabezado HTML Unificado y Carga de Estilos Antiparpadeo (FOUC)
 if (!isset($titulo_pagina)) {
-    $titulo_pagina = 'Sistema de Órdenes de Pedido Interno';
+    $titulo_pagina = 'Sistema de Órdenes de pedido interno';
 }
 ?>
 <meta charset="UTF-8">

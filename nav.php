@@ -14,7 +14,7 @@ $user_name = $_SESSION['user_name'] ?? 'Usuario';
             <img src="logo.png" alt="Logo" class="h-8 w-auto object-contain bg-white rounded p-0.5 border" style="height: 32px;">
             <div class="lh-1 d-none d-sm-block text-start">
                 <span class="fs-6 fw-bold text-dark d-block">Sistema de Órdenes de Pedido Interno</span>
-                <span class="text-muted d-block text-uppercase tracking-wider" style="font-size: 8px; font-weight: 800;">Municipalidad</span>
+                <span class="text-muted d-block text-uppercase tracking-wider" style="font-size: 8px; font-weight: 800;">ADMINISTRACIÓN MUNICIPAL</span>
             </div>
         </a>
 
@@ -136,4 +136,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
-<?php include_once __DIR__ . '/modal_trazabilidad.php'; ?>
+<?php include_once __DIR__ . '/modal_trazabilidad.php'; ?>

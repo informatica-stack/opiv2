@@ -633,7 +633,7 @@ foreach($otros_proveedores as $p) {
                 if (p) {
                     document.getElementById('provResumenRazonSocial').innerText = p.razon_social;
                     document.getElementById('provResumenRut').innerText = p.rut;
-                    document.getElementById('provResumenDireccion').innerText = 'Proveedor registrado en el Directorio Municipal';
+                    document.getElementById('provResumenDireccion').innerText = 'Proveedor registrado en el directorio municipal';
                     
                     resumenVacio.classList.add('d-none');
                     resumenDetalle.classList.remove('d-none');
