@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: db_sistemas
--- Tiempo de generación: 03-08-2026 a las 16:27:48
+-- Tiempo de generación: 04-08-2026 a las 18:33:35
 -- Versión del servidor: 8.0.45
 -- Versión de PHP: 8.2.27
 
@@ -211,6 +211,14 @@ CREATE TABLE `expedientes` (
   `plan_compras_item` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `expedientes`
+--
+
+INSERT INTO `expedientes` (`id`, `codigo_interno`, `titulo_compra`, `folio_opi`, `usuario_creador_id`, `unidad_origen_id`, `centro_costo_id`, `tipo_compra_id`, `prioridad_id`, `rango_utm_id`, `estado_actual`, `proveedor_adjudicado_id`, `id_contrato_suministro`, `orden_compra_numero`, `decreto_alcaldicio_numero`, `conv_marco_oc`, `id_licitacion`, `monto_estimado`, `monto_definitivo`, `motivo_compra`, `observacion_cierre`, `created_at`, `fecha_visa_presupuesto`, `fecha_adjudicacion`, `fecha_aprobacion_opi`, `num_certificado_oficial`, `id_entidad_gobierno`, `id_compra_agil`, `plan_compras_proyecto`, `plan_compras_item`) VALUES
+(1, 'REQ-2026-0001', 'OPI de prueba', NULL, 6, 1, 1, 6, 1, 3, 'ANULADO', NULL, NULL, NULL, NULL, NULL, NULL, 595000.00, NULL, 'Opi de prueba', 'Cancelado por el usuario', '2026-08-04 17:55:52', NULL, NULL, NULL, NULL, 'ID PE-MUN-00335', NULL, '5078-99', 8),
+(2, 'REQ-2026-0002', 'OPI de prueba', NULL, 6, 1, 1, 6, 1, 3, 'EN_VALIDACION_PRESUPUESTARIA', NULL, NULL, NULL, NULL, NULL, NULL, 595000.00, NULL, 'Opi de prueba', NULL, '2026-08-04 18:01:18', NULL, NULL, NULL, NULL, 'ID PE-MUN-00335', NULL, '5078-99', 8);
+
 -- --------------------------------------------------------
 
 --
@@ -240,6 +248,13 @@ CREATE TABLE `expedientes_documentos` (
   `nombre_original` varchar(150) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `fecha_subida` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `expedientes_documentos`
+--
+
+INSERT INTO `expedientes_documentos` (`id`, `expediente_id`, `subido_por_id`, `tipo_doc`, `ruta_archivo`, `nombre_original`, `fecha_subida`) VALUES
+(1, 2, 6, 'OTRO', 'uploads/2026/exp_2/adj_1785880878_0.docx', 'Bases Técnicas especiales.docx', '2026-08-04 18:01:18');
 
 -- --------------------------------------------------------
 
@@ -272,6 +287,16 @@ CREATE TABLE `expedientes_historial` (
   `fecha_accion` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `expedientes_historial`
+--
+
+INSERT INTO `expedientes_historial` (`id`, `expediente_id`, `usuario_id`, `accion`, `estado_anterior`, `estado_nuevo`, `comentario`, `fecha_accion`) VALUES
+(1, 1, 6, 'CREAR', 'BORRADOR', 'EN_REVISION_JEFATURA', 'Solicitud ingresada al sistema. Proyecto: 5078-99, Ítem: 8', '2026-08-04 17:55:52'),
+(2, 2, 6, 'CREAR', 'BORRADOR', 'EN_REVISION_JEFATURA', 'Solicitud ingresada al sistema. Proyecto: 5078-99, Ítem: 8', '2026-08-04 18:01:18'),
+(3, 1, 6, 'ANULAR', 'EN_REVISION_JEFATURA', 'ANULADO', 'Cancelado por el usuario creador', '2026-08-04 18:01:29'),
+(4, 2, 6, 'APROBAR', 'EN_REVISION_JEFATURA', 'EN_VALIDACION_PRESUPUESTARIA', 'Aprobar', '2026-08-04 18:04:51');
+
 -- --------------------------------------------------------
 
 --
@@ -293,6 +318,14 @@ CREATE TABLE `expedientes_items` (
   `monto_operacion` decimal(15,2) DEFAULT NULL,
   `saldo_final_resultante` decimal(15,2) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `expedientes_items`
+--
+
+INSERT INTO `expedientes_items` (`id`, `expediente_id`, `presupuesto_asignado_id`, `id_producto_cm`, `descripcion`, `unidad_medida`, `cantidad`, `precio_unitario`, `monto_total_presupuesto`, `monto_comprometido_fecha`, `monto_operacion`, `saldo_final_resultante`) VALUES
+(1, 1, 3, NULL, 'COMPUTADORES PARA ADMINISTRACIÓN', 'UNIDAD', 1.00, 0.00, NULL, NULL, NULL, NULL),
+(2, 2, 3, NULL, 'COMPUTADORES PARA ADMINISTRACIÓN', 'UNIDAD', 1.00, 0.00, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -420,13 +453,29 @@ INSERT INTO `flujos_definicion` (`id`, `tipo_compra_id`, `estado_actual`, `requi
 (116, 6, 'ESPERANDO_CDP_FINANZAS_FINAL', 0, 'APROBAR', 'Firmar CDP y Enviar a Administrador', 'EN_APROBACION_ADMINISTRADOR', 0, NULL, NULL),
 (117, 4, 'ESPERANDO_CDP_FINANZAS', 0, 'APROBAR', 'Firmar CDP y Enviar a Administrador', 'EN_APROBACION_ADMINISTRADOR', 0, NULL, NULL),
 (118, 2, 'ESPERANDO_CDP_FINANZAS', 0, 'APROBAR', 'Firmar CDP y Enviar a Administrador', 'EN_APROBACION_ADMINISTRADOR', 0, NULL, NULL),
-(119, 6, 'EN_VALIDACION_PRESUPUESTARIA', 0, 'APROBAR', 'Visar y Reservar Fondos', 'EN_AUTORIZACION_COTIZACION', 0, NULL, NULL),
-(120, 6, 'EN_AUTORIZACION_COTIZACION', 0, 'APROBAR', 'Autorizar Cotización', 'EN_COTIZACION_ADQ', 0, NULL, NULL),
-(121, 6, 'EN_AUTORIZACION_COTIZACION', 0, 'DEVOLVER', 'Devolver para Corrección', 'EN_CORRECCION', 0, NULL, NULL),
-(122, 6, 'EN_AUTORIZACION_COTIZACION', 0, 'RECHAZAR', 'Rechazar Solicitud', 'RECHAZADO', 0, NULL, NULL),
-(123, 6, 'ESPERANDO_CDP_FINANZAS_FINAL', 0, 'APROBAR', 'Firmar CDP y Enviar a Administrador', 'EN_APROBACION_ADMINISTRADOR', 0, NULL, NULL),
-(124, 4, 'ESPERANDO_CDP_FINANZAS', 0, 'APROBAR', 'Firmar CDP y Enviar a Administrador', 'EN_APROBACION_ADMINISTRADOR', 0, NULL, NULL),
-(125, 2, 'ESPERANDO_CDP_FINANZAS', 0, 'APROBAR', 'Firmar CDP y Enviar a Administrador', 'EN_APROBACION_ADMINISTRADOR', 0, NULL, NULL);
+(126, 5, 'BORRADOR', 0, 'APROBAR', 'Aprobar', 'EN_REVISION_JEFATURA', 0, NULL, NULL),
+(127, 5, 'EN_REVISION_JEFATURA', 0, 'APROBAR', 'Aprobar', 'EN_VALIDACION_PRESUPUESTARIA', 0, NULL, NULL),
+(128, 5, 'EN_REVISION_JEFATURA', 0, 'DEVOLVER', 'Devolver para Corrección', 'EN_CORRECCION', 0, NULL, NULL),
+(129, 5, 'EN_REVISION_JEFATURA', 0, 'RECHAZAR', 'Rechazar Solicitud', 'RECHAZADO', 0, NULL, NULL),
+(130, 5, 'EN_VALIDACION_PRESUPUESTARIA', 0, 'APROBAR', 'Aprobar', 'EN_GESTION_ADQUISICIONES', 0, NULL, NULL),
+(131, 5, 'EN_VALIDACION_PRESUPUESTARIA', 0, 'DEVOLVER', 'Devolver para Corrección', 'EN_CORRECCION', 0, NULL, NULL),
+(132, 5, 'EN_VALIDACION_PRESUPUESTARIA', 0, 'RECHAZAR', 'Rechazar Solicitud', 'RECHAZADO', 0, NULL, NULL),
+(133, 5, 'EN_GESTION_ADQUISICIONES', 0, 'APROBAR', 'Aprobar', 'EN_APROBACION_ADMINISTRADOR', 0, NULL, NULL),
+(134, 5, 'EN_GESTION_ADQUISICIONES', 0, 'DEVOLVER', 'Devolver para Corrección', 'EN_CORRECCION', 0, NULL, NULL),
+(135, 5, 'EN_GESTION_ADQUISICIONES', 0, 'RECHAZAR', 'Rechazar Solicitud', 'RECHAZADO', 0, NULL, NULL),
+(136, 5, 'EN_APROBACION_ADMINISTRADOR', 0, 'APROBAR', 'Aprobar', 'EN_EMISION_OC', 0, NULL, NULL),
+(137, 5, 'EN_APROBACION_ADMINISTRADOR', 0, 'DEVOLVER', 'Devolver para Corrección', 'EN_CORRECCION', 0, NULL, NULL),
+(138, 5, 'EN_APROBACION_ADMINISTRADOR', 0, 'RECHAZAR', 'Rechazar Solicitud', 'RECHAZADO', 0, NULL, NULL),
+(139, 5, 'EN_EMISION_OC', 0, 'APROBAR', 'Aprobar', 'ESPERANDO_ACEPTACION_OC', 0, NULL, NULL),
+(140, 5, 'EN_EMISION_OC', 0, 'DEVOLVER', 'Devolver para Corrección', 'EN_CORRECCION', 0, NULL, NULL),
+(141, 5, 'EN_EMISION_OC', 0, 'RECHAZAR', 'Rechazar Solicitud', 'RECHAZADO', 0, NULL, NULL),
+(142, 5, 'ESPERANDO_ACEPTACION_OC', 0, 'APROBAR', 'Aprobar', 'FINALIZADO', 0, NULL, NULL),
+(143, 5, 'ESPERANDO_ACEPTACION_OC', 0, 'DEVOLVER', 'Devolver para Corrección', 'EN_CORRECCION', 0, NULL, NULL),
+(144, 5, 'ESPERANDO_ACEPTACION_OC', 0, 'RECHAZAR', 'Rechazar Solicitud', 'RECHAZADO', 0, NULL, NULL),
+(145, 5, 'EN_VALIDACION_PRESUPUESTARIA', 0, 'SOLICITAR_CDP', 'Solicitar CDP a Finanzas', 'ESPERANDO_CDP_FINANZAS', 0, NULL, NULL),
+(146, 5, 'ESPERANDO_CDP_FINANZAS', 0, 'DEVOLVER', 'Devolver para Corrección', 'EN_CORRECCION', 1, NULL, NULL),
+(147, 5, 'ESPERANDO_CDP_FINANZAS', 0, 'RECHAZAR', 'Rechazar Solicitud', 'RECHAZADO', 1, NULL, NULL),
+(148, 5, 'ESPERANDO_CDP_FINANZAS', 0, 'APROBAR', 'Firmar CDP y Enviar a Administrador', 'EN_APROBACION_ADMINISTRADOR', 0, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -697,7 +746,8 @@ CREATE TABLE `usuarios` (
 
 INSERT INTO `usuarios` (`id`, `unidad_id`, `rol_id`, `rut`, `nombre_completo`, `email`, `password_hash`, `es_jefe_unidad`, `activo`, `cargo`, `token_verificacion`, `email_verificado`, `estado_aprobacion`, `fecha_registro`) VALUES
 (6, 1, 6, '11.111.111-1', 'Departamento de informática', 'informatica@lebu.cl', '$2y$10$4/wrHWwJnBaCk/q5JGWrK./XJEVgXzQ.3S3p/3iZ1sxhoIXeYOSfq', 0, 1, 'Departamento de informática', NULL, 1, 'APROBADO', '2026-07-31 15:45:00'),
-(7, 5, 1, '16.981.872-K', 'Oscar Muñoz Arriagada', 'administrador@lebu.cl', '$2y$10$OHlyMewXSDy2C85PosohWurCRh3fvzGPy.XQ5sYUyIoiQl0IB6yXC', 1, 1, 'Administrador Municipal', NULL, 1, 'APROBADO', '2026-07-31 15:45:00');
+(7, 5, 1, '16.981.872-K', 'Oscar Muñoz Arriagada', 'administrador@lebu.cl', '$2y$10$OHlyMewXSDy2C85PosohWurCRh3fvzGPy.XQ5sYUyIoiQl0IB6yXC', 1, 1, 'Administrador Municipal', NULL, 1, 'APROBADO', '2026-07-31 15:45:00'),
+(8, 1, 5, '19.511.214-2', 'Diego Gerardo Castro Carrillo', 'diego.castro.carrillo@gmail.com', '$2y$10$fg6w2nuJnWpE0n9kmQKdVOCgSAjtfO1HMomV/od/lfQQlmU2bw7Wu', 0, 1, 'Hago de todo', NULL, 1, 'APROBADO', '2026-08-03 17:05:45');
 
 --
 -- Índices para tablas volcadas
@@ -903,7 +953,7 @@ ALTER TABLE `cuentas_presupuestarias`
 -- AUTO_INCREMENT de la tabla `expedientes`
 --
 ALTER TABLE `expedientes`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `expedientes_criterios`
@@ -915,7 +965,7 @@ ALTER TABLE `expedientes_criterios`
 -- AUTO_INCREMENT de la tabla `expedientes_documentos`
 --
 ALTER TABLE `expedientes_documentos`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `expedientes_firmas`
@@ -927,13 +977,13 @@ ALTER TABLE `expedientes_firmas`
 -- AUTO_INCREMENT de la tabla `expedientes_historial`
 --
 ALTER TABLE `expedientes_historial`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `expedientes_items`
 --
 ALTER TABLE `expedientes_items`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `flujos_definicion`
@@ -993,7 +1043,7 @@ ALTER TABLE `unidades`
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- Restricciones para tablas volcadas
