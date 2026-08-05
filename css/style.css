@@ -1459,14 +1459,10 @@ select.input-tabla {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
-    border-radius: 4px;
+    border-radius: 0;
     border: 0;
     transition: background-color 0.2s, box-shadow 0.2s;
     cursor: pointer;
-    width: 100%;
-    min-height: 48px;
-    padding: 8px 14px !important;
-    font-size: 16px;
 }
 
 .btn-cu:hover {
@@ -1481,8 +1477,9 @@ select.input-tabla {
     flex-shrink: 0;
 }
 
-/* Texto ClaveÚnica */
-.btn-cu .texto {
+/* Texto ClaveÚnica - Soporte para clases .texto y .text */
+.btn-cu .texto,
+.btn-cu .text {
     padding-left: 4px;
     text-decoration: none;
     font-size: 16px;
@@ -1511,6 +1508,33 @@ select.input-tabla {
     color: #FFF !important;
     outline: 4px solid #FFBE5C;
     outline-offset: 0;
+}
+
+/* Tamaño M (Mediano) */
+.btn-cu.btn-m {
+    width: fit-content;
+    min-height: 48px;
+    padding: 8px 14px 8px 14px !important;
+    font-size: 16px;
+}
+
+/* Tamaño fluid-width (Ancho Flexible) */
+.btn-cu.btn-fw {
+    max-width: 550px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+/* Bordes redondeados */
+.btn-cu.rounded-none {
+    border-radius: 0%;
+}
+.btn-cu.rounded-middle {
+    border-radius: 4px 4px;
+}
+.btn-cu.rounded-full {
+    border-radius: 99px 99px;
 }
 
 
