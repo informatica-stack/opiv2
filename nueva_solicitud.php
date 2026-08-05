@@ -33,7 +33,7 @@ foreach($otros_proveedores as $p) {
 <html lang="es">
 <head>
     <?php 
-    $titulo_pagina = "Nueva Solicitud Dinámica";
+    $titulo_pagina = "Nueva compra";
     include __DIR__ . '/head.php'; 
     ?>
 </head>
@@ -48,7 +48,7 @@ foreach($otros_proveedores as $p) {
             <div class="col-12 col-md">
                 <h1 class="h3 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
                     <i class="bi bi-folder-plus text-primary fs-3"></i>
-                    Nueva Solicitud de Compra
+                    Nueva Compra
                 </h1>
                 <p class="text-muted small mb-0">El formulario se adaptará dinámicamente según el tipo de compra elegido.</p>
             </div>
@@ -87,7 +87,7 @@ foreach($otros_proveedores as $p) {
                     </div>
                 </div>
                 <div class="bg-white border px-3 py-2 rounded-3 shadow-sm d-flex align-items-center gap-2 shrink-0">
-                    <span class="text-uppercase text-muted fw-bold" style="font-size: 10px;">ID CC</span>
+                    <span class="text-uppercase text-muted fw-bold" style="font-size: 10px;">CENTTRO DE COSTOS</span>
                     <span class="font-monospace fw-bold text-primary">#<?= htmlspecialchars($centro_costo['codigo_cuenta']) ?></span>
                 </div>
             </div>
@@ -158,7 +158,7 @@ foreach($otros_proveedores as $p) {
                         <input type="hidden" name="prioridad_id" value="1">
 
                         <div class="col-md-6 d-none" id="divMontoDisponible">
-                            <label class="form-label fw-bold text-primary small">Monto Disponible Neto de la Cotización <span class="text-danger">*</span></label>
+                            <label class="form-label fw-bold text-primary small">Monto <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-primary text-white fw-bold">$</span>
                                 <input type="number" name="monto_disponible_neto" id="inpMontoDisponible" min="1" step="1" class="form-control fw-bold text-primary bg-white" oninput="calc()">
@@ -392,14 +392,14 @@ foreach($otros_proveedores as $p) {
                         <span class="badge bg-primary rounded-pill px-2.5 py-2 fs-6">3</span>
                         <div>
                             <h5 class="fw-bold mb-0">Documentación Adjunta</h5>
-                            <p class="text-muted small mb-0">Debe subir cotizaciones, TDR, bases de licitación o la ficha del proveedor si solicita pre-registro.</p>
+                            <p class="text-muted small mb-0">Debe subir cotizaciones, TDR, bases de licitación o toda documentación requerida.</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="card-body p-4">
                     <div class="mb-2">
-                        <label class="form-label fw-bold text-secondary small" id="lblAdjunto">Documentos Adjuntos (TDR/Cotizaciones)</label>
+                        <label class="form-label fw-bold text-secondary small" id="lblAdjunto">Documentos adjuntos (TDR/Cotizaciones/Patente. Etc...)</label>
                         
                         <!-- Drag and Drop Dropzone -->
                         <div id="dropzone" class="border border-2 border-dashed border-primary bg-light rounded-3 p-4 text-center d-flex flex-column align-items-center justify-content-center gap-2" style="cursor: pointer;">
@@ -420,10 +420,10 @@ foreach($otros_proveedores as $p) {
             <!-- BOTONERA DE ENVÍO -->
             <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3 pb-5">
                 <a href="mis_solicitudes.php" class="btn btn-outline-secondary px-4 py-2.5 rounded-3 w-100 w-sm-auto text-center fw-semibold">
-                    Volver a Mis Solicitudes
+                    Volver a Mis compras
                 </a>
                 <button type="submit" id="btnSubmit" class="btn btn-dark px-4 py-2.5 rounded-3 fw-bold shadow d-flex align-items-center justify-content-center gap-2 w-100 w-sm-auto">
-                    <span id="btnText">Generar e Ingresar Trámite</span>
+                    <span id="btnText">Generar e ingresar trámite</span>
                     <div id="btnSpinner" class="spinner-border spinner-border-sm text-light d-none" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
@@ -1067,7 +1067,7 @@ foreach($otros_proveedores as $p) {
             let valCuenta = data ? data.cuenta_id : '';
             let valUni = data ? data.uni : 'UNIDAD';
 
-            let options = '<option value="">Sel. Cuenta...</option>';
+            let options = '<option value="">Cuenta</option>';
             cuentasDisponibles.forEach(c => {
                 let ag = c.ag_codigo ? `[${c.ag_codigo}] ` : '';
                 let sel = (c.id == valCuenta) ? 'selected' : '';
