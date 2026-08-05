@@ -87,7 +87,7 @@ function intercambiar_code_por_token($code, $state) {
     ]);
 
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $config['token_url']);
+    curl_setopt($ch, CURLOPT_URL, 'https://accounts.claveunica.gob.cl/openid/token/');
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $post_fields);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -126,7 +126,7 @@ function obtener_info_usuario_claveunica($access_token) {
     $config = obtener_configuracion_claveunica();
 
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $config['userinfo_url']);
+    curl_setopt($ch, CURLOPT_URL, 'https://accounts.claveunica.gob.cl/openid/userinfo/');
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
