@@ -88,7 +88,7 @@ function redirectBasedOnRole($role) {
             <?php endif; ?>
 
             <p class="text-secondary small fw-bold mb-4 uppercase tracking-wide">
-                Identifíquese de forma segura utilizando su ClaveÚnica del Estado
+                Ingresa con tu ClaveÚnica
             </p>
 
             <div class="d-flex justify-content-center my-3">
