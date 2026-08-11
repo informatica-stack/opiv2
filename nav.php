@@ -67,6 +67,7 @@ $user_name = $_SESSION['user_name'] ?? 'Usuario';
                         <li><a class="dropdown-item rounded-3 py-2 small d-flex align-items-center gap-2 <?= ($pagina_actual === 'usuarios.php') ? 'active bg-primary text-white' : 'text-dark' ?>" href="usuarios.php"><i class="bi bi-people"></i> Usuarios</a></li>
                         <li><a class="dropdown-item rounded-3 py-2 small d-flex align-items-center gap-2 <?= ($pagina_actual === 'unidades.php') ? 'active bg-primary text-white' : 'text-dark' ?>" href="unidades.php"><i class="bi bi-diagram-3"></i> Unidades</a></li>
                         <li><a class="dropdown-item rounded-3 py-2 small d-flex align-items-center gap-2 <?= ($pagina_actual === 'firmantes.php') ? 'active bg-primary text-white' : 'text-dark' ?>" href="firmantes.php"><i class="bi bi-vector-pen"></i> Firmantes Suplentes</a></li>
+                        <li><a class="dropdown-item rounded-3 py-2 small d-flex align-items-center gap-2 <?= ($pagina_actual === 'configuracion_sistema.php') ? 'active bg-primary text-white' : 'text-dark' ?>" href="configuracion_sistema.php"><i class="bi bi-sliders"></i> Parámetros del Sistema</a></li>
                         <li><a class="dropdown-item rounded-3 py-2 small d-flex align-items-center gap-2 text-danger fw-bold <?= ($pagina_actual === 'limpiar_datos_pruebas.php') ? 'active bg-danger text-white' : '' ?>" href="limpiar_datos_pruebas.php"><i class="bi bi-trash3-fill"></i> Limpieza de Pruebas</a></li>
                     <?php endif; ?>
 

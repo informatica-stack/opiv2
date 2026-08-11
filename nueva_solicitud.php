@@ -407,7 +407,7 @@ foreach($otros_proveedores as $p) {
                                 <i class="bi bi-cloud-upload fs-4"></i>
                             </div>
                             <h6 class="fw-bold text-dark mb-0">Arrastre archivos aquí o haga clic para seleccionar</h6>
-                            <p class="text-muted small mb-0">Formatos permitidos: PDF, Word, Excel, JPG, PNG (Máx. 10MB por archivo)</p>
+                            <p class="text-muted small mb-0">Formatos permitidos: PDF, Word, Excel, JPG, PNG (Máx. <?= LIMITE_ADJUNTO_MB ?>MB por archivo)</p>
                             <input type="file" name="archivos_adjuntos[]" id="inpAdjunto" multiple class="d-none" onchange="manejarSeleccionArchivos()"/>
                         </div>
                         
