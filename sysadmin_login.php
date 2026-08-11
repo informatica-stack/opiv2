@@ -98,26 +98,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tiempo_restante <= 0) {
 <html lang="es">
 <head>
     <?php 
-    $titulo_pagina = "Consola de Administración - SYSADMIN";
+    $titulo_pagina = "Acceso Administrador - SYSADMIN";
     include __DIR__ . '/head.php'; 
     ?>
 </head>
-<body class="bg-dark min-vh-100 d-flex flex-column align-items-center justify-content-center p-3 text-white">
+<body class="bg-light min-vh-100 d-flex flex-column align-items-center justify-content-center p-3">
 
-    <div class="card bg-secondary text-white shadow-lg border-0 rounded-4 overflow-hidden" style="max-width: 400px; width: 100%; --bs-bg-opacity: .15; backdrop-filter: blur(10px);">
+    <div class="card shadow-lg border-0 rounded-4 overflow-hidden" style="max-width: 420px; width: 100%;">
         
-        <div class="card-header bg-black bg-opacity-50 p-4 text-center border-bottom border-secondary">
-            <div class="d-flex justify-content-center mb-2">
-                <i class="bi bi-shield-lock-fill text-warning display-4"></i>
+        <!-- ENCABEZADO DE TARJETA (Estilo Claro Institucional) -->
+        <div class="bg-white p-4 text-center border-bottom border-light-subtle">
+            <div class="d-flex justify-content-center mb-3">
+                <img src="logo.png" alt="Logo Institucional" class="img-fluid rounded bg-white p-2 border border-light-subtle shadow-sm" style="max-height: 96px; width: auto;">
             </div>
-            <h5 class="fw-bold mb-0 tracking-wide text-uppercase">Consola SYSADMIN</h5>
-            <small class="text-white-50">Acceso Técnico de Emergencia</small>
+            <h4 class="fw-bold text-dark mb-1">Sistema de órdenes de pedido interno</h4>
+            <p class="text-muted small mb-0">Acceso Administrador del Sistema (SYSADMIN)</p>
         </div>
 
-        <div class="card-body p-4 p-sm-4">
+        <div class="card-body p-4 p-sm-5">
             <?php if(!empty($error)): ?>
-                <div class="alert alert-danger border-0 d-flex align-items-center gap-2 mb-4" role="alert">
-                    <i class="bi bi-exclamation-octagon-fill shrink-0"></i>
+                <div class="alert alert-danger d-flex align-items-center gap-2 mb-4 text-start" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill shrink-0"></i>
                     <div class="small fw-semibold"><?= htmlspecialchars($error) ?></div>
                 </div>
             <?php endif; ?>
@@ -125,38 +126,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tiempo_restante <= 0) {
             <form action="" method="POST" autocomplete="off">
                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                 
+                <!-- CORREO INSTITUCIONAL -->
                 <div class="mb-3">
-                    <label for="email" class="form-label fw-bold text-white-50 small text-uppercase" style="font-size: 10px;">Correo Administrador</label>
+                    <label for="email" class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Correo Administrador</label>
                     <div class="input-group">
-                        <span class="input-group-text bg-dark border-secondary text-secondary">
-                            <i class="bi bi-person-fill-gear"></i>
+                        <span class="input-group-text bg-light text-secondary border-end-0">
+                            <i class="bi bi-envelope-fill"></i>
                         </span>
                         <input type="email" name="email" id="email" required 
-                            class="form-control bg-dark text-white border-secondary" placeholder="sysadmin@dominio.cl" <?= $tiempo_restante > 0 ? 'disabled' : '' ?>>
+                            class="form-control bg-light border-start-0 py-2.5" placeholder="informatica@lebu.cl" <?= $tiempo_restante > 0 ? 'disabled' : '' ?>>
                     </div>
                 </div>
 
+                <!-- CONTRASEÑA -->
                 <div class="mb-4">
-                    <label for="password" class="form-label fw-bold text-white-50 small text-uppercase" style="font-size: 10px;">Contraseña Maestro</label>
+                    <label for="password" class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Contraseña</label>
                     <div class="input-group">
-                        <span class="input-group-text bg-dark border-secondary text-secondary">
-                            <i class="bi bi-key-fill"></i>
+                        <span class="input-group-text bg-light text-secondary border-end-0">
+                            <i class="bi bi-lock-fill"></i>
                         </span>
                         <input type="password" name="password" id="password" required 
-                            class="form-control bg-dark text-white border-secondary" placeholder="••••••••••••" <?= $tiempo_restante > 0 ? 'disabled' : '' ?>>
+                            class="form-control bg-light border-start-0 py-2.5" placeholder="••••••••••••" <?= $tiempo_restante > 0 ? 'disabled' : '' ?>>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-warning w-100 py-2.5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" <?= $tiempo_restante > 0 ? 'disabled' : '' ?>>
-                    Autenticar SYSADMIN
-                    <i class="bi bi-arrow-right-circle-fill"></i>
+                <!-- BOTÓN DE INGRESO -->
+                <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" <?= $tiempo_restante > 0 ? 'disabled' : '' ?>>
+                    Iniciar Sesión
+                    <i class="bi bi-box-arrow-in-right"></i>
                 </button>
             </form>
         </div>
 
-        <div class="card-footer bg-black bg-opacity-30 p-3 text-center border-top border-secondary">
-            <p class="text-white-50 small mb-0" style="font-size: 11px;">
-                Conexión segura cifrada con TLS &bull; OPIv2 Internal System
+        <!-- FOOTER DE TARJETA -->
+        <div class="bg-light p-3 text-center border-top border-light-subtle">
+            <p class="text-muted small mb-0" style="font-size: 11px;">
+                Departamento de Informática &copy; <?= date('Y') ?> &bull; Municipalidad de Lebu
             </p>
         </div>
     </div>

@@ -402,13 +402,13 @@ foreach($otros_proveedores as $p) {
                         <label class="form-label fw-bold text-secondary small" id="lblAdjunto">Documentos adjuntos (TDR/Cotizaciones/Patente. Etc...)</label>
                         
                         <!-- Drag and Drop Dropzone -->
-                        <div id="dropzone" class="border border-2 border-dashed border-primary bg-light rounded-3 p-4 text-center d-flex flex-column align-items-center justify-content-center gap-2" style="cursor: pointer;">
+                        <div id="dropzone" tabindex="0" role="button" class="border border-2 border-dashed border-primary bg-light rounded-3 p-4 text-center d-flex flex-column align-items-center justify-content-center gap-2" style="cursor: pointer;">
                             <div class="p-3 bg-white text-primary rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
                                 <i class="bi bi-cloud-upload fs-4"></i>
                             </div>
                             <h6 class="fw-bold text-dark mb-0">Arrastre archivos aquí o haga clic para seleccionar</h6>
                             <p class="text-muted small mb-0">Formatos permitidos: PDF, Word, Excel, JPG, PNG (Máx. 10MB por archivo)</p>
-                            <input type="file" name="archivos_adjuntos[]" id="inpAdjunto" multiple class="d-none" onchange="actualizarListaArchivos()"/>
+                            <input type="file" name="archivos_adjuntos[]" id="inpAdjunto" multiple class="d-none" onchange="manejarSeleccionArchivos()"/>
                         </div>
                         
                         <!-- Lista de archivos seleccionados -->
@@ -450,6 +450,19 @@ foreach($otros_proveedores as $p) {
         const listaAdjuntos = document.getElementById('listaAdjuntos');
 
         if (dropzone) {
+            dropzone.addEventListener('click', (e) => {
+                if (e.target !== inpAdjunto) {
+                    inpAdjunto.click();
+                }
+            });
+
+            dropzone.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    inpAdjunto.click();
+                }
+            });
+
             ['dragenter', 'dragover'].forEach(eventName => {
                 dropzone.addEventListener(eventName, (e) => {
                     e.preventDefault();
@@ -471,6 +484,16 @@ foreach($otros_proveedores as $p) {
                 let files = dt.files;
                 agregarArchivosAlInput(files);
             });
+        }
+
+        function manejarSeleccionArchivos() {
+            if (inpAdjunto.files && inpAdjunto.files.length > 0) {
+                for (let i = 0; i < inpAdjunto.files.length; i++) {
+                    dtArchivos.items.add(inpAdjunto.files[i]);
+                }
+            }
+            inpAdjunto.files = dtArchivos.files;
+            actualizarListaArchivos();
         }
 
         function agregarArchivosAlInput(files) {
