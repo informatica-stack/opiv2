@@ -161,7 +161,7 @@ foreach($otros_proveedores as $p) {
                             <label class="form-label fw-bold text-primary small">Monto <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-primary text-white fw-bold">$</span>
-                                <input type="number" name="monto_disponible_neto" id="inpMontoDisponible" min="1" step="1" class="form-control fw-bold text-primary bg-white" oninput="calc()">
+                                <input type="text" name="monto_disponible_neto" id="inpMontoDisponible" class="form-control fw-bold text-primary bg-white" oninput="handleMontoInput(this)" value="<?= htmlspecialchars($post_monto_disponible_neto ?? '') ?>">
                             </div>
                             <div class="form-text text-muted small" style="font-size: 9px;">El total estimado sumará el 19% de IVA de forma automática.</div>
                         </div>
@@ -1082,6 +1082,17 @@ foreach($otros_proveedores as $p) {
             return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])); 
         }
 
+        function formatCLP(value) {
+            let clean = value.toString().replace(/\D/g, '');
+            if (clean === '') return '';
+            return clean.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function handleMontoInput(input) {
+            input.value = formatCLP(input.value);
+            calc();
+        }
+
         function crearFilaHTML(data = null) {
             let valDesc = data ? escapeHTML(data.desc) : '';
             let valIdCm = data ? escapeHTML(data.id_cm) : '';
@@ -1145,7 +1156,7 @@ foreach($otros_proveedores as $p) {
 
             if (requiereCot) {
                 const inpMonto = document.getElementById('inpMontoDisponible');
-                totalNeto = parseFloat(inpMonto.value) || 0;
+                totalNeto = parseFloat(inpMonto.value.replace(/\./g, '')) || 0;
                 totalBruto = totalNeto * (1 + ivaRate);
                 
                 document.querySelectorAll('#tbodyItems tr').forEach(row => {
@@ -1184,7 +1195,8 @@ foreach($otros_proveedores as $p) {
             if (requiereCot) {
                 const inpMonto = document.getElementById('inpMontoDisponible');
                 inpMonto.classList.remove('is-invalid');
-                if (parseFloat(inpMonto.value) <= 0 || !inpMonto.value) {
+                const valMonto = parseFloat(inpMonto.value.replace(/\./g, '')) || 0;
+                if (valMonto <= 0 || !inpMonto.value) {
                     inpMonto.classList.add('is-invalid');
                     divError.innerHTML = "<strong>⚠️ Faltan datos requeridos:</strong> Debe ingresar un Monto Disponible Neto válido para la cotización.";
                     divError.classList.remove('d-none');
@@ -1334,6 +1346,11 @@ foreach($otros_proveedores as $p) {
                 document.getElementById('provResumenVacio').classList.add('d-none');
                 document.getElementById('provResumenDetalle').classList.remove('d-none');
                 document.getElementById('btnSelectProvText').innerText = 'Cambiar Proveedor';
+            }
+
+            const inpMonto = document.getElementById('inpMontoDisponible');
+            if (inpMonto && inpMonto.value) {
+                inpMonto.value = formatCLP(inpMonto.value);
             }
 
             evaluarFormularioReactivo();

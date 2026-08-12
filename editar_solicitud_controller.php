@@ -165,6 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     $post_plan_proyecto = trim($_POST['plan_compras_proyecto'] ?? '');
     $post_plan_item = trim($_POST['plan_compras_item'] ?? '');
     $post_tipo_impuesto = $_POST['tipo_impuesto'] ?? 'NETO';
+    $post_monto_disponible_neto = trim($_POST['monto_disponible_neto'] ?? '');
     
     $desc = $_POST['desc'] ?? [];
     $id_cm = $_POST['id_producto_cm'] ?? [];
@@ -231,7 +232,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
         $total_est_bruto = 0;
 
         if ($requiere_cot) {
-            $monto_disp_neto = floatval($_POST['monto_disponible_neto'] ?? 0);
+            $monto_raw = str_replace('.', '', $_POST['monto_disponible_neto'] ?? '0');
+            $monto_disp_neto = floatval($monto_raw);
             $total_est_bruto = $monto_disp_neto * $iva_pct;
         } else {
             foreach ($cant as $i => $c) {
