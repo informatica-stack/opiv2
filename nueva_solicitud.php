@@ -714,9 +714,6 @@ foreach($otros_proveedores as $p) {
                 btnText.innerText = 'Generar e ingresar trámite';
             }
         }
-            actualizarListaArchivos();
-            evaluarProveedorNuevo();
-        }
 
         // --- TRANSICIÓN DE PANELES ANIMADOS ---
         function toggleSlidePanel(id, visible) {
@@ -1437,6 +1434,11 @@ foreach($otros_proveedores as $p) {
                     divError.innerHTML = "<strong>⚠️ Faltan datos del Proveedor Nuevo:</strong> Por favor ingrese un RUT válido, Razón Social y suba el archivo PDF de la Ficha del Proveedor.";
                     divError.classList.remove('d-none');
                     divError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    document.getElementById('panelNuevoProv').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return false;
+                }
+            }
+
             // Validar que no haya adjuntos subiendo o con error
             if (typeof archivosSubidos !== 'undefined') {
                 if (archivosSubidos.some(a => a.status === 'uploading')) {
