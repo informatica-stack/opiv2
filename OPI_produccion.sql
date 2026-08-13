@@ -58,6 +58,14 @@ CREATE TABLE `centros_costo` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `centros_costo`
+-- (Requerido para la integridad referencial de unidades)
+--
+INSERT INTO `centros_costo` (`id`, `codigo_cuenta`, `nombre`, `anio_fiscal`, `activo`) VALUES
+(1, '11', 'Depto. Informática', 2026, 1),
+(2, '12', 'Administración', 2026, 1);
+
 -- --------------------------------------------------------
 
 --
@@ -149,7 +157,7 @@ DROP TABLE IF EXISTS `expedientes`;
 CREATE TABLE `expedientes` (
   `id` int NOT NULL AUTO_INCREMENT,
   `codigo_interno` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `titulo_compra` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `titulo_compra` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'Sin Título',
   `folio_opi` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `usuario_creador_id` int NOT NULL,
   `unidad_origen_id` int NOT NULL,
@@ -159,24 +167,24 @@ CREATE TABLE `expedientes` (
   `rango_utm_id` int DEFAULT NULL,
   `estado_actual` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'BORRADOR',
   `proveedor_adjudicado_id` int DEFAULT NULL,
-  `id_compra_agil` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `n_orden_compra` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `decreto_adjudicacion` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `id_licitacion` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `id_contrato_suministro` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `monto_estimado` decimal(15,2) NOT NULL DEFAULT '0.00',
-  `monto_definitivo` decimal(15,2) DEFAULT '0.00',
+  `orden_compra_numero` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `decreto_alcaldicio_numero` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `conv_marco_oc` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `id_licitacion` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `monto_estimado` decimal(15,2) NOT NULL,
+  `monto_definitivo` decimal(15,2) DEFAULT NULL,
   `motivo_compra` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `observacion_actual` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `observacion_cierre` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `fecha_visa_presupuesto` datetime DEFAULT NULL,
   `fecha_adjudicacion` datetime DEFAULT NULL,
-  `fecha_aprobado` datetime DEFAULT NULL,
-  `fecha_solicitud_fondos` datetime DEFAULT NULL,
-  `id_requerimiento_pe` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `link_portal_mercado` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `telefono_contacto` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `plazo_entrega` int NOT NULL DEFAULT '3',
+  `fecha_aprobacion_opi` datetime DEFAULT NULL,
+  `num_certificado_oficial` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `id_entidad_gobierno` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'ID PE-MUN-00335',
+  `id_compra_agil` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `plan_compras_proyecto` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `plan_compras_item` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `codigo_interno` (`codigo_interno`),
   UNIQUE KEY `folio_opi` (`folio_opi`),
@@ -199,9 +207,9 @@ DROP TABLE IF EXISTS `expedientes_criterios`;
 CREATE TABLE `expedientes_criterios` (
   `id` int NOT NULL AUTO_INCREMENT,
   `expediente_id` int NOT NULL,
-  `concepto` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `numero_criterio` int NOT NULL,
+  `descripcion` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `porcentaje` decimal(5,2) NOT NULL,
-  `detalle` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_criterio_exp` (`expediente_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -215,11 +223,11 @@ DROP TABLE IF EXISTS `expedientes_documentos`;
 CREATE TABLE `expedientes_documentos` (
   `id` int NOT NULL AUTO_INCREMENT,
   `expediente_id` int NOT NULL,
-  `subido_por_id` int DEFAULT NULL,
-  `tipo_doc` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `subido_por_id` int NOT NULL,
+  `tipo_doc` enum('TDR_ESPECIFICACIONES','COTIZACION_RESPALDO','CUADRO_COMPARATIVO','OPI_FIRMADA_PDF','OPI_ANULADA','FICHA_PROVEEDOR','CDP_BORRADOR','SITUACION_PRESUPUESTARIA','DECRETO_ALCALDICIO','OTRO') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `ruta_archivo` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `nombre_original` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `fecha_subida` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `fecha_subida` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `fk_doc_exp` (`expediente_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -233,10 +241,9 @@ DROP TABLE IF EXISTS `expedientes_firmas`;
 CREATE TABLE `expedientes_firmas` (
   `id` int NOT NULL AUTO_INCREMENT,
   `expediente_id` int NOT NULL,
-  `usuario_id` int NOT NULL,
-  `rol_firmante` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `fecha_firma` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `hash_firma` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `autoridad_id` int NOT NULL,
+  `cargo_firmante` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `fecha_firma` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `fk_fir_exp` (`expediente_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -251,11 +258,11 @@ CREATE TABLE `expedientes_historial` (
   `id` int NOT NULL AUTO_INCREMENT,
   `expediente_id` int NOT NULL,
   `usuario_id` int NOT NULL,
-  `estado_anterior` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `estado_nuevo` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `accion` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `estado_anterior` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `estado_nuevo` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `comentario` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  `fecha` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `fecha_accion` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `fk_hist_exp` (`expediente_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -452,6 +459,14 @@ CREATE TABLE `presupuestos_asignados` (
   KEY `fk_pre_ag` (`area_gestion_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `presupuestos_asignados`
+-- (Requerido para vinculación inicial de ejemplo si aplica)
+--
+INSERT INTO `presupuestos_asignados` (`id`, `centro_costo_id`, `cuenta_maestra_id`, `area_gestion_id`) VALUES
+(2, 1, 1, 1),
+(3, 1, 3, 1);
+
 -- --------------------------------------------------------
 
 --
@@ -500,23 +515,25 @@ CREATE TABLE `proveedores` (
 DROP TABLE IF EXISTS `rangos_utm`;
 CREATE TABLE `rangos_utm` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `nombre` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `desde` decimal(10,2) NOT NULL,
-  `hasta` decimal(10,2) NOT NULL,
+  `nombre` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `min_utm` decimal(10,2) DEFAULT '0.00',
+  `max_utm` decimal(10,2) DEFAULT NULL,
+  `regla_cotizaciones` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `activo` tinyint(1) DEFAULT '1',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `rangos_utm`
 --
-INSERT INTO `rangos_utm` (`id`, `nombre`, `desde`, `hasta`) VALUES
-(1, 'Menor a 3 UTM', 0.00, 3.00),
-(2, 'De 3 a 10 UTM', 3.01, 10.00),
-(3, 'De 10 a 30 UTM', 10.01, 30.00),
-(4, 'De 30 a 100 UTM', 30.01, 100.00),
-(5, 'De 100 a 1000 UTM', 100.01, 1000.00),
-(6, 'De 1000 a 5000 UTM', 1000.01, 5000.00),
-(7, 'Mayor a 5000 UTM', 5000.01, 999999.99);
+INSERT INTO `rangos_utm` (`id`, `nombre`, `min_utm`, `max_utm`, `regla_cotizaciones`, `activo`) VALUES
+(1, 'Menor', 0.00, 3.00, 'Sin mínimos', 1),
+(2, 'Bajo', 3.01, 10.00, 'Mínimo 1 Cotización', 1),
+(3, 'Intermedio', 10.01, 100.00, 'Mínimo 3 Cotizaciones', 1),
+(4, 'Alto', 100.01, 1000.00, 'Licitación / Gran Compra', 1),
+(5, 'Muy Alto', 1000.01, 2000.00, 'Mayores exigencias', 1),
+(6, 'Estratégico', 2000.01, 5000.00, 'Aprobación Concejo posible', 1),
+(7, 'Mayor', 5000.01, NULL, 'Máxima autoridad', 1);
 
 -- --------------------------------------------------------
 
@@ -553,9 +570,11 @@ CREATE TABLE `subrogancias` (
   `id` int NOT NULL AUTO_INCREMENT,
   `usuario_titular_id` int NOT NULL,
   `usuario_subrogante_id` int NOT NULL,
-  `fecha_desde` date NOT NULL,
-  `fecha_hasta` date NOT NULL,
+  `fecha_inicio` date NOT NULL,
+  `fecha_fin` date NOT NULL,
+  `motivo` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `activo` tinyint(1) DEFAULT '1',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `fk_sub_tit` (`usuario_titular_id`),
   KEY `fk_sub_sup` (`usuario_subrogante_id`)
@@ -571,7 +590,9 @@ CREATE TABLE `tipos_compra` (
   `id` int NOT NULL AUTO_INCREMENT,
   `codigo` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `nombre` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `limite_utm` decimal(10,2) DEFAULT NULL,
   `activo` tinyint(1) DEFAULT '1',
+  `requiere_cotizacion` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `codigo` (`codigo`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -579,13 +600,13 @@ CREATE TABLE `tipos_compra` (
 --
 -- Volcado de datos para la tabla `tipos_compra`
 --
-INSERT INTO `tipos_compra` (`id`, `codigo`, `nombre`, `activo`) VALUES
-(1, 'LICITACION_PUBLICA', 'Licitación Pública', 1),
-(2, 'LICITACION_PRIVADA', 'Licitación Privada', 1),
-(3, 'TRATO_DIRECTO', 'Trato Directo', 1),
-(4, 'CONVENIO_MARCO', 'Convenio Marco', 1),
-(5, 'CONTRATO_SUMINISTRO', 'Contrato Suministro', 1),
-(6, 'COMPRA_AGIL', 'Compra Ágil', 1);
+INSERT INTO `tipos_compra` (`id`, `codigo`, `nombre`, `limite_utm`, `activo`, `requiere_cotizacion`) VALUES
+(1, 'SISTEMA_DIRECTO', 'Orden de Compra Por Sistema Directo', NULL, 0, 0),
+(2, 'TRATO_DIRECTO', 'Trato Directo', NULL, 1, 0),
+(3, 'LICITACION', 'Licitación Pública', NULL, 1, 1),
+(4, 'CONVENIO_MARCO', 'Convenio Marco', NULL, 1, 0),
+(5, 'CONTRATO_SUMINISTRO', 'Contrato de Suministros', NULL, 1, 0),
+(6, 'COMPRA_AGIL', 'Compra Ágil', NULL, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -608,7 +629,7 @@ CREATE TABLE `unidades` (
 -- Volcado de datos para la tabla `unidades`
 --
 INSERT INTO `unidades` (`id`, `nombre`, `padre_id`, `centro_costo_id`, `jefe_actual_id`) VALUES
-(1, 'Departamento de informática', 5, NULL, NULL),
+(1, 'Departamento de informática', 5, 1, NULL),
 (2, 'DIDECO', NULL, NULL, NULL),
 (3, 'PRESUPUESTO', NULL, NULL, NULL),
 (4, 'Adquisiciones', 10, NULL, NULL),
