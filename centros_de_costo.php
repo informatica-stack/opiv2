@@ -92,7 +92,9 @@ if ($vista === 'detalle' && isset($_GET['id'])) {
 
     if ($centro_actual) {
         $sqlAsig = "
-            SELECT pa.*, cm.codigo, cm.nombre, ag.codigo as ag_cod 
+            SELECT pa.id, pa.centro_costo_id, pa.cuenta_maestra_id, pa.area_gestion_id,
+                   cm.codigo, cm.nombre, ag.codigo as ag_cod,
+                   (SELECT COUNT(*) FROM expedientes_items ei WHERE ei.presupuesto_asignado_id = pa.id) as items_count
             FROM presupuestos_asignados pa 
             JOIN cuentas_maestras cm ON pa.cuenta_maestra_id = cm.id
             LEFT JOIN areas_gestion ag ON pa.area_gestion_id = ag.id
@@ -276,7 +278,7 @@ function money($v) { return '$ ' . number_format($v, 0, ',', '.'); }
                         </thead>
                         <tbody class="divide-y divide-gray-100 bg-white">
                             <?php foreach($asignaciones as $a): 
-                                $usado = $a['monto_comprometido'] + $a['monto_ejecutado'];
+                                $usado = $a['items_count'];
                             ?>
                             <tr>
                                 <td class="p-3">
