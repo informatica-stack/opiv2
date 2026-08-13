@@ -443,8 +443,8 @@ foreach($otros_proveedores as $p) {
         const mapaRequiereCotizacion = <?= json_encode($mapa_requiere_cotizacion) ?>;
         let requiereArchivos = false;
         
-        // --- DRAG AND DROP & ARCHIVOS ---
-        let dtArchivos = new DataTransfer();
+        // --- DRAG AND DROP & ARCHIVOS CON PROGRESO AJAX ---
+        let archivosSubidos = []; // [{ id, file, progress, status, tempPath, nombreOriginal, xhr, errorMessage }]
         const dropzone = document.getElementById('dropzone');
         const inpAdjunto = document.getElementById('inpAdjunto');
         const listaAdjuntos = document.getElementById('listaAdjuntos');
@@ -482,72 +482,238 @@ foreach($otros_proveedores as $p) {
             dropzone.addEventListener('drop', (e) => {
                 let dt = e.dataTransfer;
                 let files = dt.files;
-                agregarArchivosAlInput(files);
+                procesarNuevosArchivos(files);
             });
         }
 
         function manejarSeleccionArchivos() {
             if (inpAdjunto.files && inpAdjunto.files.length > 0) {
-                for (let i = 0; i < inpAdjunto.files.length; i++) {
-                    dtArchivos.items.add(inpAdjunto.files[i]);
-                }
+                procesarNuevosArchivos(inpAdjunto.files);
+                inpAdjunto.value = '';
             }
-            inpAdjunto.files = dtArchivos.files;
-            actualizarListaArchivos();
         }
 
         function agregarArchivosAlInput(files) {
-            for (let i = 0; i < files.length; i++) {
-                dtArchivos.items.add(files[i]);
-            }
-            inpAdjunto.files = dtArchivos.files;
-            actualizarListaArchivos();
+            procesarNuevosArchivos(files);
         }
 
-        function actualizarListaArchivos() {
-            if (inpAdjunto.files.length !== dtArchivos.files.length) {
-                dtArchivos = new DataTransfer();
-                for (let i = 0; i < inpAdjunto.files.length; i++) {
-                    dtArchivos.items.add(inpAdjunto.files[i]);
-                }
-            }
-
-            listaAdjuntos.innerHTML = '';
-            const files = dtArchivos.files;
-            
-            if (files.length === 0) return;
-
+        function procesarNuevosArchivos(files) {
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
-                const sizeKB = (file.size / 1024).toFixed(1);
-                const sizeStr = sizeKB > 1024 ? (sizeKB / 1024).toFixed(1) + ' MB' : sizeKB + ' KB';
+                const fileId = 'adj_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
                 
-                const item = document.createElement('div');
-                item.className = 'd-flex align-items-center justify-content-between p-2.5 bg-white border rounded-3 mb-2 animate-pulse';
-                item.innerHTML = `
+                const item = {
+                    id: fileId,
+                    file: file,
+                    progress: 0,
+                    status: 'uploading',
+                    tempPath: '',
+                    nombreOriginal: file.name,
+                    errorMessage: '',
+                    xhr: null
+                };
+                
+                archivosSubidos.push(item);
+                renderizarItemArchivo(item);
+                subirArchivoAJAX(item);
+            }
+            actualizarEstadoBotonSubmit();
+        }
+
+        function renderizarItemArchivo(item) {
+            const file = item.file;
+            const sizeKB = (file.size / 1024).toFixed(1);
+            const sizeStr = sizeKB > 1024 ? (sizeKB / 1024).toFixed(1) + ' MB' : sizeKB + ' KB';
+            
+            const div = document.createElement('div');
+            div.id = `item-adj-${item.id}`;
+            div.className = 'p-3 bg-white border rounded-3 mb-2 shadow-sm transition';
+            div.innerHTML = `
+                <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
                     <div class="d-flex align-items-center gap-2 min-w-0 flex-1">
                         <i class="bi bi-file-earmark-text text-primary fs-5 shrink-0"></i>
                         <span class="text-truncate fw-semibold small" title="${escapeHTML(file.name)}">${escapeHTML(file.name)}</span>
                         <span class="text-muted small shrink-0">(${sizeStr})</span>
                     </div>
-                    <button type="button" class="btn btn-link text-secondary p-1" onclick="removerArchivo(${i})">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                `;
-                setTimeout(() => item.classList.remove('animate-pulse'), 250);
-                listaAdjuntos.appendChild(item);
+                    <div class="d-flex align-items-center gap-2 shrink-0">
+                        <span id="status-${item.id}" class="small text-muted font-monospace fw-bold">0%</span>
+                        <span id="icon-${item.id}">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        </span>
+                        <button type="button" class="btn btn-link text-secondary p-1" onclick="removerAdjuntoAJAX('${item.id}')" title="Eliminar archivo">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="progress mt-1" style="height: 6px;">
+                    <div id="bar-${item.id}" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%"></div>
+                </div>
+                <div id="err-${item.id}" class="small text-danger fw-bold d-none mt-1" style="font-size: 11px;"></div>
+                <input type="hidden" name="archivos_temp_rutas[]" id="input-ruta-${item.id}" value="" disabled>
+                <input type="hidden" name="archivos_temp_nombres[]" id="input-nom-${item.id}" value="" disabled>
+            `;
+            listaAdjuntos.appendChild(div);
+        }
+
+        function subirArchivoAJAX(item) {
+            const formData = new FormData();
+            formData.append('archivo', item.file);
+            formData.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
+
+            const xhr = new XMLHttpRequest();
+            item.xhr = xhr;
+
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    item.progress = percent;
+                    const bar = document.getElementById(`bar-${item.id}`);
+                    const statusTxt = document.getElementById(`status-${item.id}`);
+                    if (bar) bar.style.width = percent + '%';
+                    if (statusTxt) statusTxt.innerText = percent + '%';
+                    actualizarEstadoBotonSubmit();
+                }
+            };
+
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    try {
+                        const res = JSON.parse(xhr.responseText);
+                        if (res.success) {
+                            item.progress = 100;
+                            item.status = 'completed';
+                            item.tempPath = res.ruta_temp;
+                            item.nombreOriginal = res.nombre_original;
+
+                            const bar = document.getElementById(`bar-${item.id}`);
+                            if (bar) {
+                                bar.style.width = '100%';
+                                bar.classList.remove('progress-bar-striped', 'progress-bar-animated');
+                                bar.classList.add('bg-success');
+                            }
+
+                            const statusTxt = document.getElementById(`status-${item.id}`);
+                            if (statusTxt) {
+                                statusTxt.className = 'small text-success fw-bold ms-2';
+                                statusTxt.innerText = '100% Completado';
+                            }
+
+                            const iconSpan = document.getElementById(`icon-${item.id}`);
+                            if (iconSpan) {
+                                iconSpan.innerHTML = '<i class="bi bi-check-circle-fill text-success fs-5"></i>';
+                            }
+
+                            const inputRuta = document.getElementById(`input-ruta-${item.id}`);
+                            const inputNom = document.getElementById(`input-nom-${item.id}`);
+                            if (inputRuta && inputNom) {
+                                inputRuta.value = res.ruta_temp;
+                                inputRuta.disabled = false;
+                                inputNom.value = res.nombre_original;
+                                inputNom.disabled = false;
+                            }
+                        } else {
+                            marcarErrorArchivo(item, res.error || 'Error al procesar el archivo.');
+                        }
+                    } catch(err) {
+                        marcarErrorArchivo(item, 'Respuesta inválida del servidor.');
+                    }
+                } else {
+                    try {
+                        const res = JSON.parse(xhr.responseText);
+                        marcarErrorArchivo(item, res.error || `Error del servidor (${xhr.status}).`);
+                    } catch(e) {
+                        marcarErrorArchivo(item, `Error del servidor (${xhr.status}).`);
+                    }
+                }
+                actualizarEstadoBotonSubmit();
+            };
+
+            xhr.onerror = function() {
+                marcarErrorArchivo(item, 'Error de conexión de red al subir archivo.');
+                actualizarEstadoBotonSubmit();
+            };
+
+            xhr.open('POST', 'subir_adjunto_ajax.php', true);
+            xhr.setRequestHeader('X-CSRF-TOKEN', '<?= $_SESSION['csrf_token'] ?>');
+            xhr.send(formData);
+        }
+
+        function marcarErrorArchivo(item, errorMsg) {
+            item.status = 'error';
+            item.errorMessage = errorMsg;
+
+            const bar = document.getElementById(`bar-${item.id}`);
+            if (bar) {
+                bar.style.width = '100%';
+                bar.classList.remove('progress-bar-striped', 'progress-bar-animated', 'bg-primary');
+                bar.classList.add('bg-danger');
+            }
+
+            const statusTxt = document.getElementById(`status-${item.id}`);
+            if (statusTxt) {
+                statusTxt.className = 'small text-danger fw-bold ms-2';
+                statusTxt.innerText = 'Error';
+            }
+
+            const iconSpan = document.getElementById(`icon-${item.id}`);
+            if (iconSpan) {
+                iconSpan.innerHTML = '<i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>';
+            }
+
+            const errDiv = document.getElementById(`err-${item.id}`);
+            if (errDiv) {
+                errDiv.innerText = '⚠️ ' + errorMsg;
+                errDiv.classList.remove('d-none');
             }
         }
 
-        function removerArchivo(index) {
-            const nuevosArchivos = new DataTransfer();
-            for (let i = 0; i < dtArchivos.files.length; i++) {
-                if (i !== index) {
-                    nuevosArchivos.items.add(dtArchivos.files[i]);
+        function removerAdjuntoAJAX(fileId) {
+            const index = archivosSubidos.findIndex(a => a.id === fileId);
+            if (index !== -1) {
+                const item = archivosSubidos[index];
+                if (item.xhr && item.status === 'uploading') {
+                    item.xhr.abort();
                 }
+                archivosSubidos.splice(index, 1);
             }
-            dtArchivos = nuevosArchivos;
-            inpAdjunto.files = dtArchivos.files;
+            const el = document.getElementById(`item-adj-${fileId}`);
+            if (el) el.remove();
+            actualizarEstadoBotonSubmit();
+            evaluarProveedorNuevo();
+        }
+
+        function actualizarEstadoBotonSubmit() {
+            const btnSubmit = document.getElementById('btnSubmit');
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+            const btnIcon = document.getElementById('btnIcon');
+
+            if (!btnSubmit) return;
+
+            const cargando = archivosSubidos.filter(a => a.status === 'uploading');
+            const conError = archivosSubidos.filter(a => a.status === 'error');
+            const completados = archivosSubidos.filter(a => a.status === 'completed');
+
+            if (cargando.length > 0) {
+                btnSubmit.disabled = true;
+                btnSubmit.classList.add('opacity-75', 'pe-none');
+                btnSpinner.classList.remove('d-none');
+                btnIcon.classList.add('d-none');
+                btnText.innerText = `Subiendo adjuntos (${completados.length}/${archivosSubidos.length})...`;
+            } else if (conError.length > 0) {
+                btnSubmit.disabled = true;
+                btnSubmit.classList.add('opacity-75', 'pe-none');
+                btnSpinner.classList.add('d-none');
+                btnIcon.classList.remove('d-none');
+                btnText.innerText = '⚠️ Elimine o reintente los archivos con error';
+            } else {
+                btnSubmit.disabled = false;
+                btnSubmit.classList.remove('opacity-75', 'pe-none');
+                btnSpinner.classList.add('d-none');
+                btnIcon.classList.remove('d-none');
+                btnText.innerText = 'Generar e ingresar trámite';
+            }
+        }
             actualizarListaArchivos();
             evaluarProveedorNuevo();
         }
@@ -1271,7 +1437,18 @@ foreach($otros_proveedores as $p) {
                     divError.innerHTML = "<strong>⚠️ Faltan datos del Proveedor Nuevo:</strong> Por favor ingrese un RUT válido, Razón Social y suba el archivo PDF de la Ficha del Proveedor.";
                     divError.classList.remove('d-none');
                     divError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    document.getElementById('panelNuevoProv').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Validar que no haya adjuntos subiendo o con error
+            if (typeof archivosSubidos !== 'undefined') {
+                if (archivosSubidos.some(a => a.status === 'uploading')) {
+                    divError.innerHTML = "<strong>⚠️ Archivos en proceso de carga:</strong> Por favor espere a que todos los documentos adjuntos se suban al 100% antes de iniciar el trámite.";
+                    divError.classList.remove('d-none');
+                    divError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return false;
+                }
+                if (archivosSubidos.some(a => a.status === 'error')) {
+                    divError.innerHTML = "<strong>⚠️ Archivos con error de carga:</strong> Elimine o corrija los archivos adjuntos con error antes de enviar la solicitud.";
+                    divError.classList.remove('d-none');
+                    divError.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     return false;
                 }
             }

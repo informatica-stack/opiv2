@@ -250,7 +250,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
             }
         }
 
-        // Subir Archivos
+        // Subir Archivos Pre-subidos vía AJAX
+        if (!empty($_POST['archivos_temp_rutas']) && is_array($_POST['archivos_temp_rutas'])) {
+            $dir = __DIR__ . "/uploads/$anio_actual/exp_$exp_id/";
+            if (!file_exists($dir)) {
+                if (!@mkdir($dir, 0777, true) && !is_dir($dir)) {
+                    throw new Exception("Error de permisos: No se pudo crear la carpeta del expediente en '$dir'.");
+                }
+            }
+
+            $temp_rutas = $_POST['archivos_temp_rutas'];
+            $temp_nombres = $_POST['archivos_temp_nombres'] ?? [];
+
+            foreach ($temp_rutas as $idx => $rel_temp_path) {
+                // Prevenir Directory Traversal
+                $clean_rel = ltrim(str_replace('..', '', $rel_temp_path), '/\\');
+                $abs_temp_path = __DIR__ . '/' . $clean_rel;
+
+                if (file_exists($abs_temp_path) && is_file($abs_temp_path)) {
+                    $ext = strtolower(pathinfo($abs_temp_path, PATHINFO_EXTENSION));
+                    $nombre_orig = !empty($temp_nombres[$idx]) ? $temp_nombres[$idx] : basename($abs_temp_path);
+                    $nombre_final = "adj_" . time() . "_ajax_$idx." . $ext;
+                    $dest_abs = $dir . $nombre_final;
+
+                    if (@rename($abs_temp_path, $dest_abs) || @copy($abs_temp_path, $dest_abs)) {
+                        @unlink($abs_temp_path);
+                        $ruta_db = "uploads/$anio_actual/exp_$exp_id/" . $nombre_final;
+                        $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'OTRO', ?, ?)")
+                            ->execute([$exp_id, $user_id, $ruta_db, $nombre_orig]);
+                    }
+                }
+            }
+        }
+
+        // Subir Archivos Tradicionales (Fallback)
         if (isset($_FILES['archivos_adjuntos']) && !empty($_FILES['archivos_adjuntos']['name'][0])) {
             $total_files = count($_FILES['archivos_adjuntos']['name']);
             $dir = __DIR__ . "/uploads/$anio_actual/exp_$exp_id/";
