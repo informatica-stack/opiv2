@@ -410,18 +410,7 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
                                 <?php 
                                 foreach($items as $it): 
                                     $costo_linea = $it['cantidad'] * $it['precio_unitario'];
-                                    
-                                    // Cálculo de ajuste para mostrar costo en fase final
-                                    if (!$es_fase_inicial && $expediente['monto_definitivo'] > 0) {
-                                        $total_original = $expediente['monto_estimado'];
-                                        $total_nuevo = $expediente['monto_definitivo'];
-                                        $diferencia = $total_nuevo - $total_original;
-                                        $proporcion = ($total_original > 0) ? ($costo_linea / $total_original) : 0;
-                                        $ajuste_requerido = $diferencia * $proporcion;
-                                        $costo_mostrar = $costo_linea + $ajuste_requerido;
-                                    } else {
-                                        $costo_mostrar = $costo_linea;
-                                    }
+                                    $costo_mostrar = $costo_linea;
                                 ?>
                                     <!-- Item Card -->
                                     <div class="bg-white border rounded-3 p-3 shadow-sm">
@@ -533,11 +522,7 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
                                              <div class="card border border-light-subtle bg-light shadow-sm mb-4">
                                                  <div class="card-header bg-white border-bottom py-2.5 fw-bold text-sm d-flex justify-content-between align-items-center">
                                                      <span class="text-dark"><i class="bi bi-file-earmark-check text-primary me-1"></i> Certificado de Disponibilidad Presupuestaria (CDP)</span>
-                                                     <?php if($expediente['estado_actual'] !== 'EN_VALIDACION_PRESUPUESTARIA_FINAL'): ?>
-                                                         <a href="cdp.php?id=<?= $expediente['id'] ?>" target="_blank" class="btn btn-outline-primary btn-xs fw-bold px-2 py-0.5" style="font-size: 10px;">
-                                                             <i class="bi bi-filetype-pdf"></i> Confeccionar CDP
-                                                         </a>
-                                                     <?php endif; ?>
+                                                     <!-- CDP cargado externamente -->
                                                  </div>
                                                  <div class="card-body p-3">
                                                      

@@ -437,12 +437,6 @@ require_once __DIR__ . '/finanzas_controller.php';
                                                 </div>
                                             </div>
 
-                                            <div class="text-end mb-3">
-                                                <a href="cdp.php?id=<?= $expediente['id'] ?>" target="_blank" class="text-xs fw-semibold text-primary text-decoration-none" style="font-size: 11px;">
-                                                    <i class="bi bi-printer-fill"></i> Ver Plantilla CDP Dinámica (Nombre/Cargo Logueado)
-                                                </a>
-                                            </div>
-
                                             <div class="border-top pt-3">
                                                 <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Paso 2: Adjuntar Certificado de Disponibilidad SMC Firmado (Obligatorio)</label>
                                                 <input type="file" name="archivo_cdp" accept="application/pdf" required class="form-control form-control-sm bg-white">
