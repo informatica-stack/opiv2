@@ -19,5 +19,8 @@ if (!isset($titulo_pagina)) {
 <!-- 2. Bootstrap Icons 1.11.3 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
+<!-- Tipografía Oficial Roboto (Requerida por Guía ClaveÚnica) -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
 <!-- 3. Sistema de Diseño Global Custom (Prioridad Máxima sobre Bootstrap) -->
 <link rel="stylesheet" href="css/style.css">

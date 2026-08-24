@@ -1444,14 +1444,15 @@ select.input-tabla {
 }
 
 /* --------------------------------------------------------------------------
-   BOTÓN OFICIAL DE CLAVEÚNICA (Secretaría de Gobierno Digital - MUNICIPAL)
+   BOTÓN OFICIAL DE CLAVEÚNICA (Secretaría de Gobierno Digital - Chile)
+   Especificación Técnica Oficial v5.5 / Guía Botón ClaveÚnica
    -------------------------------------------------------------------------- */
 .btn-cu {
-    display: flex;
+    display: inline-flex;
     justify-content: center;
     align-items: center;
-    font-family: "Roboto", system-ui, -apple-system, sans-serif;
-    font-weight: bold;
+    font-family: 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-weight: 700;
     text-align: center;
     text-decoration: none !important;
     vertical-align: middle;
@@ -1459,83 +1460,96 @@ select.input-tabla {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
-    border-radius: 0;
-    border: 0;
-    transition: background-color 0.2s, box-shadow 0.2s;
+    border: none;
+    outline: none;
     cursor: pointer;
+    box-sizing: border-box;
+    transition: background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
-.btn-cu:hover {
+.btn-cu:hover,
+.btn-cu:visited,
+.btn-cu:active,
+.btn-cu:focus {
     text-decoration: none !important;
 }
 
-/* Icono ClaveÚnica */
+/* Icono Isotipo ClaveÚnica (24px x 24px exactos) */
 .btn-cu .cl-claveunica-svg {
     width: 24px;
     height: 24px;
-    margin: auto 4px auto 0px;
+    margin: 0;
+    padding: 0;
     flex-shrink: 0;
+    display: inline-block;
+    vertical-align: middle;
 }
 
-/* Texto ClaveÚnica - Soporte para clases .texto y .text */
+/* Texto del botón (Roboto, 1rem/16px, Bold, color blanco, 4px de espaciado con el icono) */
 .btn-cu .texto,
 .btn-cu .text {
-    padding-left: 4px;
-    text-decoration: none;
-    font-size: 16px;
-    line-height: 2rem;
-    text-rendering: geometricPrecision;
+    margin-left: 4px;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    font-size: 1rem; /* 16px */
+    font-weight: 700; /* Bold */
+    line-height: 1.5;
+    color: #FFFFFF !important;
+    text-decoration: none !important;
+    white-space: nowrap;
 }
 
-/* Color Estándar */
+/* Color Estándar Institucional */
 .btn-cu.btn-color-estandar {
     background-color: #0F69C4;
-    color: #FFF !important;
+    color: #FFFFFF !important;
 }
 
 .btn-cu.btn-color-estandar:hover {
     background-color: #0B4E91;
-    color: #FFF !important;
+    color: #FFFFFF !important;
 }
 
 .btn-cu.btn-color-estandar:active {
     background-color: #07305A;
-    color: #FFF !important;
+    color: #FFFFFF !important;
 }
 
-.btn-cu.btn-color-estandar:focus {
+.btn-cu.btn-color-estandar:focus,
+.btn-cu.btn-color-estandar:focus-visible {
     background-color: #0B4E91;
-    color: #FFF !important;
-    outline: 4px solid #FFBE5C;
-    outline-offset: 0;
+    color: #FFFFFF !important;
+    outline: 4px solid #FFBE5C !important;
+    outline-offset: 0px !important;
 }
 
-/* Tamaño M (Mediano) */
+/* Dimensiones Estándar del Botón (Altura total 48px / 2rem + 16px, Padding 8px vertical y 14px horizontal) */
 .btn-cu.btn-m {
-    width: fit-content;
     min-height: 48px;
-    padding: 8px 14px 8px 14px !important;
-    font-size: 16px;
+    height: 48px;
+    padding: 8px 14px !important;
+    width: fit-content;
 }
 
-/* Tamaño fluid-width (Ancho Flexible) */
+/* Opción de Ancho Completo (Full Width) */
 .btn-cu.btn-fw {
-    max-width: 550px;
     width: 100%;
-    display: flex;
-    justify-content: center;
+    max-width: 550px;
 }
 
-/* Bordes redondeados */
+/* Opciones de Forma Oficiales */
 .btn-cu.rounded-none {
-    border-radius: 0%;
+    border-radius: 0px !important;
 }
+
 .btn-cu.rounded-middle {
-    border-radius: 4px 4px;
+    border-radius: 4px !important;
 }
+
 .btn-cu.rounded-full {
-    border-radius: 99px 99px;
+    border-radius: 99px !important;
 }
+
 
 
 
