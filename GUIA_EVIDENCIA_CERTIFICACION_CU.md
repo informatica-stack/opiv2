@@ -69,9 +69,10 @@ function obtener_configuracion_claveunica() {
 ### Captura 4: Botón Oficial de ClaveÚnica en Pantalla de Login
 * **Dónde tomarla:** En el navegador web ingresando a `https://opi.munilebu.gob.cl/login.php` (o en local).
 * **Qué debe mostrar la captura:**
-  * La pantalla de acceso limpia con el botón oficial:
+  * La pantalla de acceso limpia con el botón oficial y su texto superior:
+    * Texto previo oficial: `Ingresa con tu ClaveÚnica` (respetando la mayúscula en C y U, y tilde en la Ú, tal como lo indica la pág. 6 de la guía oficial).
     * Isotipo vectorial de ClaveÚnica (24x24 px).
-    * Texto oficial: `Iniciar sesión`.
+    * Texto del botón: `Iniciar sesión` (evitando redundancia conforme al estándar).
     * Tipografía oficial `Roboto Bold`.
     * Altura exacta de 48px y color institucional `#0F69C4`.
     * Sin sombras externas ni alteraciones visuales.

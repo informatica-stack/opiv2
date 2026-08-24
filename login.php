@@ -87,8 +87,8 @@ function redirectBasedOnRole($role) {
                 </div>
             <?php endif; ?>
 
-            <p class="text-secondary small fw-medium mb-4">
-                Plataforma de autenticación para funcionarios municipales
+            <p class="text-secondary small fw-medium mb-3">
+                Ingresa con tu ClaveÚnica
             </p>
 
             <div class="d-flex justify-content-center my-3">
