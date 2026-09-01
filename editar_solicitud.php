@@ -429,9 +429,6 @@ foreach($otros_proveedores as $p) {
         </form>
     </div>
 
-    <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-
     <script>
         const listadoProveedores = <?= json_encode($listado_prov_json) ?>;
         const mapaTiposCompra = <?= json_encode($mapa_tipos) ?>;
