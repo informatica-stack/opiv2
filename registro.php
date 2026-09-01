@@ -218,9 +218,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
 
                         <div class="text-center mt-3 pt-3 border-top">
-                            <a href="login.php" class="text-decoration-none small fw-bold text-secondary">
-                                <i class="bi bi-arrow-left me-1"></i> ¿Ya tienes una cuenta? Inicia Sesión
-                            </a>
+                            <p class="mb-2">
+                                <a href="login.php" class="text-decoration-none small fw-bold text-secondary">
+                                    <i class="bi bi-arrow-left me-1"></i> ¿Ya tienes una cuenta? Inicia Sesión
+                                </a>
+                            </p>
+                            <p class="text-muted small mb-0" style="font-size: 11px;">
+                                Administración - Municipalidad de Lebu - <?= date('Y') ?>
+                            </p>
                         </div>
                     </form>
 

@@ -116,7 +116,7 @@ function estado_fecha($inicio, $fin) {
     include __DIR__ . '/head.php'; 
     ?>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans pb-20">
+<body class="bg-slate-50 text-slate-800 font-sans d-flex flex-column min-vh-100">
 
     <?php include __DIR__ . '/nav.php'; ?>
 
@@ -261,6 +261,6 @@ function estado_fecha($inicio, $fin) {
     </div>
 
     <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <?php include __DIR__ . '/footer.php'; ?>
 </body>
 </html>

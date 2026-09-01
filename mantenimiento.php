@@ -106,7 +106,7 @@ $es_admin = (($_SESSION['user_rol'] ?? '') === 'SYSADMIN');
         <p>Estamos realizando mejoras programadas y actualizaciones de seguridad en la plataforma para ofrecerle un mejor servicio. Estaremos de vuelta muy pronto.</p>
         
         <div class="border-top border-secondary-subtle pt-3 mt-4 opacity-50">
-            <small class="text-xs text-uppercase tracking-wider">Sistema de Órdenes de Pedido Interno - Ilustre Municipalidad</small>
+            <small class="text-xs text-uppercase tracking-wider">Administración - Municipalidad de Lebu - <?= date('Y') ?></small>
         </div>
 
         <?php if ($es_admin): ?>

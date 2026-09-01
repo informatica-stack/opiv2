@@ -113,7 +113,7 @@ function redirectBasedOnRole($role) {
                 </a>
             </p>
             <p class="text-muted small mb-0" style="font-size: 11px;">
-                Departamento de Informática &copy; <?= date('Y') ?>
+                Administración - Municipalidad de Lebu - <?= date('Y') ?>
             </p>
         </div>
     </div>

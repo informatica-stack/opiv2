@@ -81,7 +81,7 @@ function enviar_correo_institucional($para_email, $para_nombre, $asunto, $cuerpo
             </div>
             <div class="footer">
                 Este es un mensaje automático generado por el Sistema de órdenes de pedido interno.<br>
-                Departamento de Informática - Municipalidad de Lebu.
+                Administración - Municipalidad de Lebu - ' . date('Y') . '
             </div>
         </div>
     </body>

@@ -117,7 +117,7 @@ if ($is_cli) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="bg-light text-slate-800 pb-20">
+<body class="bg-light text-slate-800 d-flex flex-column min-vh-100">
 
     <?php include __DIR__ . '/nav.php'; ?>
 
@@ -216,5 +216,6 @@ if ($is_cli) {
         </div>
 
     </div>
+<?php include __DIR__ . '/footer.php'; ?>
 </body>
 </html>

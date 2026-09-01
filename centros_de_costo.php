@@ -126,7 +126,7 @@ function money($v) { return '$ ' . number_format($v, 0, ',', '.'); }
     include __DIR__ . '/head.php'; 
     ?>
 </head>
-<body class="bg-light text-slate-800 pb-20 font-sans">
+<body class="bg-light text-slate-800 font-sans d-flex flex-column min-vh-100">
 
     <?php include __DIR__ . '/nav.php'; ?>
 
@@ -395,5 +395,6 @@ function money($v) { return '$ ' . number_format($v, 0, ',', '.'); }
         <?php endif; ?>
 
     </div>
+<?php include __DIR__ . '/footer.php'; ?>
 </body>
 </html>

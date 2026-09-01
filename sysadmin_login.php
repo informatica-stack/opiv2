@@ -161,7 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tiempo_restante <= 0) {
         <!-- FOOTER DE TARJETA -->
         <div class="bg-light p-3 text-center border-top border-light-subtle">
             <p class="text-muted small mb-0" style="font-size: 11px;">
-                Departamento de Informática &copy; <?= date('Y') ?> &bull; Municipalidad de Lebu
+                Administración - Municipalidad de Lebu - <?= date('Y') ?>
             </p>
         </div>
     </div>

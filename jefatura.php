@@ -9,7 +9,7 @@ require_once __DIR__ . '/jefatura_controller.php';
     include __DIR__ . '/head.php'; 
     ?>
 </head>
-<body class="bg-slate-50 text-slate-800 pb-20 font-sans">
+<body class="bg-slate-50 text-slate-800 font-sans d-flex flex-column min-vh-100">
 
     <?php include __DIR__ . '/nav.php'; ?>
 
@@ -739,5 +739,6 @@ require_once __DIR__ . '/jefatura_controller.php';
             if (modalVerItemsInstance) modalVerItemsInstance.show();
         }
     </script>
+<?php include __DIR__ . '/footer.php'; ?>
 </body>
 </html>

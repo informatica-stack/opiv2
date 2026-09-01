@@ -127,9 +127,13 @@ if (empty($token)) {
                     <a href="login.php" class="btn btn-outline-dark fw-bold px-4">Volver al Inicio de Sesión</a>
                 <?php endif; ?>
 
+                <div class="mt-4 pt-3 border-top">
+                    <p class="text-muted small mb-0" style="font-size: 11px;">
+                        Administración - Municipalidad de Lebu - <?= date('Y') ?>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
-
 </body>
 </html>
