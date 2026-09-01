@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p style="font-size: 12px; color: #64748b;">Si no puedes hacer clic en el botón, copia y pega el siguiente enlace en tu navegador web:<br>
             <a href="' . $link_verificacion . '" style="color: #0d6efd;">' . $link_verificacion . '</a></p>
             <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-            <p style="font-size: 12px; color: #64748b;">Una vez verificado tu correo, tu solicitud será revisada por el Administrador del Sistema (SYSADMIN) para la asignación definitiva de tu rol y activación final.</p>
+            <p style="font-size: 12px; color: #64748b;">Una vez verificado tu correo, tu solicitud será revisada por el Administrador del Sistema para la asignación definitiva de tu rol y activación final.</p>
         ';
 
         $correo_enviado = enviar_correo_institucional($email, $nombre, "Verificación de Correo - Registro OPI Municipalidad de Lebu", $cuerpo_correo);

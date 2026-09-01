@@ -54,7 +54,7 @@ try {
             header("Location: login.php");
             exit;
         } elseif ($user['estado_aprobacion'] === 'PENDIENTE_APROBACION') {
-            $_SESSION['login_error'] = "Su cuenta (RUT: $rut_cu_formateado) fue verificada y está pendiente de aprobación por el Administrador (SYSADMIN).";
+            $_SESSION['login_error'] = "Su cuenta (RUT: $rut_cu_formateado) fue verificada y está pendiente de aprobación.";
             header("Location: login.php");
             exit;
         } elseif ($user['estado_aprobacion'] === 'RECHAZADO') {

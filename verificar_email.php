@@ -74,7 +74,7 @@ if (empty($token)) {
                 enviar_correo_institucional('informatica@lebu.cl', 'Soporte Informática', "[OPI] Solicitud de Registro Pendiente de Aprobación", $cuerpo_sysadmin);
             }
 
-            $mensaje = "¡Correo electrónico verificado con éxito! Su solicitud ha sido enviada al Administrador del Sistema (SYSADMIN) para la asignación de su rol y aprobación de acceso.";
+            $mensaje = "¡Correo electrónico verificado con éxito! Su solicitud ha sido enviada al Administrador del Sistema para la asignación de su rol y aprobación de acceso.";
             $tipo_mensaje = "success";
             $exito = true;
         }
