@@ -121,9 +121,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         try {
             if (!empty($rut_raw) && !validar_rut_chileno($rut_raw)) {
-                throw new Exception("El RUT ingresado no es válido.");
+                throw new Exception("El RUT ingresado no es válido (Módulo 11 incorrecto).");
             }
-            $rut = !empty($rut_raw) ? formatear_rut_chileno($rut_raw) : '';
+            $rut = !empty($rut_raw) ? formatear_rut_claveunica($rut_raw) : '';
 
             if ($id) {
                 // EDICIÓN
@@ -143,9 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $mensaje = "Usuario actualizado correctamente.";
             } else {
                 // CREACIÓN MANUAL DE USUARIO
-                if(empty($password_raw)) throw new Exception("La contraseña es obligatoria para nuevos usuarios.");
-                
-                $hash = password_hash($password_raw, PASSWORD_DEFAULT);
+                $hash = !empty($password_raw) ? password_hash($password_raw, PASSWORD_DEFAULT) : null;
                 $stmt = $pdo->prepare("INSERT INTO usuarios (nombre_completo, email, rut, rol_id, unidad_id, es_jefe_unidad, cargo, password_hash, activo, email_verificado, estado_aprobacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 'APROBADO')");
                 $stmt->execute([$nombre, $email, $rut, $rol_id, $unidad_id, $es_jefe, $cargo, $hash]);
                 $mensaje = "Usuario creado exitosamente.";
@@ -252,16 +250,22 @@ $tab_activa = $_GET['tab'] ?? ($count_pendientes > 0 && !isset($_GET['action']) 
                                 <input type="text" name="nombre" required value="<?= htmlspecialchars($data['nombre_completo'] ?? '') ?>" class="form-control bg-white">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">RUT del Usuario</label>
-                                <input type="text" name="rut" required value="<?= htmlspecialchars($data['rut'] ?? '') ?>" class="form-control bg-white" placeholder="12.345.678-K">
+                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">RUT del Usuario (Formato ClaveÚnica) *</label>
+                                <input type="text" name="rut" id="rutAdminInput" required maxlength="10" 
+                                    value="<?= htmlspecialchars($data['rut'] ?? '') ?>" 
+                                    class="form-control bg-white font-monospace fw-bold" 
+                                    placeholder="Ej: 15737866-K" autocomplete="off"
+                                    oninput="manejarInputRutAdmin(this)">
+                                <div id="rutAdminFeedback" class="form-text small" style="display:none; font-size: 10px;"></div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Correo Electrónico</label>
+                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Correo Electrónico *</label>
                                 <input type="email" name="email" required value="<?= htmlspecialchars($data['email'] ?? '') ?>" class="form-control bg-white">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Contraseña</label>
-                                <input type="password" name="password" class="form-control bg-white" <?= $accion==='edit' ? '' : 'required' ?>>
+                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Contraseña (Opcional si usa ClaveÚnica)</label>
+                                <input type="password" name="password" class="form-control bg-white" placeholder="<?= $accion==='edit' ? 'Dejar en blanco para mantener actual' : 'Opcional si usará ClaveÚnica' ?>">
+                                <div class="form-text text-muted" style="font-size: 9px;">Los funcionarios con ClaveÚnica no requieren contraseña local.</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Unidad Asignada</label>
@@ -463,5 +467,74 @@ $tab_activa = $_GET['tab'] ?? ($count_pendientes > 0 && !isset($_GET['action']) 
         <?php endif; ?>
 
     </div>
+
+    <!-- VALIDACIÓN Y FORMATEO DE RUT (FORMATO CLAVEÚNICA: SIN PUNTOS, CON GUIÓN) -->
+    <script>
+    function limpiarRutAdmin(val) {
+        return (val || '').replace(/[^0-9kK]/g, '').toUpperCase();
+    }
+
+    function formatearRutClaveUnicaAdmin(val) {
+        let limpio = limpiarRutAdmin(val);
+        if (limpio.length > 9) limpio = limpio.slice(0, 9);
+        if (limpio.length > 1) {
+            return limpio.slice(0, -1) + '-' + limpio.slice(-1);
+        }
+        return limpio;
+    }
+
+    function validarRutM11Admin(rut) {
+        let limpio = limpiarRutAdmin(rut);
+        if (limpio.length < 7 || limpio.length > 9) return false;
+        
+        let dv = limpio.slice(-1);
+        let cuerpo = limpio.slice(0, -1);
+        
+        let suma = 0;
+        let mult = 2;
+        for (let i = cuerpo.length - 1; i >= 0; i--) {
+            suma += parseInt(cuerpo.charAt(i), 10) * mult;
+            mult = (mult === 7) ? 2 : mult + 1;
+        }
+        let resto = suma % 11;
+        let dvCalc = 11 - resto;
+        let dvEsp = (dvCalc === 11) ? '0' : (dvCalc === 10) ? 'K' : dvCalc.toString();
+        
+        return (dv === dvEsp);
+    }
+
+    function manejarInputRutAdmin(input) {
+        let formateado = formatearRutClaveUnicaAdmin(input.value);
+        input.value = formateado;
+
+        let feedback = document.getElementById('rutAdminFeedback');
+        if (!feedback) return;
+        let limpio = limpiarRutAdmin(input.value);
+
+        if (limpio.length >= 7) {
+            if (validarRutM11Admin(input.value)) {
+                input.classList.remove('is-invalid');
+                input.classList.add('is-valid');
+                feedback.className = 'form-text text-success small';
+                feedback.textContent = '✓ RUT válido';
+                feedback.style.display = 'block';
+            } else {
+                input.classList.remove('is-valid');
+                input.classList.add('is-invalid');
+                feedback.className = 'form-text text-danger small';
+                feedback.textContent = '✗ Dígito verificador no válido.';
+                feedback.style.display = 'block';
+            }
+        } else if (limpio.length > 0) {
+            input.classList.remove('is-valid', 'is-invalid');
+            feedback.className = 'form-text text-muted small';
+            feedback.textContent = 'Ingrese RUT completo (ej: 15737866-K).';
+            feedback.style.display = 'block';
+        } else {
+            input.classList.remove('is-valid', 'is-invalid');
+            feedback.style.display = 'none';
+        }
+    }
+    </script>
 </body>
 </html>

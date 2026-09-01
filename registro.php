@@ -39,16 +39,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!validar_rut_chileno($rut_raw)) {
             throw new Exception("El RUT ingresado no es válido. Por favor verifique el número y dígito verificador.");
         }
-        $rut = formatear_rut_chileno($rut_raw);
+        $rut = formatear_rut_claveunica($rut_raw);
 
         // 3. Validación de Email
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new Exception("La dirección de correo electrónico ingresada no tiene un formato válido.");
         }
 
-        // 4. Verificar duplicados de RUT y Email
-        $stmtCheckRut = $pdo->prepare("SELECT id FROM usuarios WHERE rut = ?");
-        $stmtCheckRut->execute([$rut]);
+        // 4. Verificar duplicados de RUT (de forma agnóstica a formatos previos) y Email
+        $rut_limpio = strtoupper(preg_replace('/[^0-9kK]/', '', $rut_raw));
+        $stmtCheckRut = $pdo->prepare("SELECT id FROM usuarios WHERE REPLACE(REPLACE(rut, '.', ''), '-', '') = ?");
+        $stmtCheckRut->execute([$rut_limpio]);
         if ($stmtCheckRut->fetch()) {
             throw new Exception("El RUT $rut ya se encuentra registrado en el sistema.");
         }
@@ -148,12 +149,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             
                             <!-- RUT CHILENO -->
                             <div class="col-md-6">
-                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">RUT Funcionario *</label>
+                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">RUT Funcionario (Formato ClaveÚnica) *</label>
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text bg-light"><i class="bi bi-card-heading"></i></span>
-                                    <input type="text" name="rut" id="rutInput" required class="form-control fw-bold text-dark" placeholder="" onblur="formatearRutInput(this)">
+                                    <input type="text" name="rut" id="rutInput" required maxlength="10" 
+                                        class="form-control fw-bold text-dark font-monospace" 
+                                        placeholder="Ej: 15737866-K" autocomplete="off"
+                                        oninput="manejarInputRut(this)">
                                 </div>
-                                <div id="rutFeedback" class="form-text text-danger small" style="display:none; font-size: 10px;">RUT no válido.</div>
+                                <div id="rutFeedback" class="form-text small" style="display:none; font-size: 10px;"></div>
                             </div>
 
                             <!-- NOMBRE COMPLETO -->
@@ -226,20 +230,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-    <!-- VALIDACIÓN CLIENTE RUT CHILENO (MÓDULO 11) -->
+    <!-- VALIDACIÓN Y FORMATEO DE RUT (FORMATO CLAVEÚNICA: SIN PUNTOS, CON GUIÓN) -->
     <script>
+    function limpiarRut(val) {
+        return (val || '').replace(/[^0-9kK]/g, '').toUpperCase();
+    }
+
+    function formatearRutClaveUnica(val) {
+        let limpio = limpiarRut(val);
+        if (limpio.length > 9) limpio = limpio.slice(0, 9);
+        if (limpio.length > 1) {
+            return limpio.slice(0, -1) + '-' + limpio.slice(-1);
+        }
+        return limpio;
+    }
+
     function validarRutM11(rut) {
-        if (!rut) return false;
-        let limpio = rut.replace(/[^0-9kK]/g, '');
+        let limpio = limpiarRut(rut);
         if (limpio.length < 7 || limpio.length > 9) return false;
         
-        let dv = limpio.slice(-1).toUpperCase();
+        let dv = limpio.slice(-1);
         let cuerpo = limpio.slice(0, -1);
         
         let suma = 0;
         let mult = 2;
         for (let i = cuerpo.length - 1; i >= 0; i--) {
-            suma += parseInt(cuerpo.charAt(i)) * mult;
+            suma += parseInt(cuerpo.charAt(i), 10) * mult;
             mult = (mult === 7) ? 2 : mult + 1;
         }
         let resto = suma % 11;
@@ -249,12 +265,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         return (dv === dvEsp);
     }
 
-    function formatearRutInput(input) {
-        let val = input.value.replace(/[^0-9kK]/g, '');
-        if (val.length >= 2) {
-            let dv = val.slice(-1).toUpperCase();
-            let cuerpo = val.slice(0, -1);
-            input.value = Number(cuerpo).toLocaleString('es-CL') + '-' + dv;
+    function manejarInputRut(input) {
+        let formateado = formatearRutClaveUnica(input.value);
+        input.value = formateado;
+
+        let feedback = document.getElementById('rutFeedback');
+        let limpio = limpiarRut(input.value);
+
+        if (limpio.length >= 7) {
+            if (validarRutM11(input.value)) {
+                input.classList.remove('is-invalid');
+                input.classList.add('is-valid');
+                feedback.className = 'form-text text-success small';
+                feedback.textContent = '✓ RUT válido';
+                feedback.style.display = 'block';
+            } else {
+                input.classList.remove('is-valid');
+                input.classList.add('is-invalid');
+                feedback.className = 'form-text text-danger small';
+                feedback.textContent = '✗ Dígito verificador no válido.';
+                feedback.style.display = 'block';
+            }
+        } else if (limpio.length > 0) {
+            input.classList.remove('is-valid', 'is-invalid');
+            feedback.className = 'form-text text-muted small';
+            feedback.textContent = 'Ingrese RUT completo (ej: 15737866-K).';
+            feedback.style.display = 'block';
+        } else {
+            input.classList.remove('is-valid', 'is-invalid');
+            feedback.style.display = 'none';
         }
     }
 
@@ -262,13 +301,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         let input = document.getElementById('rutInput');
         let feedback = document.getElementById('rutFeedback');
         if (!validarRutM11(input.value)) {
+            feedback.className = 'form-text text-danger small';
+            feedback.textContent = 'Por favor ingrese un RUT chileno válido antes de continuar.';
             feedback.style.display = 'block';
+            input.classList.remove('is-valid');
             input.classList.add('is-invalid');
             input.focus();
             return false;
         }
-        feedback.style.display = 'none';
-        input.classList.remove('is-invalid');
         return true;
     }
     </script>

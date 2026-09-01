@@ -53,17 +53,34 @@ function validar_rut_chileno($rut) {
 }
 
 /**
- * Formatea un RUT a su representación estándar chilena (ej: "12.345.678-K").
+ * Formatea un RUT a su representación estándar chilena con puntos (ej: "12.345.678-K").
  * 
  * @param string $rut
  * @return string
  */
 function formatear_rut_chileno($rut) {
     $rut_limpio = preg_replace('/[^0-9kK]/', '', $rut);
-    if (strlen($rut_limpio) < 2) return $rut;
+    if (strlen($rut_limpio) < 2) return strtoupper($rut);
 
     $dv = strtoupper(substr($rut_limpio, -1));
     $cuerpo = substr($rut_limpio, 0, -1);
 
     return number_format(intval($cuerpo), 0, '', '.') . '-' . $dv;
 }
+
+/**
+ * Formatea un RUT al estándar nativo de ClaveÚnica: sin puntos y con guión (ej: "12345678-K").
+ * 
+ * @param string $rut
+ * @return string
+ */
+function formatear_rut_claveunica($rut) {
+    $rut_limpio = preg_replace('/[^0-9kK]/', '', $rut);
+    if (strlen($rut_limpio) < 2) return strtoupper($rut);
+
+    $dv = strtoupper(substr($rut_limpio, -1));
+    $cuerpo = substr($rut_limpio, 0, -1);
+
+    return intval($cuerpo) . '-' . $dv;
+}
+
