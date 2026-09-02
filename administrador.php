@@ -74,7 +74,7 @@ require_once __DIR__ . '/admin_controller.php';
                                         <th class="p-3">Requerimiento</th>
                                         <th class="p-3">Solicitante / Centro de Costo</th>
                                         <th class="p-3">Tipo de Compra</th>
-                                        <th class="p-3 text-end" style="width: 180px;">Monto Estimado</th>
+                                        <th class="p-3 text-end" style="width: 180px;">Monto Total</th>
                                         <th class="p-3 text-center" style="width: 170px;">Acción</th>
                                     </tr>
                                 </thead>
@@ -135,7 +135,7 @@ require_once __DIR__ . '/admin_controller.php';
                                         <th class="p-3">Requerimiento</th>
                                         <th class="p-3">Proveedor Adjudicado</th>
                                         <th class="p-3">Solicitante / Centro Costo</th>
-                                        <th class="p-3 text-end" style="width: 180px;">Monto Definitivo</th>
+                                        <th class="p-3 text-end" style="width: 180px;">Monto Total</th>
                                         <th class="p-3 text-center" style="width: 170px;">Acción</th>
                                     </tr>
                                 </thead>
@@ -330,7 +330,7 @@ require_once __DIR__ . '/admin_controller.php';
                                 Detalle de Productos
                             </h6>
                             <div class="text-end">
-                                <span class="text-muted text-uppercase fw-bold" style="font-size: 8px;"><?= $exp['monto_definitivo'] ? 'Monto Final Aprobado' : 'Monto Estimado Inicial' ?></span>
+                                <span class="text-muted text-uppercase fw-bold" style="font-size: 8px;">Monto Total</span>
                                 <div class="h5 fw-black text-success font-monospace mb-0"><?= money($exp['monto_definitivo'] ?? $exp['monto_estimado']) ?></div>
                             </div>
                         </div>

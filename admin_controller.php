@@ -249,5 +249,8 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
     $docs = $stmtD->fetchAll();
 }
 
-function money($v) { return '$ ' . number_format($v, 0, ',', '.'); }
+function money($v) {
+    if ($v === null || $v === '') return '$ 0';
+    return '$ ' . number_format((float)$v, 0, ',', '.');
+}
 ?>

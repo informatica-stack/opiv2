@@ -132,7 +132,7 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
                                 <th class="p-3" style="min-width: 250px;">Trámite / Solicitante / CC</th>
                                 <th class="p-3 text-nowrap" style="width: 150px;">Clasificación</th>
                                 <th class="p-3 text-nowrap" style="width: 180px;">Fase / Estado Actual</th>
-                                <th class="p-3 text-end text-nowrap" style="width: 150px;">Monto Estimado</th>
+                                <th class="p-3 text-end text-nowrap" style="width: 150px;">Monto Total</th>
                                 <th class="p-3 text-center text-nowrap" style="width: 150px;">Gestión</th>
                             </tr>
                         </thead>
@@ -203,11 +203,8 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
                                     </td>
 
                                     <td class="p-3 text-end text-nowrap">
-                                        <div class="font-monospace fw-bold <?= $row['monto_definitivo'] ? 'text-success' : 'text-dark' ?>" style="font-size: 13px;">
+                                        <div class="font-monospace fw-bold text-dark" style="font-size: 13px;">
                                             <?= money($row['monto_definitivo'] ?? $row['monto_estimado']) ?>
-                                        </div>
-                                        <div class="text-muted" style="font-size: 9px;">
-                                            <?= $row['monto_definitivo'] ? 'Gasto Definitivo' : 'Estimado' ?>
                                         </div>
                                     </td>
 
@@ -238,7 +235,7 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
             <div class="row align-items-center mb-4 g-3">
                 <div class="col-12 col-md">
                     <span class="badge bg-primary text-uppercase tracking-wider mb-1.5" style="font-size: 9px; letter-spacing: 0.5px;">
-                        <?= $es_fase_inicial ? 'Fase: Emisión de Certificado de Disponibilidad (CDP)' : 'Fase: Visación de Gasto Definitiva' ?>
+                        <?= $es_fase_inicial ? 'Fase: Emisión de Certificado de Disponibilidad (CDP)' : 'Fase: Visación Presupuestaria' ?>
                     </span>
                     <h1 class="h3 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
                         Expediente: <span class="font-monospace text-primary">#<?= htmlspecialchars($expediente['codigo_interno']) ?></span>
@@ -326,7 +323,7 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
                                     <?php endif; ?>
                                 </div>
 
-                                <?php if(!$es_fase_inicial && $expediente['proveedor_adjudicado_id']): ?>
+                                <?php if(!empty($expediente['proveedor_nombre'])): ?>
                                     <div class="bg-success-subtle border border-success-subtle p-3 rounded-3 mt-1 text-success-emphasis">
                                         <span class="fw-bold d-block text-uppercase mb-1" style="font-size: 9px;">Proveedor Adjudicado</span>
                                         <p class="font-bold mb-1 leading-tight fs-6"><?= htmlspecialchars($expediente['proveedor_nombre']) ?></p>
@@ -337,7 +334,7 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
                                 <div class="pt-2 border-t mt-2">
                                     <span class="text-muted fw-bold d-block text-uppercase mb-1" style="font-size: 9px;">Justificación del Gasto:</span>
                                     <div class="bg-light p-2.5 rounded border small text-secondary leading-relaxed" style="max-height: 180px; overflow-y: auto; font-size: 11px;">
-                                        <?= nl2br(htmlspecialchars($expediente['motivo_compra'])) ?>
+                                        <?= nl2br(htmlspecialchars($expediente['motivo_compra'] ?? '')) ?>
                                     </div>
                                 </div>
                             </div>
@@ -381,25 +378,11 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
                         <div class="card-header bg-white py-3 d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3">
                             <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
                                 <i class="bi bi-diagram-3 text-secondary"></i>
-                                Imputación Contable y Saldos (Micro)
+                                Imputación Contable
                             </h6>
                             <div class="text-start text-sm-end">
-                                <?php if($es_fase_inicial): ?>
-                                    <span class="text-muted text-uppercase fw-bold" style="font-size: 9px;">Presupuesto Estimado</span>
-                                    <div class="h5 fw-black text-primary font-monospace mb-0"><?= money($expediente['monto_estimado']) ?></div>
-                                <?php else: ?>
-                                    <span class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size: 9px;">Cálculo de Adjudicación Final</span>
-                                    <div class="d-flex gap-3 align-items-center justify-content-start justify-content-sm-end text-sm">
-                                        <div class="text-start text-sm-end">
-                                            <span class="text-muted font-bold d-block text-uppercase" style="font-size: 8px;">Estimado</span>
-                                            <span class="text-secondary small line-through"><?= money($expediente['monto_estimado']) ?></span>
-                                        </div>
-                                        <div class="text-start text-sm-end">
-                                            <span class="text-success font-bold d-block text-uppercase" style="font-size: 8px;">Gasto Definitivo</span>
-                                            <span class="text-success fw-black fs-5 font-monospace"><?= money($expediente['monto_definitivo']) ?></span>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
+                                <span class="text-muted text-uppercase fw-bold" style="font-size: 9px;">Monto Total</span>
+                                <div class="h5 fw-black text-primary font-monospace mb-0"><?= money($expediente['monto_definitivo'] ?? $expediente['monto_estimado']) ?></div>
                             </div>
                         </div>
                         
@@ -427,7 +410,7 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
                                             </div>
                                             <div class="text-end">
                                                 <span class="text-muted d-block text-uppercase fw-bold" style="font-size: 8px;">Monto Total</span>
-                                                <span class="fw-bold font-monospace <?= !$es_fase_inicial ? 'text-success' : 'text-dark' ?>" style="font-size: 14px;">
+                                                <span class="fw-bold font-monospace text-dark" style="font-size: 14px;">
                                                     <?= money($costo_mostrar) ?>
                                                 </span>
                                             </div>

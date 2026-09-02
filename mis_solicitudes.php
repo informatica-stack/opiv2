@@ -99,7 +99,7 @@ require_once __DIR__ . '/mis_solicitudes_controller.php';
                             <th class="p-3" style="min-width: 250px;">Trámite / Requerimiento</th>
                             <th class="p-3 text-nowrap" style="width: 150px;">Clasificación</th>
                             <th class="p-3 text-nowrap" style="width: 180px;">Estado Actual</th>
-                            <th class="p-3 text-end text-nowrap" style="width: 150px;">Monto Estimado</th>
+                            <th class="p-3 text-end text-nowrap" style="width: 150px;">Monto Total</th>
                             <th class="p-3 text-center text-nowrap" style="width: 150px;">Gestión</th>
                         </tr>
                     </thead>

@@ -168,12 +168,12 @@ foreach($otros_proveedores as $p) {
                         <input type="hidden" name="prioridad_id" value="1">
 
                         <div class="col-md-6 d-none" id="divMontoDisponible">
-                            <label class="form-label fw-bold text-primary small">Monto Disponible Neto de la Cotización <span class="text-danger">*</span></label>
+                            <label class="form-label fw-bold text-primary small">Monto Neto de la Cotización <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-primary text-white fw-bold">$</span>
                                 <input type="text" name="monto_disponible_neto" id="inpMontoDisponible" class="form-control fw-bold text-primary bg-white" oninput="handleMontoInput(this)" value="<?= htmlspecialchars($post_monto_disponible_neto ?? '') ?>">
                             </div>
-                            <div class="form-text text-muted small" style="font-size: 9px;">El total estimado sumará el 19% de IVA de forma automática.</div>
+                            <div class="form-text text-muted small" style="font-size: 9px;">El total sumará el 19% de IVA de forma automática.</div>
                         </div>
 
                         <div class="col-md-6">

@@ -335,7 +335,8 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
     if (!$expediente) die("Expediente no encontrado.");
 
     $es_accionable = in_array($expediente['estado_actual'], ['EN_VALIDACION_PRESUPUESTARIA', 'EN_VALIDACION_PRESUPUESTARIA_FINAL']);
-    $es_fase_inicial = in_array($expediente['estado_actual'], ['EN_VALIDACION_PRESUPUESTARIA', 'ESPERANDO_CDP_FINANZAS']);
+    $es_fase_final = in_array($expediente['estado_actual'], ['EN_VALIDACION_PRESUPUESTARIA_FINAL', 'ESPERANDO_CDP_FINANZAS_FINAL', 'EN_APROBACION_ADMINISTRADOR', 'EN_EMISION_OC', 'ESPERANDO_ACEPTACION_OC', 'FINALIZADO']) || !empty($expediente['monto_definitivo']);
+    $es_fase_inicial = !$es_fase_final;
 
     $stmtItems = $pdo->prepare("
         SELECT ei.*, cm.codigo as cuenta_codigo, cm.nombre as cuenta_nombre, ag.codigo as ag_codigo
@@ -373,5 +374,8 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
     $criterios = $stmtCrit->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function money($v) { return '$ ' . number_format($v, 0, ',', '.'); }
+function money($v) {
+    if ($v === null || $v === '') return '$ 0';
+    return '$ ' . number_format((float)$v, 0, ',', '.');
+}
 ?>

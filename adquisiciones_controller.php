@@ -384,5 +384,8 @@ if ($vista === 'gestionar' && isset($_GET['id'])) {
     $proveedores = $pdo->query("SELECT * FROM proveedores ORDER BY razon_social ASC")->fetchAll();
 }
 
-function money($v) { return '$ ' . number_format($v, 0, ',', '.'); }
+function money($v) {
+    if ($v === null || $v === '') return '$ 0';
+    return '$ ' . number_format((float)$v, 0, ',', '.');
+}
 ?>

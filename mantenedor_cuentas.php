@@ -74,7 +74,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // CONSULTA LISTADO
 $cuentas = $pdo->query("SELECT * FROM cuentas_maestras ORDER BY codigo ASC")->fetchAll();
 
-function money($v) { return '$ ' . number_format($v, 0, ',', '.'); }
+function money($v) {
+    if ($v === null || $v === '') return '$ 0';
+    return '$ ' . number_format((float)$v, 0, ',', '.');
+}
 ?><!DOCTYPE html>
 <html lang="es">
 <head>

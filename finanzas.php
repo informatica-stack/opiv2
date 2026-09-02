@@ -126,7 +126,7 @@ require_once __DIR__ . '/finanzas_controller.php';
                                 <th class="p-3" style="min-width: 250px;">Trámite / Solicitante / CC</th>
                                 <th class="p-3 text-nowrap" style="width: 150px;">Clasificación</th>
                                 <th class="p-3 text-nowrap" style="width: 180px;">Fase / Estado Actual</th>
-                                <th class="p-3 text-end text-nowrap" style="width: 150px;">Monto Estimado</th>
+                                <th class="p-3 text-end text-nowrap" style="width: 150px;">Monto Total</th>
                                 <th class="p-3 text-center text-nowrap" style="width: 150px;">Gestión</th>
                             </tr>
                         </thead>
@@ -197,11 +197,8 @@ require_once __DIR__ . '/finanzas_controller.php';
                                     </td>
 
                                     <td class="p-3 text-end text-nowrap">
-                                        <div class="font-monospace fw-bold <?= $row['monto_definitivo'] ? 'text-success' : 'text-dark' ?>" style="font-size: 13px;">
+                                        <div class="font-monospace fw-bold text-dark" style="font-size: 13px;">
                                             <?= money($row['monto_definitivo'] ?? $row['monto_estimado']) ?>
-                                        </div>
-                                        <div class="text-muted" style="font-size: 9px;">
-                                            <?= $row['monto_definitivo'] ? 'Gasto Definitivo' : 'Estimado' ?>
                                         </div>
                                     </td>
 
@@ -327,11 +324,11 @@ require_once __DIR__ . '/finanzas_controller.php';
                         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                             <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
                                 <i class="bi bi-diagram-3 text-secondary"></i>
-                                Imputación Contable y Montos
+                                Imputación Contable
                             </h6>
                             <div class="text-end">
-                                <span class="text-muted text-uppercase fw-bold" style="font-size: 9px;">Total Requerido</span>
-                                <div class="h5 fw-black text-primary font-monospace mb-0"><?= money($expediente['monto_estimado']) ?></div>
+                                <span class="text-muted text-uppercase fw-bold" style="font-size: 9px;">Monto Total</span>
+                                <div class="h5 fw-black text-primary font-monospace mb-0"><?= money($expediente['monto_definitivo'] ?? $expediente['monto_estimado']) ?></div>
                             </div>
                         </div>
                         

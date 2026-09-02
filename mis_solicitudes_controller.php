@@ -164,7 +164,11 @@ function color_estado($estado_codigo) {
     if ($estado_codigo === 'EN_CORRECCION') return 'bg-danger-subtle text-danger-emphasis fw-bold border border-danger-subtle'; 
     return 'bg-primary-subtle text-primary-emphasis border border-primary-subtle';
 }
-function money($v) { return '$ ' . number_format($v, 0, ',', '.'); }
+
+function money($v) {
+    if ($v === null || $v === '') return '$ 0';
+    return '$ ' . number_format((float)$v, 0, ',', '.');
+}
 
 $query_string = $_GET; unset($query_string['p']); unset($query_string['anular_id']); unset($query_string['descargar_zip']); 
 $base_url = '?' . http_build_query($query_string) . '&p=';

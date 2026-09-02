@@ -127,7 +127,7 @@ require_once __DIR__ . '/adquisiciones_controller.php';
                                 <th class="p-3" style="min-width: 250px;">Trámite / Solicitante / CC</th>
                                 <th class="p-3 text-nowrap" style="width: 150px;">Clasificación</th>
                                 <th class="p-3 text-nowrap" style="width: 180px;">Fase / Estado Actual</th>
-                                <th class="p-3 text-end text-nowrap" style="width: 150px;">Monto Estimado</th>
+                                <th class="p-3 text-end text-nowrap" style="width: 150px;">Monto Total</th>
                                 <th class="p-3 text-center text-nowrap" style="width: 150px;">Gestión</th>
                             </tr>
                         </thead>
@@ -198,11 +198,8 @@ require_once __DIR__ . '/adquisiciones_controller.php';
                                     </td>
 
                                     <td class="p-3 text-end text-nowrap">
-                                        <div class="font-monospace fw-bold <?= $row['monto_definitivo'] ? 'text-success' : 'text-dark' ?>" style="font-size: 13px;">
+                                        <div class="font-monospace fw-bold text-dark" style="font-size: 13px;">
                                             <?= money($row['monto_definitivo'] ?? $row['monto_estimado']) ?>
-                                        </div>
-                                        <div class="text-muted" style="font-size: 9px;">
-                                            <?= $row['monto_definitivo'] ? 'Gasto Definitivo' : 'Estimado' ?>
                                         </div>
                                     </td>
 
@@ -284,16 +281,9 @@ require_once __DIR__ . '/adquisiciones_controller.php';
 
                                 <div class="d-flex flex-column gap-2 pt-2 border-top">
                                     <div class="d-flex justify-content-between align-items-center bg-light p-2 rounded-3 border">
-                                        <span class="text-muted fw-bold text-uppercase" style="font-size: 9px;">Monto Estimado Inicial:</span> 
-                                        <span class="fw-bold text-dark"><?= money($exp['monto_estimado']) ?></span>
+                                        <span class="text-muted fw-bold text-uppercase" style="font-size: 9px;">Monto Total:</span> 
+                                        <span class="fw-bold text-dark"><?= money($exp['monto_definitivo'] ?? $exp['monto_estimado']) ?></span>
                                     </div>
-                                    
-                                    <?php if($exp['monto_definitivo']): ?>
-                                        <div class="d-flex justify-content-between align-items-center bg-success-subtle text-success-emphasis p-2 rounded-3 border border-success-subtle">
-                                            <span class="fw-bold text-uppercase" style="font-size: 9px;">Monto Adjudicado Final:</span> 
-                                            <span class="fw-black font-monospace"><?= money($exp['monto_definitivo']) ?></span>
-                                        </div>
-                                    <?php endif; ?>
 
                                     <?php if($exp['id_contrato_suministro']): ?>
                                         <div class="d-flex justify-content-between align-items-center bg-teal-subtle text-teal-emphasis p-2 rounded-3 border border-teal-subtle">
@@ -536,7 +526,7 @@ require_once __DIR__ . '/adquisiciones_controller.php';
                                                     </div>
                                                     <div class="col-md-5">
                                                         <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Monto Final C/IVA ($)</label>
-                                                        <input type="text" name="monto_definitivo" id="inpMonto" required class="form-control form-control-sm font-monospace fw-bold text-dark text-end" value="<?= number_format($exp['monto_estimado'], 0, '', '') ?>">
+                                                        <input type="text" name="monto_definitivo" id="inpMonto" required class="form-control form-control-sm font-monospace fw-bold text-dark text-end" value="<?= number_format((float)($exp['monto_estimado'] ?? 0), 0, '', '') ?>">
                                                     </div>
                                                 </div>
                                             <?php endif; ?>

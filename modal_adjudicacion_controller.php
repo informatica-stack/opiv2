@@ -100,11 +100,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
             }
         }
 
-        // Validar que el monto total adjudicado no supere el monto disponible estimado previamente declarado
-        if ($monto_final_calculado > floatval($expediente['monto_estimado'])) {
-            throw new Exception("El monto total adjudicado ($" . number_format($monto_final_calculado, 0, ',', '.') . " Bruto) supera el monto disponible estimado previamente declarado ($" . number_format($expediente['monto_estimado'], 0, ',', '.') . " Bruto).");
-        }
-
         // Guardar el Acta de Adjudicación
         $ext_acta = validar_subida_archivo($_FILES['acta_adjudicacion']);
         $file_acta = $_FILES['acta_adjudicacion'];

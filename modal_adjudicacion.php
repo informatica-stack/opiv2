@@ -300,11 +300,6 @@ if (isset($proveedores_db)) {
             return false;
         }
 
-        // Validar que no supere el monto_estimado
-        if (totalBrutoAdjudicacion > montoEstimadoExpediente) {
-            alert("⚠️ Error de Adjudicación: El monto total adjudicado (" + formatCurrency(totalBrutoAdjudicacion) + " con IVA) supera el presupuesto disponible para este trámite (" + formatCurrency(montoEstimadoExpediente) + ").");
-            return false;
-        }
 
         return true;
     }

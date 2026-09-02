@@ -130,7 +130,7 @@ require_once __DIR__ . '/jefatura_controller.php';
                                 <th class="p-3" style="min-width: 250px;">Trámite / Solicitante / CC</th>
                                 <th class="p-3 text-nowrap" style="width: 150px;">Clasificación</th>
                                 <th class="p-3 text-nowrap" style="width: 180px;">Estado Actual</th>
-                                <th class="p-3 text-end text-nowrap" style="width: 150px;">Monto Estimado</th>
+                                <th class="p-3 text-end text-nowrap" style="width: 150px;">Monto Total</th>
                                 <th class="p-3 text-center text-nowrap" style="width: 150px;">Gestión</th>
                             </tr>
                         </thead>
@@ -367,8 +367,8 @@ require_once __DIR__ . '/jefatura_controller.php';
                                 Detalle de Productos / Servicios
                             </h6>
                             <div class="text-end">
-                                <span class="text-muted text-uppercase fw-bold mb-0" style="font-size: 9px;">Monto Estimado Solicitado</span>
-                                <div class="h5 fw-black text-primary mb-0 font-monospace"><?= money($exp['monto_estimado']) ?></div>
+                                <span class="text-muted text-uppercase fw-bold mb-0" style="font-size: 9px;">Monto Total</span>
+                                <div class="h5 fw-black text-primary mb-0 font-monospace"><?= money($exp['monto_definitivo'] ?? $exp['monto_estimado']) ?></div>
                             </div>
                         </div>
                         
