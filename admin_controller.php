@@ -247,6 +247,7 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
     ");
     $stmt->execute([$_GET['id']]);
     $exp = $stmt->fetch();
+    $expediente = $exp;
 
     if (!$exp) die("Expediente no encontrado.");
 

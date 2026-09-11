@@ -204,6 +204,7 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
     $stmt = $pdo->prepare($sql); 
     $stmt->execute([$_GET['id']]); 
     $exp = $stmt->fetch();
+    $expediente = $exp;
     
     $es_accionable = in_array($exp['estado_actual'], ['EN_REVISION_JEFATURA', 'EN_FIRMA_JEFATURA']);
     

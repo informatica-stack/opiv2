@@ -509,13 +509,17 @@ DROP TABLE IF EXISTS `expedientes_items`;
 CREATE TABLE `expedientes_items` (
   `id` int NOT NULL AUTO_INCREMENT,
   `expediente_id` int NOT NULL,
+  `presupuesto_asignado_id` int DEFAULT NULL,
+  `id_producto_cm` varchar(100) DEFAULT NULL,
   `descripcion` varchar(255) NOT NULL,
-  `cantidad` decimal(10,2) NOT NULL DEFAULT '1.00',
-  `precio_unitario` decimal(15,2) NOT NULL DEFAULT '0.00',
   `unidad_medida` varchar(50) NOT NULL DEFAULT 'UNIDAD',
+  `cantidad` decimal(12,2) NOT NULL DEFAULT '1.00',
+  `precio_unitario` decimal(15,2) NOT NULL DEFAULT '0.00',
   PRIMARY KEY (`id`),
   KEY `fk_items_exp` (`expediente_id`),
-  CONSTRAINT `fk_items_exp` FOREIGN KEY (`expediente_id`) REFERENCES `expedientes` (`id`) ON DELETE CASCADE
+  KEY `fk_items_pa` (`presupuesto_asignado_id`),
+  CONSTRAINT `fk_items_exp` FOREIGN KEY (`expediente_id`) REFERENCES `expedientes` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_items_pa` FOREIGN KEY (`presupuesto_asignado_id`) REFERENCES `presupuestos_asignados` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -547,6 +551,7 @@ CREATE TABLE `expedientes_historial` (
   `estado_anterior` varchar(50) NOT NULL,
   `estado_nuevo` varchar(50) NOT NULL,
   `comentario` text,
+  `fecha_accion` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `fk_hist_exp` (`expediente_id`),
@@ -562,6 +567,7 @@ CREATE TABLE `expedientes_firmas` (
   `id` int NOT NULL AUTO_INCREMENT,
   `expediente_id` int NOT NULL,
   `usuario_firmante_id` int NOT NULL,
+  `autoridad_id` int DEFAULT NULL,
   `nombre_firmante` varchar(150) NOT NULL,
   `rut_firmante` varchar(12) NOT NULL,
   `cargo_firmante` varchar(150) DEFAULT NULL,
@@ -588,8 +594,10 @@ DROP TABLE IF EXISTS `expedientes_criterios`;
 CREATE TABLE `expedientes_criterios` (
   `id` int NOT NULL AUTO_INCREMENT,
   `expediente_id` int NOT NULL,
+  `numero_criterio` int DEFAULT NULL,
   `nombre_criterio` varchar(150) NOT NULL,
-  `porcentaje_ponderacion` decimal(5,2) NOT NULL,
+  `porcentaje` decimal(5,2) DEFAULT NULL,
+  `porcentaje_ponderacion` decimal(5,2) DEFAULT NULL,
   `descripcion` text,
   PRIMARY KEY (`id`),
   KEY `fk_criterios_exp` (`expediente_id`),

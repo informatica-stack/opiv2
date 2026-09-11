@@ -551,9 +551,9 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
                                                  break;
                                              }
                                          }
-                                         if ($exp['estado_actual'] === 'EN_VALIDACION_PRESUPUESTARIA_FINAL'):
+                                         if ($expediente['estado_actual'] === 'EN_VALIDACION_PRESUPUESTARIA_FINAL'):
                                          ?>
-                                             <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $exp['id'] ?>, transicion_id: <?= $t_aprobar ? $t_aprobar['id'] : 'null' ?>, etapa: 'PRESUPUESTO', codigo_interno: '<?= htmlspecialchars($exp['codigo_interno']) ?>', monto: '<?= $exp['monto_definitivo'] ?: $exp['monto_estimado'] ?>', doc_titulo: 'OPI - V°B° Presupuestario (2/3)'})" class="btn btn-primary py-2.5 w-100 mb-4 shadow d-flex align-items-center justify-content-center gap-2 fw-bold">
+                                             <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $expediente['id'] ?>, transicion_id: <?= $t_aprobar ? $t_aprobar['id'] : 'null' ?>, etapa: 'PRESUPUESTO', codigo_interno: '<?= htmlspecialchars($expediente['codigo_interno']) ?>', monto: '<?= $expediente['monto_definitivo'] ?: $expediente['monto_estimado'] ?>', doc_titulo: 'OPI - V°B° Presupuestario (2/3)'})" class="btn btn-primary py-2.5 w-100 mb-4 shadow d-flex align-items-center justify-content-center gap-2 fw-bold">
                                                  <i class="bi bi-pen-fill"></i>
                                                  Firmar OPI con FirmaGob (2/3)
                                              </button>

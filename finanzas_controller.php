@@ -274,6 +274,7 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
     $stmtHead->execute([$_GET['id']]);
     $expediente = $stmtHead->fetch();
     if (!$expediente) die("Expediente no encontrado.");
+    $exp = $expediente;
 
     $es_accionable = ($expediente['estado_actual'] === 'ESPERANDO_CDP_FINANZAS' || $expediente['estado_actual'] === 'ESPERANDO_CDP_FINANZAS_FINAL');
 

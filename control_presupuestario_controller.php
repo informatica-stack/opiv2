@@ -353,6 +353,7 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
     $stmtHead->execute([$_GET['id']]);
     $expediente = $stmtHead->fetch();
     if (!$expediente) die("Expediente no encontrado.");
+    $exp = $expediente;
 
     $es_accionable = in_array($expediente['estado_actual'], ['EN_VALIDACION_PRESUPUESTARIA', 'EN_VALIDACION_PRESUPUESTARIA_FINAL']);
     $es_fase_final = in_array($expediente['estado_actual'], ['EN_VALIDACION_PRESUPUESTARIA_FINAL', 'ESPERANDO_CDP_FINANZAS_FINAL', 'EN_APROBACION_ADMINISTRADOR', 'EN_EMISION_OC', 'ESPERANDO_ACEPTACION_OC', 'FINALIZADO']) || !empty($expediente['monto_definitivo']);

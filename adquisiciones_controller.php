@@ -382,6 +382,7 @@ if ($vista === 'gestionar' && isset($_GET['id'])) {
     $stmt->execute([$id]); 
     $exp = $stmt->fetch();
     if (!$exp) die("Error de datos o expediente no encontrado.");
+    $expediente = $exp;
     
     $es_accionable = (($exp['rol_responsable'] ?? '') === 'ADQUISICIONES');
     

@@ -447,7 +447,7 @@ require_once __DIR__ . '/finanzas_controller.php';
                                     }
                                     if ($t_aprobar):
                                     ?>
-                                        <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $exp['id'] ?>, transicion_id: <?= $t_aprobar['id'] ?>, etapa: 'CDP_FINANZAS', codigo_interno: '<?= htmlspecialchars($exp['codigo_interno']) ?>', monto: '<?= $exp['monto_definitivo'] ?: $exp['monto_estimado'] ?>', doc_titulo: 'Certificado de Disponibilidad Presupuestaria (CDP)'})" class="btn btn-primary py-2.5 w-100 mb-4 shadow d-flex align-items-center justify-content-center gap-2 fw-bold">
+                                        <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $expediente['id'] ?>, transicion_id: <?= $t_aprobar['id'] ?>, etapa: 'CDP_FINANZAS', codigo_interno: '<?= htmlspecialchars($expediente['codigo_interno']) ?>', monto: '<?= $expediente['monto_definitivo'] ?: $expediente['monto_estimado'] ?>', doc_titulo: 'Certificado de Disponibilidad Presupuestaria (CDP)'})" class="btn btn-primary py-2.5 w-100 mb-4 shadow d-flex align-items-center justify-content-center gap-2 fw-bold">
                                             <i class="bi bi-pen-fill"></i>
                                             Firmar CDP Oficial con FirmaGob
                                         </button>
