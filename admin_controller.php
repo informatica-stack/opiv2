@@ -77,11 +77,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // C. APROBAR Y FIRMAR
-        if ($accion === 'firmar' || $accion === 'aprobar') {
+        if ($accion === 'firmar' || $accion === 'aprobar' || $accion === 'firmar_firmagob' || $accion === 'subir_pdf_manual') {
             
-            $stmtEst = $pdo->prepare("SELECT estado_actual FROM expedientes WHERE id = ?");
+            $stmtEst = $pdo->prepare("SELECT estado_actual, codigo_interno FROM expedientes WHERE id = ?");
             $stmtEst->execute([$id]);
-            $estado_actual_exp = $stmtEst->fetchColumn();
+            $exp_row = $stmtEst->fetch();
+            $estado_actual_exp = $exp_row['estado_actual'] ?? '';
 
             if ($estado_actual_exp === 'EN_AUTORIZACION_COTIZACION') {
                 // Autorización de Cotización limpia (sin OPI ni PDF)
@@ -99,24 +100,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $tipo_mensaje = "success";
                 $vista = 'lista';
             } else {
-                // Firma y Emisión de OPI Final
-                if (!isset($_FILES['pdf_firmado']) || $_FILES['pdf_firmado']['error'] !== UPLOAD_ERR_OK) {
-                    throw new Exception("Debe subir el documento PDF de la OPI firmada.");
-                }
-                $file = $_FILES['pdf_firmado'];
-                if (strtolower(pathinfo($file['name'], PATHINFO_EXTENSION)) !== 'pdf') {
-                    throw new Exception("El archivo debe ser formato PDF.");
-                }
-
+                // Firma y Emisión de OPI Final (Fase 3: Firma 3/3)
                 $anio = date('Y');
                 $dir = __DIR__ . "/uploads/$anio/exp_$id/";
                 if (!file_exists($dir)) mkdir($dir, 0777, true);
                 
-                $nombre_final = "OPI_FIRMADA_" . time() . ".pdf";
+                $nombre_final = "OPI_FIRMADA_FINAL_" . time() . ".pdf";
+                $ruta_abs = $dir . $nombre_final;
                 $ruta_db = "uploads/$anio/exp_$id/" . $nombre_final;
-                
-                if (!move_uploaded_file($file['tmp_name'], $dir . $nombre_final)) {
-                    throw new Exception("Error al mover el archivo al servidor.");
+
+                $firmante = firmagob_obtener_firmante_activo($pdo, 'ADMIN_MUNICIPAL', $_SESSION['user_id']);
+                $run_firmante = $firmante['rut'] ?? $_SESSION['user_rut'];
+
+                if ($accion === 'subir_pdf_manual' || (!empty($_FILES['pdf_firmado']['name']) && $accion === 'aprobar')) {
+                    $file_input = !empty($_FILES['pdf_firmado_manual']['name']) ? $_FILES['pdf_firmado_manual'] : $_FILES['pdf_firmado'];
+                    $ext = validar_subida_archivo($file_input, null, ['pdf']);
+                    if (!move_uploaded_file($file_input['tmp_name'], $ruta_abs)) {
+                        throw new Exception("Error al mover el archivo al servidor.");
+                    }
+                    $id_solicitud = null;
+                    $chk_orig = null;
+                    $chk_signed = hash_file('sha256', $ruta_abs);
+                    $tipo_firma = 'MANUAL_DOCDIGITAL';
+                } else {
+                    $otp = $_POST['otp_code'] ?? null;
+
+                    // Buscar PDF de entrada (OPI_FIRMADA_2 u OPI_FIRMADA_1)
+                    $stmtDoc = $pdo->prepare("SELECT ruta_archivo FROM expedientes_documentos WHERE expediente_id = ? AND tipo_doc = 'OPI_FIRMADA_PDF' ORDER BY id DESC LIMIT 1");
+                    $stmtDoc->execute([$id]);
+                    $doc_db = $stmtDoc->fetchColumn();
+
+                    $ruta_base = ($doc_db && file_exists(__DIR__ . '/' . $doc_db)) ? __DIR__ . '/' . $doc_db : __DIR__ . '/' . generar_pdf_base_opi($pdo, $id);
+
+                    $resFirma = firmagob_firmar_archivo($ruta_base, $run_firmante, "OPI Final #" . ($exp_row['codigo_interno'] ?? $id), $otp, 'ADMIN_MUNICIPAL');
+                    file_put_contents($ruta_abs, $resFirma['content_binary']);
+
+                    $id_solicitud = $resFirma['id_solicitud'];
+                    $chk_orig = $resFirma['checksum_original'];
+                    $chk_signed = $resFirma['checksum_signed'];
+                    $tipo_firma = (FIRMAGOB_MODO === 'DESATENDIDA') ? 'FIRMAGOB_DESATENDIDA' : 'FIRMAGOB_ATENDIDA';
                 }
 
                 // LÓGICA DE GENERACIÓN DE FOLIO OFICIAL CORRELATIVO
@@ -156,23 +178,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Registrar Documento
                 $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'OPI_FIRMADA_PDF', ?, ?)")
-                    ->execute([$id, $_SESSION['user_id'], $ruta_db, $file['name']]);
+                    ->execute([$id, $_SESSION['user_id'], $ruta_db, $nombre_final]);
 
                 // Registrar Firma
-                $pdo->prepare("INSERT INTO expedientes_firmas (expediente_id, autoridad_id, cargo_firmante) VALUES (?, ?, 'ADMINISTRADOR MUNICIPAL')")
-                    ->execute([$id, $_SESSION['user_id']]);
+                $pdo->prepare("INSERT INTO expedientes_firmas (expediente_id, autoridad_id, cargo_firmante, etapa_firma, firmagob_solicitud_id, checksum_original, checksum_signed, tipo_firma, ip_origen) VALUES (?, ?, ?, 'ADMIN_MUNICIPAL', ?, ?, ?, ?, ?)")
+                    ->execute([$id, $_SESSION['user_id'], $firmante['cargo'] ?? 'ADMINISTRADOR MUNICIPAL', $id_solicitud, $chk_orig, $chk_signed, $tipo_firma, $_SERVER['REMOTE_ADDR'] ?? null]);
 
                 // Avanzar el Flujo
                 if ($transicion_id) {
-                    $nuevo_destino = ejecutar_transicion_por_id($pdo, $id, $_SESSION['user_id'], $transicion_id, "OPI Oficial Generada y Firmada (Folio: $folio_opi).");
+                    $nuevo_destino = ejecutar_transicion_por_id($pdo, $id, $_SESSION['user_id'], $transicion_id, "OPI Oficial Generada y Firmada Digitalmente (Folio: $folio_opi).");
                 } else {
-                    $nuevo_destino = avanzar_flujo($pdo, $id, $_SESSION['user_id'], "OPI Oficial Generada y Firmada (Folio: $folio_opi).");
+                    $nuevo_destino = avanzar_flujo($pdo, $id, $_SESSION['user_id'], "OPI Oficial Generada y Firmada Digitalmente (Folio: $folio_opi).");
                 }
                 $stmtNd = $pdo->prepare("SELECT nombre FROM estados_tramite WHERE codigo = ?");
                 $stmtNd->execute([$nuevo_destino]);
                 $nombre_dest = $stmtNd->fetchColumn();
 
-                $mensaje = "OPI #$folio_opi emitida oficialmente. Enviado a: $nombre_dest.";
+                $mensaje = "OPI #$folio_opi emitida y firmada oficialmente con éxito (3/3). Enviado a: $nombre_dest.";
                 $tipo_mensaje = "success";
                 $vista = 'lista';
             }

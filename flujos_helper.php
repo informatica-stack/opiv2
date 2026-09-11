@@ -94,20 +94,36 @@ function ejecutar_transicion_por_id($pdo, $expediente_id, $usuario_id, $transici
 }
 
 /**
- * Avanza el expediente al siguiente estado (Mantenido para compatibilidad).
+ * Avanza el expediente al siguiente estado de progresión positiva.
  */
-function avanzar_flujo($pdo, $expediente_id, $usuario_id, $comentario = 'Aprobado y enviado a la siguiente etapa.') {
+function avanzar_flujo($pdo, $expediente_id, $usuario_id, $comentario = 'Aprobado y enviado a la siguiente etapa.', $accion_codigo = null) {
     $transiciones = obtener_transiciones_disponibles($pdo, $expediente_id);
     
-    // Buscar la de tipo APROBAR
+    // 1. Si se especificó un código de acción exacto, buscarlo
+    if ($accion_codigo) {
+        foreach ($transiciones as $t) {
+            if ($t['accion_codigo'] === $accion_codigo) {
+                return ejecutar_transicion_por_id($pdo, $expediente_id, $usuario_id, $t['id'], $comentario);
+            }
+        }
+    }
+
+    // 2. Buscar transición estándar APROBAR
     foreach ($transiciones as $t) {
         if ($t['accion_codigo'] === 'APROBAR') {
             return ejecutar_transicion_por_id($pdo, $expediente_id, $usuario_id, $t['id'], $comentario);
         }
     }
 
+    // 3. Fallback: buscar la primera acción de avance (no destructiva / no retroceso)
+    foreach ($transiciones as $t) {
+        if (!in_array($t['accion_codigo'], ['DEVOLVER', 'RECHAZAR', 'ANULAR'])) {
+            return ejecutar_transicion_por_id($pdo, $expediente_id, $usuario_id, $t['id'], $comentario);
+        }
+    }
+
     // Fallback si no hay transiciones dinámicas configuradas: lanzar excepción
-    throw new Exception("No hay una transición de tipo 'APROBAR' configurada para el estado actual de este expediente.");
+    throw new Exception("No hay una transición de avance configurada para el estado actual de este expediente.");
 }
 
 /**

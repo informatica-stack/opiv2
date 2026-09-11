@@ -131,16 +131,16 @@ if (isset($proveedores_db)) {
                             </div>
                         </div>
 
-                        <!-- 3. Acta de Adjudicación -->
+                        <!-- 3. Acta de Adjudicación / Readjudicación -->
                         <div class="col-12 mt-3">
                             <div class="card border border-light-subtle shadow-sm">
                                 <div class="card-header bg-white py-2.5">
-                                    <h6 class="fw-bold mb-0 text-dark">3. Acta de Adjudicación</h6>
-                                    <p class="text-muted small mb-0" style="font-size: 10px;">Adjunte obligatoriamente el Acta de Adjudicación oficial firmada (PDF).</p>
+                                    <h6 class="fw-bold mb-0 text-dark">3. Acta de Adjudicación / Readjudicación</h6>
+                                    <p class="text-muted small mb-0" style="font-size: 10px;">Adjunte obligatoriamente el Acta de Adjudicación o Readjudicación oficial firmada (PDF).</p>
                                 </div>
                                 <div class="card-body p-3">
                                     <div>
-                                        <label class="form-label fw-bold text-secondary small" style="font-size: 9.5px;">Acta de Adjudicación (PDF) <span class="text-danger">*</span></label>
+                                        <label class="form-label fw-bold text-secondary small" style="font-size: 9.5px;">Acta de Adjudicación / Readjudicación (PDF) <span class="text-danger">*</span></label>
                                         <input type="file" name="acta_adjudicacion" id="inpActaAdjudicacion" accept="application/pdf" required class="form-control form-control-sm">
                                     </div>
                                 </div>

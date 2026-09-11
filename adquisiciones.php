@@ -586,14 +586,18 @@ require_once __DIR__ . '/adquisiciones_controller.php';
                                         </div>
 
                                         <div class="col-md-6">
-                                            <form method="POST" onsubmit="return confirm('¿Confirma que la OC fue rechazada en portal?')">
+                                            <form method="POST" enctype="multipart/form-data" onsubmit="return confirm('¿Confirma que la OC fue rechazada en portal?')">
                                                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                                 <input type="hidden" name="accion" value="oc_rechazada">
                                                 <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
-                                                <input type="text" name="motivo_rechazo_proveedor" required class="form-control form-control-sm text-center mb-2" placeholder="Motivo del rechazo...">
+                                                <div class="mb-2 text-start">
+                                                    <label class="form-label fw-bold text-secondary small" style="font-size: 10px;">Comprobante de Rechazo Portal (PDF) <span class="text-danger">*</span></label>
+                                                    <input type="file" name="comprobante_rechazo_oc" accept="application/pdf" required class="form-control form-control-sm">
+                                                </div>
+                                                <input type="text" name="motivo_rechazo_proveedor" required class="form-control form-control-sm text-start mb-2" placeholder="Indique motivo del rechazo...">
                                                 <button type="submit" class="btn btn-outline-danger py-2 w-100 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
-                                                    <i class="bi bi-x-circle"></i>
-                                                    <span>Rechazar Compra</span>
+                                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                                    <span>Registrar Rechazo y Devolver para Readjudicar</span>
                                                 </button>
                                             </form>
                                         </div>

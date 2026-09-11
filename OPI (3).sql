@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: db_sistemas
--- Tiempo de generación: 12-08-2026 a las 22:15:43
+-- Tiempo de generación: 11-09-2026 a las 15:34:50
 -- Versión del servidor: 8.0.45
 -- Versión de PHP: 8.2.27
 
@@ -63,7 +63,9 @@ CREATE TABLE `centros_costo` (
 
 INSERT INTO `centros_costo` (`id`, `codigo_cuenta`, `nombre`, `anio_fiscal`, `activo`) VALUES
 (1, '11', 'Depto. Informática', 2026, 1),
-(2, '12', 'Administración', 2026, 1);
+(2, '12', 'Administración', 2026, 1),
+(3, '13', 'DIDECO', 2026, 1),
+(4, '9000', 'Dirección Servicios Generales', 2026, 1);
 
 -- --------------------------------------------------------
 
@@ -106,37 +108,11 @@ CREATE TABLE `cuentas_maestras` (
 --
 
 INSERT INTO `cuentas_maestras` (`id`, `codigo`, `nombre`, `presupuesto_global_total`, `activo`) VALUES
-(1, '215-22-04-001', 'Materiales de Oficina', 0.00, 1),
-(3, '215-29-06-001', 'Equipos computacionales y periféricos', 0.00, 1),
-(4, '215-24-01-007-001', 'Canastas', 0.00, 1);
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `cuentas_presupuestarias`
---
-
-CREATE TABLE `cuentas_presupuestarias` (
-  `id` int NOT NULL,
-  `centro_costo_id` int NOT NULL,
-  `codigo` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `nombre` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `presupuesto_inicial` decimal(15,2) DEFAULT '0.00',
-  `monto_comprometido` decimal(15,2) DEFAULT '0.00',
-  `monto_ejecutado` decimal(15,2) DEFAULT '0.00',
-  `saldo_disponible` decimal(15,2) GENERATED ALWAYS AS (((`presupuesto_inicial` - `monto_comprometido`) - `monto_ejecutado`)) VIRTUAL,
-  `activo` tinyint(1) DEFAULT '1',
-  `area_gestion_id` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Volcado de datos para la tabla `cuentas_presupuestarias`
---
-
-INSERT INTO `cuentas_presupuestarias` (`id`, `centro_costo_id`, `codigo`, `nombre`, `presupuesto_inicial`, `monto_comprometido`, `monto_ejecutado`, `activo`, `area_gestion_id`) VALUES
-(1, 1, '215-22-04-001', 'Materiales de Oficina', NULL, 0.00, 0.00, 1, 1),
-(3, 1, '215-22-04-003', 'Equipamiento Computacional', NULL, 0.00, 0.00, 1, 1),
-(4, 1, '215-22-04-009', 'Insumos computacionales y repuestos', NULL, 0.00, 0.00, 1, 1);
+(1, '2152204001001', 'Por propuesta pública', 0.00, 1),
+(3, '2152906001', 'Equipos computacionales y periféricos', 0.00, 1),
+(4, '2152401007001', 'Canastas', 0.00, 1),
+(5, '2152201001001', 'Actividades propias', 0.00, 1),
+(6, '2152907001', 'Programas Computacionales', 0.00, 1);
 
 -- --------------------------------------------------------
 
@@ -158,21 +134,21 @@ CREATE TABLE `estados_tramite` (
 INSERT INTO `estados_tramite` (`codigo`, `nombre`, `rol_responsable`, `descripcion`) VALUES
 ('ANULADO', 'Anulado por Usuario', 'SISTEMA', NULL),
 ('BORRADOR', 'Borrador / Ingreso de Solicitud', 'USUARIO_REQ', NULL),
-('EN_APROBACION_ADMINISTRADOR', 'Firma y Emisión de OPI', 'ADMIN_MUNICIPAL', NULL),
-('EN_AUTORIZACION_COTIZACION', 'Autorización de Cotización', 'ADMIN_MUNICIPAL', NULL),
-('EN_CORRECCION', 'Devuelto para Corrección', 'USUARIO_REQ', NULL),
-('EN_COTIZACION_ADQ', 'Búsqueda de Cotizaciones', 'ADQUISICIONES', NULL),
-('EN_EMISION_OC', 'Emisión y Envío de Orden de Compra', 'ADQUISICIONES', NULL),
-('EN_EVALUACION_OFERTAS', 'Evaluación y Selección de Ofertas', 'USUARIO_REQ', NULL),
-('EN_GESTION_ADQUISICIONES', 'Gestión de Adjudicación Directa', 'ADQUISICIONES', NULL),
-('EN_REVISION_JEFATURA', 'Visación de Jefatura', 'JEFE_UNIDAD', NULL),
-('EN_VALIDACION_PRESUPUESTARIA', 'Reserva de Presupuesto Inicial', 'PRESUPUESTO', NULL),
-('EN_VALIDACION_PRESUPUESTARIA_FINAL', 'Visación de Gasto Definitivo', 'PRESUPUESTO', NULL),
+('EN_APROBACION_ADMINISTRADOR', 'Esperando Autorización de Administrador', 'ADMIN_MUNICIPAL', NULL),
+('EN_AUTORIZACION_COTIZACION', 'Esperando Autorización para Cotizar', 'ADMIN_MUNICIPAL', NULL),
+('EN_CORRECCION', 'Devuelto para Correcciones', 'USUARIO_REQ', NULL),
+('EN_COTIZACION_ADQ', 'En Proceso de Cotización', 'ADQUISICIONES', NULL),
+('EN_EMISION_OC', 'Esperando Emisión de Orden de Compra', 'ADQUISICIONES', NULL),
+('EN_EVALUACION_OFERTAS', 'Evaluación de Ofertas / Selección Proveedor', 'USUARIO_REQ', NULL),
+('EN_GESTION_ADQUISICIONES', 'En Gestión de Adquisiciones', 'ADQUISICIONES', NULL),
+('EN_REVISION_JEFATURA', 'Esperando Visto Bueno de Jefatura', 'JEFE_UNIDAD', NULL),
+('EN_VALIDACION_PRESUPUESTARIA', 'Visación y Reserva Presupuestaria', 'PRESUPUESTO', NULL),
+('EN_VALIDACION_PRESUPUESTARIA_FINAL', 'Visación Presupuestaria Final (Adjudicado)', 'PRESUPUESTO', NULL),
 ('ESPERANDO_ACEPTACION_OC', 'Esperando Aceptación del Proveedor', 'ADQUISICIONES', NULL),
-('ESPERANDO_CDP_FINANZAS', 'Espera de CDP por Finanzas', 'FINANZAS', 'Expediente enviado a Finanzas para adjuntar el Certificado de Disponibilidad Presupuestaria'),
-('ESPERANDO_CDP_FINANZAS_FINAL', 'Espera de CDP Final por Finanzas', 'FINANZAS', 'Expediente enviado a Finanzas para adjuntar el Certificado de Disponibilidad Presupuestaria Final'),
-('FINALIZADO', 'Proceso Finalizado Exitosamente', 'SISTEMA', NULL),
-('RECHAZADO', 'Proceso Rechazado / Cerrado', 'SISTEMA', NULL);
+('ESPERANDO_CDP_FINANZAS', 'Finanzas - Firma CDP Inicial', 'FINANZAS', NULL),
+('ESPERANDO_CDP_FINANZAS_FINAL', 'Finanzas - Firma CDP Final', 'FINANZAS', NULL),
+('FINALIZADO', 'Trámite Concluido', 'SISTEMA', NULL),
+('RECHAZADO', 'Rechazado Definitivamente', 'SISTEMA', NULL);
 
 -- --------------------------------------------------------
 
@@ -218,9 +194,9 @@ CREATE TABLE `expedientes` (
 --
 
 INSERT INTO `expedientes` (`id`, `codigo_interno`, `titulo_compra`, `folio_opi`, `usuario_creador_id`, `unidad_origen_id`, `centro_costo_id`, `tipo_compra_id`, `prioridad_id`, `rango_utm_id`, `estado_actual`, `proveedor_adjudicado_id`, `id_contrato_suministro`, `orden_compra_numero`, `decreto_alcaldicio_numero`, `conv_marco_oc`, `id_licitacion`, `monto_estimado`, `monto_definitivo`, `motivo_compra`, `observacion_cierre`, `created_at`, `fecha_visa_presupuesto`, `fecha_adjudicacion`, `fecha_aprobacion_opi`, `num_certificado_oficial`, `id_entidad_gobierno`, `id_compra_agil`, `plan_compras_proyecto`, `plan_compras_item`) VALUES
-(1, 'REQ-2026-0001', 'PRUEBA DE OPI', NULL, 1, 1, 1, 6, 1, 4, 'EN_COTIZACION_ADQ', NULL, NULL, NULL, NULL, NULL, NULL, 1071000.00, NULL, 'OPI PRUEBA TEST 01', NULL, '2026-08-05 10:33:00', '2026-08-05 10:36:18', NULL, NULL, NULL, 'ID PE-MUN-00335', NULL, '5089-70', 8),
-(4, 'REQ-2026-0002', 'Compra de sillas', 'OPI-2026-0001', 1, 1, 1, 6, 1, 3, 'ESPERANDO_CDP_FINANZAS_FINAL', 2, NULL, '4189-243-AG26', 'DA8080', '4189-243-AG26', NULL, 5712000.00, 3570000.00, 'sillas de oficina', NULL, '2026-08-12 14:58:47', '2026-08-12 21:55:26', '2026-08-12 21:51:50', '2026-08-12 15:16:30', NULL, 'ID PE-MUN-00335', NULL, '555-44 26', 3),
-(5, 'REQ-2026-0003', 'Subida de archivos', NULL, 1, 1, 1, 6, 1, 3, 'EN_REVISION_JEFATURA', NULL, NULL, NULL, NULL, NULL, NULL, 4760000.00, NULL, 'aslkdaklsdlknlasd', NULL, '2026-08-12 21:18:59', NULL, NULL, NULL, NULL, 'ID PE-MUN-00335', NULL, '5054-66-56', 8);
+(1, 'REQ-2026-0001', 'Computadores todo en uno', 'OPI-2026-0001', 1, 1, 1, 6, 1, 3, 'RECHAZADO', 2, NULL, '4189-600-AG26', 'DA8877', '4189-600-AG26', NULL, 6902000.00, 6568800.00, 'Proveer de equipamiento computacional a oficinas municipales', NULL, '2026-08-12 22:55:12', '2026-08-12 23:12:19', '2026-08-12 23:34:23', '2026-08-12 23:13:41', NULL, 'ID PE-MUN-00335', NULL, '5030-5-PC26', 2),
+(2, 'REQ-2026-0002', 'Compra de impresoras', 'OPI-2026-0002', 1, 1, 1, 6, 1, 3, 'ESPERANDO_ACEPTACION_OC', 2, NULL, '4189-601-AG26', 'DA8877', '4189-601-AG26', NULL, 5712000.00, 1190000.00, 'Compra de impresoras a todas las unidades municipales', NULL, '2026-08-13 11:33:48', '2026-08-13 11:39:40', '2026-08-13 11:39:13', '2026-08-13 11:40:31', NULL, 'ID PE-MUN-00335', NULL, '5030-5-PC26', 9),
+(3, 'REQ-2026-0003', 'LICENCIAS DE OFIMÁTICA', NULL, 4, 1, 1, 6, 1, 2, 'EN_AUTORIZACION_COTIZACION', NULL, NULL, NULL, NULL, NULL, NULL, 116382.00, NULL, 'Unidad de Transparencia para el correcto manejo de la información a publicar en plataforma de transparencia.', NULL, '2026-09-02 16:03:56', '2026-09-02 16:08:10', NULL, NULL, NULL, 'ID PE-MUN-00335', NULL, '5108-18-PC26', 11);
 
 -- --------------------------------------------------------
 
@@ -257,22 +233,28 @@ CREATE TABLE `expedientes_documentos` (
 --
 
 INSERT INTO `expedientes_documentos` (`id`, `expediente_id`, `subido_por_id`, `tipo_doc`, `ruta_archivo`, `nombre_original`, `fecha_subida`) VALUES
-(1, 1, 1, 'OTRO', 'uploads/2026/exp_1/adj_1785940380_0.pdf', 'Patente_Comercial_Electronica_-_2-10672.pdf', '2026-08-05 10:33:00'),
-(2, 4, 1, 'OTRO', 'uploads/2026/exp_4/adj_1786561127_0.png', 'unnamed (1) (1).png', '2026-08-12 14:58:47'),
-(3, 4, 1, 'COTIZACION_RESPALDO', 'uploads/2026/exp_4/COTIZACIONES_1786561857.pdf', 'SAESA-comprobante-pago-35606820-BC397B2E-EA7E-F111-B338-0022482BEE46.pdf', '2026-08-12 15:10:57'),
-(4, 4, 1, 'FICHA_PROVEEDOR', 'uploads/2026/exp_4/ficha_prov_1786561975.pdf', 'TRHK -28.pdf', '2026-08-12 15:12:55'),
-(5, 4, 1, 'OTRO', 'uploads/2026/exp_4/acta_adj_1786561975.pdf', 'Estado de cuenta_1780581900371.pdf', '2026-08-12 15:12:55'),
-(6, 4, 1, 'CDP_BORRADOR', 'uploads/2026/exp_4/CDP_BORRADOR_1786562036.pdf', 'CDP_BORRADOR_1785812715.pdf', '2026-08-12 15:13:56'),
-(7, 4, 1, 'SITUACION_PRESUPUESTARIA', 'uploads/2026/exp_4/SITUACION_GASTOS_1786562036.pdf', 'OPI N° OPI-2026-0001 - Municipalidad de Lebu.pdf', '2026-08-12 15:13:56'),
-(8, 4, 1, 'CDP_BORRADOR', 'uploads/2026/exp_4/CDP_FIRMADO_FINANZAS_1786562077.pdf', 'CDP_BORRADOR_1786562036.pdf', '2026-08-12 15:14:37'),
-(9, 4, 1, 'OPI_FIRMADA_PDF', 'uploads/2026/exp_4/OPI_FIRMADA_1786562808.pdf', 'OPI N° OPI-2026-0001 - Municipalidad de Lebu.pdf', '2026-08-12 15:26:48'),
-(10, 4, 1, 'OTRO', 'uploads/2026/exp_4/ORDEN_COMPRA_1786564632.pdf', 'TRHK -28.pdf', '2026-08-12 15:57:12'),
-(11, 4, 1, 'DECRETO_ALCALDICIO', 'uploads/2026/exp_4/DECRETO_ALCALDICIO_1786564632.pdf', 'DECRETO.pdf', '2026-08-12 15:57:12'),
-(12, 5, 1, 'OTRO', 'uploads/2026/exp_5/adj_1786583939_0.zip', 'habilitacinformulariodigitalpostulacinfiestadelan.zip', '2026-08-12 21:18:59'),
-(13, 4, 1, 'FICHA_PROVEEDOR', 'uploads/2026/exp_4/ficha_prov_1786585910.pdf', 'Ficha_PDF_20260812_21_51.pdf', '2026-08-12 21:51:50'),
-(14, 4, 1, 'OTRO', 'uploads/2026/exp_4/acta_adj_1786585910.pdf', 'TRHK -28.pdf', '2026-08-12 21:51:50'),
-(15, 4, 1, 'CDP_BORRADOR', 'uploads/2026/exp_4/CDP_BORRADOR_1786586126.pdf', 'DECRETO.pdf', '2026-08-12 21:55:26'),
-(16, 4, 1, 'SITUACION_PRESUPUESTARIA', 'uploads/2026/exp_4/SITUACION_GASTOS_1786586126.pdf', 'Ficha_PDF_20260812_21_51.pdf', '2026-08-12 21:55:26');
+(1, 1, 1, 'OTRO', 'uploads/2026/exp_1/adj_1786589712_ajax_0.docx', 'TERMINOS DE REFERENCIA.docx', '2026-08-12 22:55:12'),
+(2, 1, 1, 'COTIZACION_RESPALDO', 'uploads/2026/exp_1/COTIZACIONES_1786590330.zip', 'ofertas compra agil 4189-100-COT26.zip', '2026-08-12 23:05:30'),
+(3, 1, 1, 'FICHA_PROVEEDOR', 'uploads/2026/exp_1/ficha_prov_1786590654.pdf', 'Ficha_PDF_20260812_23_07.pdf', '2026-08-12 23:10:54'),
+(4, 1, 1, 'OTRO', 'uploads/2026/exp_1/acta_adj_1786590654.pdf', 'ACTA DE ADJUDICACIÓN.pdf', '2026-08-12 23:10:54'),
+(5, 1, 1, 'CDP_BORRADOR', 'uploads/2026/exp_1/CDP_BORRADOR_1786590739.pdf', 'CDP_BORRADOR_1785465798.pdf', '2026-08-12 23:12:19'),
+(6, 1, 1, 'SITUACION_PRESUPUESTARIA', 'uploads/2026/exp_1/SITUACION_GASTOS_1786590739.pdf', 'SITUACION DE GASTOS.pdf', '2026-08-12 23:12:19'),
+(7, 1, 1, 'CDP_BORRADOR', 'uploads/2026/exp_1/CDP_FIRMADO_FINANZAS_1786590791.pdf', 'CDP_BORRADOR_1786590739.pdf', '2026-08-12 23:13:11'),
+(8, 1, 1, 'OPI_FIRMADA_PDF', 'uploads/2026/exp_1/OPI_FIRMADA_1786591228.pdf', 'OPI N° OPI-2026-0001.pdf', '2026-08-12 23:20:28'),
+(9, 1, 1, 'OTRO', 'uploads/2026/exp_1/ORDEN_COMPRA_1786591553.pdf', 'ORDEN DE COMPRA.pdf', '2026-08-12 23:25:53'),
+(10, 1, 1, 'DECRETO_ALCALDICIO', 'uploads/2026/exp_1/DECRETO_ALCALDICIO_1786591553.pdf', 'DECRETO.pdf', '2026-08-12 23:25:53'),
+(11, 1, 1, 'FICHA_PROVEEDOR', 'uploads/2026/exp_1/ficha_prov_1786592063.pdf', 'Ficha_PDF_20260812_22_27.pdf', '2026-08-12 23:34:23'),
+(12, 1, 1, 'OTRO', 'uploads/2026/exp_1/acta_adj_1786592063.pdf', 'ACTA DE ADJUDICACIÓN.pdf', '2026-08-12 23:34:23'),
+(13, 2, 1, 'OTRO', 'uploads/2026/exp_2/adj_1786635228_ajax_0.pdf', 'TDR.pdf', '2026-08-13 11:33:48'),
+(14, 2, 1, 'COTIZACION_RESPALDO', 'uploads/2026/exp_2/COTIZACIONES_1786635436.zip', 'uJ7R6QCXs6UF0vAun9DW.zip', '2026-08-13 11:37:16'),
+(15, 2, 1, 'OTRO', 'uploads/2026/exp_2/acta_adj_1786635553.pdf', 'ACTA DE ADJUDICACIÓN.pdf', '2026-08-13 11:39:13'),
+(16, 2, 1, 'CDP_BORRADOR', 'uploads/2026/exp_2/CDP_BORRADOR_1786635580.pdf', 'CDP_BORRADOR_1786590739.pdf', '2026-08-13 11:39:40'),
+(17, 2, 1, 'SITUACION_PRESUPUESTARIA', 'uploads/2026/exp_2/SITUACION_GASTOS_1786635580.pdf', 'SITUACION DE GASTOS.pdf', '2026-08-13 11:39:40'),
+(18, 2, 1, 'CDP_BORRADOR', 'uploads/2026/exp_2/CDP_FIRMADO_FINANZAS_1786635619.pdf', 'CDP_BORRADOR_1786590739.pdf', '2026-08-13 11:40:19'),
+(19, 2, 1, 'OPI_FIRMADA_PDF', 'uploads/2026/exp_2/OPI_FIRMADA_1786635673.pdf', 'OPI N° OPI-2026-0002.pdf', '2026-08-13 11:41:13'),
+(20, 2, 1, 'OTRO', 'uploads/2026/exp_2/ORDEN_COMPRA_1786635739.pdf', 'ORDEN DE COMPRA.pdf', '2026-08-13 11:42:19'),
+(21, 2, 1, 'DECRETO_ALCALDICIO', 'uploads/2026/exp_2/DECRETO_ALCALDICIO_1786635739.pdf', 'DA 8080.pdf', '2026-08-13 11:42:19'),
+(22, 3, 4, 'OTRO', 'uploads/2026/exp_3/adj_1788379436_ajax_0.docx', 'TDR.docx', '2026-09-02 16:03:56');
 
 -- --------------------------------------------------------
 
@@ -293,7 +275,8 @@ CREATE TABLE `expedientes_firmas` (
 --
 
 INSERT INTO `expedientes_firmas` (`id`, `expediente_id`, `autoridad_id`, `cargo_firmante`, `fecha_firma`) VALUES
-(1, 4, 1, 'ADMINISTRADOR MUNICIPAL', '2026-08-12 15:26:48');
+(1, 1, 1, 'ADMINISTRADOR MUNICIPAL', '2026-08-12 23:20:28'),
+(2, 2, 1, 'ADMINISTRADOR MUNICIPAL', '2026-08-13 11:41:13');
 
 -- --------------------------------------------------------
 
@@ -317,24 +300,34 @@ CREATE TABLE `expedientes_historial` (
 --
 
 INSERT INTO `expedientes_historial` (`id`, `expediente_id`, `usuario_id`, `accion`, `estado_anterior`, `estado_nuevo`, `comentario`, `fecha_accion`) VALUES
-(1, 1, 1, 'CREAR', 'BORRADOR', 'EN_REVISION_JEFATURA', 'Solicitud ingresada al sistema. Proyecto: 5089-70, Ítem: 8', '2026-08-05 10:33:00'),
-(2, 1, 1, 'APROBAR', 'EN_REVISION_JEFATURA', 'EN_VALIDACION_PRESUPUESTARIA', 'Aprobar', '2026-08-05 10:33:19'),
-(3, 1, 1, 'APROBAR', 'EN_VALIDACION_PRESUPUESTARIA', 'EN_AUTORIZACION_COTIZACION', 'Certificado de Disponibilidad Presupuestaria (CDP) generado. Visación presupuestaria aprobada.', '2026-08-05 10:36:19'),
-(4, 1, 1, 'APROBAR', 'EN_AUTORIZACION_COTIZACION', 'EN_COTIZACION_ADQ', 'Cotización autorizada por Administración Municipal.', '2026-08-05 10:36:42'),
-(5, 4, 1, 'CREAR', 'BORRADOR', 'EN_REVISION_JEFATURA', 'Solicitud ingresada al sistema. Proyecto: 555-44 26, Ítem: 3', '2026-08-12 14:58:47'),
-(6, 4, 1, 'APROBAR', 'EN_REVISION_JEFATURA', 'EN_VALIDACION_PRESUPUESTARIA', 'Aprobar', '2026-08-12 15:06:21'),
-(7, 4, 1, 'APROBAR', 'EN_VALIDACION_PRESUPUESTARIA', 'EN_AUTORIZACION_COTIZACION', 'Certificado de Disponibilidad Presupuestaria (CDP) generado. Visación presupuestaria aprobada.', '2026-08-12 15:08:03'),
-(8, 4, 1, 'APROBAR', 'EN_AUTORIZACION_COTIZACION', 'EN_COTIZACION_ADQ', 'Cotización autorizada por Administración Municipal.', '2026-08-12 15:09:31'),
-(9, 4, 1, 'APROBAR', 'EN_COTIZACION_ADQ', 'EN_EVALUACION_OFERTAS', 'Gestión de Adquisiciones completada. Archivos subidos.', '2026-08-12 15:10:57'),
-(10, 4, 1, 'APROBAR', 'EN_EVALUACION_OFERTAS', 'EN_VALIDACION_PRESUPUESTARIA_FINAL', 'Proveedor seleccionado: churra (69.160.300-8). Acta de Adjudicación adjunta. Montos actualizados.', '2026-08-12 15:12:55'),
-(11, 4, 1, 'APROBAR', 'EN_VALIDACION_PRESUPUESTARIA_FINAL', 'ESPERANDO_CDP_FINANZAS_FINAL', 'Visación final por gasto real aprobada. Borrador de CDP y Situación de Gastos cargados. Expediente enviado a Finanzas para firma.', '2026-08-12 15:13:56'),
-(12, 4, 1, 'APROBAR', 'ESPERANDO_CDP_FINANZAS_FINAL', 'EN_APROBACION_ADMINISTRADOR', 'Certificado de Disponibilidad Presupuestaria (CDP) cargado exitosamente desde SMC por Finanzas.', '2026-08-12 15:14:37'),
-(13, 4, 1, 'APROBAR', 'EN_APROBACION_ADMINISTRADOR', 'EN_EMISION_OC', 'OPI Oficial Generada y Firmada (Folio: OPI-2026-0001).', '2026-08-12 15:26:48'),
-(14, 4, 1, 'APROBAR', 'EN_EMISION_OC', 'ESPERANDO_ACEPTACION_OC', 'Gestión de Adquisiciones completada. Archivos subidos.', '2026-08-12 15:57:12'),
-(15, 4, 1, 'RECHAZO_PROVEEDOR', 'ESPERANDO_ACEPTACION_OC', 'EN_EVALUACION_OFERTAS', 'Proveedor rechazó OC. Motivo: PROVEEDOR NO TIENE LOS PRODUCTOS. Se devuelve a evaluación para readjudicar (OPI Vigente).', '2026-08-12 15:58:04'),
-(16, 5, 1, 'CREAR', 'BORRADOR', 'EN_REVISION_JEFATURA', 'Solicitud ingresada al sistema. Proyecto: 5054-66-56, Ítem: 8', '2026-08-12 21:18:59'),
-(17, 4, 1, 'APROBAR', 'EN_EVALUACION_OFERTAS', 'EN_VALIDACION_PRESUPUESTARIA_FINAL', 'Proveedor seleccionado: Empresas del Sur (11.239.204-1). Acta de Adjudicación adjunta. Montos actualizados.', '2026-08-12 21:51:50'),
-(18, 4, 1, 'APROBAR', 'EN_VALIDACION_PRESUPUESTARIA_FINAL', 'ESPERANDO_CDP_FINANZAS_FINAL', 'Visación final por gasto real aprobada. Borrador de CDP y Situación de Gastos cargados. Expediente enviado a Finanzas para firma.', '2026-08-12 21:55:26');
+(1, 1, 1, 'CREAR', 'BORRADOR', 'EN_REVISION_JEFATURA', 'Solicitud ingresada al sistema. Proyecto: 5030-5-PC26, Ítem: 2', '2026-08-12 22:55:12'),
+(2, 1, 1, 'DEVOLVER', 'EN_REVISION_JEFATURA', 'EN_CORRECCION', 'Te faltó colocar las cantidades', '2026-08-12 22:59:05'),
+(3, 1, 1, 'CORREGIR', 'EN_CORRECCION', 'EN_REVISION_JEFATURA', 'Solicitud corregida y re-enviada al flujo. Proyecto: 5030-5-PC26', '2026-08-12 22:59:39'),
+(4, 1, 1, 'APROBAR', 'EN_REVISION_JEFATURA', 'EN_VALIDACION_PRESUPUESTARIA', 'Aprobar', '2026-08-12 23:02:27'),
+(5, 1, 1, 'APROBAR', 'EN_VALIDACION_PRESUPUESTARIA', 'EN_AUTORIZACION_COTIZACION', 'Certificado de Disponibilidad Presupuestaria (CDP) generado. Visación presupuestaria aprobada.', '2026-08-12 23:03:09'),
+(6, 1, 1, 'APROBAR', 'EN_AUTORIZACION_COTIZACION', 'EN_COTIZACION_ADQ', 'Cotización autorizada por Administración Municipal.', '2026-08-12 23:03:59'),
+(7, 1, 1, 'APROBAR', 'EN_COTIZACION_ADQ', 'EN_EVALUACION_OFERTAS', 'Gestión de Adquisiciones completada. Archivos subidos.', '2026-08-12 23:05:30'),
+(8, 1, 1, 'APROBAR', 'EN_EVALUACION_OFERTAS', 'EN_VALIDACION_PRESUPUESTARIA_FINAL', 'Proveedor seleccionado: VENTA, COMPRAS DE EQUIPOS & ACCESORIOS TECNOLOGICOS SPA (77.508.642-4). Acta de Adjudicación adjunta. Montos actualizados.', '2026-08-12 23:10:54'),
+(9, 1, 1, 'APROBAR', 'EN_VALIDACION_PRESUPUESTARIA_FINAL', 'ESPERANDO_CDP_FINANZAS_FINAL', 'Visación final por gasto real aprobada. Borrador de CDP y Situación de Gastos cargados. Expediente enviado a Finanzas para firma.', '2026-08-12 23:12:19'),
+(10, 1, 1, 'APROBAR', 'ESPERANDO_CDP_FINANZAS_FINAL', 'EN_APROBACION_ADMINISTRADOR', 'Certificado de Disponibilidad Presupuestaria (CDP) cargado exitosamente desde SMC por Finanzas.', '2026-08-12 23:13:11'),
+(11, 1, 1, 'APROBAR', 'EN_APROBACION_ADMINISTRADOR', 'EN_EMISION_OC', 'OPI Oficial Generada y Firmada (Folio: OPI-2026-0001).', '2026-08-12 23:20:28'),
+(12, 1, 1, 'APROBAR', 'EN_EMISION_OC', 'ESPERANDO_ACEPTACION_OC', 'Gestión de Adquisiciones completada. Archivos subidos.', '2026-08-12 23:25:53'),
+(13, 1, 1, 'RECHAZO_PROVEEDOR', 'ESPERANDO_ACEPTACION_OC', 'EN_EVALUACION_OFERTAS', 'Proveedor rechazó OC. Motivo: no aceptda por proveedor. Se devuelve a evaluación para readjudicar (OPI Vigente).', '2026-08-12 23:29:38'),
+(14, 1, 1, 'APROBAR', 'EN_EVALUACION_OFERTAS', 'EN_VALIDACION_PRESUPUESTARIA_FINAL', 'Proveedor seleccionado: TECHNOSYSTEMS CHILE SPA (96.678.350-8). Acta de Adjudicación adjunta. Montos actualizados.', '2026-08-12 23:34:23'),
+(15, 1, 1, 'RECHAZAR', 'EN_VALIDACION_PRESUPUESTARIA_FINAL', 'RECHAZADO', 'Error de flujo. Comenzar de nuevo', '2026-08-13 08:55:40'),
+(16, 2, 1, 'CREAR', 'BORRADOR', 'EN_REVISION_JEFATURA', 'Solicitud ingresada al sistema. Proyecto: 5030-5-PC26, Ítem: 9', '2026-08-13 11:33:48'),
+(17, 2, 1, 'APROBAR', 'EN_REVISION_JEFATURA', 'EN_VALIDACION_PRESUPUESTARIA', 'Aprobar', '2026-08-13 11:35:01'),
+(18, 2, 1, 'APROBAR', 'EN_VALIDACION_PRESUPUESTARIA', 'EN_AUTORIZACION_COTIZACION', 'Certificado de Disponibilidad Presupuestaria (CDP) generado. Visación presupuestaria aprobada.', '2026-08-13 11:35:26'),
+(19, 2, 1, 'APROBAR', 'EN_AUTORIZACION_COTIZACION', 'EN_COTIZACION_ADQ', 'Cotización autorizada por Administración Municipal.', '2026-08-13 11:36:12'),
+(20, 2, 1, 'APROBAR', 'EN_COTIZACION_ADQ', 'EN_EVALUACION_OFERTAS', 'Gestión de Adquisiciones completada. Archivos subidos.', '2026-08-13 11:37:16'),
+(21, 2, 1, 'APROBAR', 'EN_EVALUACION_OFERTAS', 'EN_VALIDACION_PRESUPUESTARIA_FINAL', 'Proveedor seleccionado: TECHNOSYSTEMS CHILE SPA (96.678.350-8). Acta de Adjudicación adjunta. Montos actualizados.', '2026-08-13 11:39:13'),
+(22, 2, 1, 'APROBAR', 'EN_VALIDACION_PRESUPUESTARIA_FINAL', 'ESPERANDO_CDP_FINANZAS_FINAL', 'Visación final por gasto real aprobada. Borrador de CDP y Situación de Gastos cargados. Expediente enviado a Finanzas para firma.', '2026-08-13 11:39:40'),
+(23, 2, 1, 'APROBAR', 'ESPERANDO_CDP_FINANZAS_FINAL', 'EN_APROBACION_ADMINISTRADOR', 'Certificado de Disponibilidad Presupuestaria (CDP) cargado exitosamente desde SMC por Finanzas.', '2026-08-13 11:40:19'),
+(24, 2, 1, 'APROBAR', 'EN_APROBACION_ADMINISTRADOR', 'EN_EMISION_OC', 'OPI Oficial Generada y Firmada (Folio: OPI-2026-0002).', '2026-08-13 11:41:13'),
+(25, 2, 1, 'APROBAR', 'EN_EMISION_OC', 'ESPERANDO_ACEPTACION_OC', 'Gestión de Adquisiciones completada. Archivos subidos.', '2026-08-13 11:42:19'),
+(26, 3, 4, 'CREAR', 'BORRADOR', 'EN_REVISION_JEFATURA', 'Solicitud ingresada al sistema. Proyecto: 5108-18-PC26, Ítem: 11', '2026-09-02 16:03:56'),
+(27, 3, 3, 'APROBAR', 'EN_REVISION_JEFATURA', 'EN_VALIDACION_PRESUPUESTARIA', 'Aprobar', '2026-09-02 16:06:31'),
+(28, 3, 5, 'APROBAR', 'EN_VALIDACION_PRESUPUESTARIA', 'EN_AUTORIZACION_COTIZACION', 'Certificado de Disponibilidad Presupuestaria (CDP) generado. Visación presupuestaria aprobada.', '2026-09-02 16:08:10');
 
 -- --------------------------------------------------------
 
@@ -348,24 +341,19 @@ CREATE TABLE `expedientes_items` (
   `presupuesto_asignado_id` int NOT NULL,
   `id_producto_cm` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `descripcion` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `unidad_medida` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `cantidad` decimal(10,2) NOT NULL,
-  `precio_unitario` decimal(15,2) NOT NULL,
-  `total_linea` decimal(15,2) GENERATED ALWAYS AS ((`cantidad` * `precio_unitario`)) VIRTUAL,
-  `monto_total_presupuesto` decimal(15,2) DEFAULT NULL,
-  `monto_comprometido_fecha` decimal(15,2) DEFAULT NULL,
-  `monto_operacion` decimal(15,2) DEFAULT NULL,
-  `saldo_final_resultante` decimal(15,2) DEFAULT NULL
+  `unidad_medida` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'UNIDAD',
+  `cantidad` decimal(12,2) NOT NULL DEFAULT '1.00',
+  `precio_unitario` decimal(15,2) NOT NULL DEFAULT '0.00'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `expedientes_items`
 --
 
-INSERT INTO `expedientes_items` (`id`, `expediente_id`, `presupuesto_asignado_id`, `id_producto_cm`, `descripcion`, `unidad_medida`, `cantidad`, `precio_unitario`, `monto_total_presupuesto`, `monto_comprometido_fecha`, `monto_operacion`, `saldo_final_resultante`) VALUES
-(1, 1, 3, NULL, 'Computadores para vivienda, dom y secplan', 'UNIDAD', 1.00, 0.00, NULL, NULL, NULL, NULL),
-(4, 4, 3, NULL, 'sillas', 'UNIDAD', 20.00, 178500.00, NULL, NULL, NULL, NULL),
-(5, 5, 3, NULL, 'Computadores', 'UNIDAD', 1.00, 0.00, NULL, NULL, NULL, NULL);
+INSERT INTO `expedientes_items` (`id`, `expediente_id`, `presupuesto_asignado_id`, `id_producto_cm`, `descripcion`, `unidad_medida`, `cantidad`, `precio_unitario`) VALUES
+(2, 1, 3, NULL, 'Computadores todo en uno según TDR', 'UNIDAD', 6.00, 1094800.00),
+(3, 2, 3, NULL, 'Impresoras multifuncionales full duplex', 'UNIDAD', 10.00, 119000.00),
+(4, 3, 5, NULL, 'LICENCIA DE PAGO ÚNICO PARA SUITE DE OFIMÁTICA', 'UNIDAD', 2.00, 0.00);
 
 -- --------------------------------------------------------
 
@@ -527,20 +515,17 @@ CREATE TABLE `presupuestos_asignados` (
   `id` int NOT NULL,
   `centro_costo_id` int NOT NULL,
   `cuenta_maestra_id` int NOT NULL,
-  `area_gestion_id` int DEFAULT NULL,
-  `monto_inicial_asignado` decimal(15,2) DEFAULT '0.00',
-  `monto_comprometido` decimal(15,2) DEFAULT '0.00',
-  `monto_ejecutado` decimal(15,2) DEFAULT '0.00',
-  `saldo_disponible` decimal(15,2) GENERATED ALWAYS AS (((`monto_inicial_asignado` - `monto_comprometido`) - `monto_ejecutado`)) VIRTUAL
+  `area_gestion_id` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `presupuestos_asignados`
 --
 
-INSERT INTO `presupuestos_asignados` (`id`, `centro_costo_id`, `cuenta_maestra_id`, `area_gestion_id`, `monto_inicial_asignado`, `monto_comprometido`, `monto_ejecutado`) VALUES
-(2, 1, 1, 1, NULL, 0.00, 0.00),
-(3, 1, 3, 1, NULL, 0.00, 0.00);
+INSERT INTO `presupuestos_asignados` (`id`, `centro_costo_id`, `cuenta_maestra_id`, `area_gestion_id`) VALUES
+(3, 1, 3, 1),
+(4, 3, 4, 1),
+(5, 1, 6, 1);
 
 -- --------------------------------------------------------
 
@@ -561,9 +546,9 @@ CREATE TABLE `prioridades` (
 --
 
 INSERT INTO `prioridades` (`id`, `codigo`, `nombre`, `clase_css`, `activo`) VALUES
-(1, 'NORMAL', 'Normal', 'bg-primary-subtle text-primary-emphasis', 1),
-(2, 'URGENTE', 'Urgente', 'bg-warning-subtle text-warning-emphasis fw-bold', 1),
-(3, 'EMERGENCIA', 'Emergencia', 'bg-danger-subtle text-danger-emphasis fw-bold', 1);
+(1, 'BAJA', 'Baja', 'bg-gray-100 text-gray-600 border border-gray-200', 1),
+(2, 'MEDIA', 'Media', 'bg-blue-50 text-blue-700 border border-blue-100', 1),
+(3, 'ALTA', 'Alta / Urgencia', 'bg-red-50 text-red-700 border border-red-100 animate-pulse', 1);
 
 -- --------------------------------------------------------
 
@@ -574,20 +559,18 @@ INSERT INTO `prioridades` (`id`, `codigo`, `nombre`, `clase_css`, `activo`) VALU
 CREATE TABLE `proveedores` (
   `id` int NOT NULL,
   `rut` varchar(12) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `razon_social` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `giro` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `direccion` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `telefono` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL
+  `razon_social` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `direccion` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `proveedores`
 --
 
-INSERT INTO `proveedores` (`id`, `rut`, `razon_social`, `giro`, `direccion`, `telefono`, `email`) VALUES
-(1, '69.160.300-8', 'CHURRA ENTERPRISES', NULL, 'Lebu', NULL, NULL),
-(2, '11.239.204-1', 'Empresas del Sur', NULL, 'Lebu', NULL, NULL);
+INSERT INTO `proveedores` (`id`, `rut`, `razon_social`, `direccion`, `activo`) VALUES
+(1, '77.508.642-4', 'VENTA, COMPRAS DE EQUIPOS & ACCESORIOS TECNOLOGICOS SPA', '', 1),
+(2, '96.678.350-8', 'TECHNOSYSTEMS CHILE SPA', '', 1);
 
 -- --------------------------------------------------------
 
@@ -705,7 +688,7 @@ CREATE TABLE `unidades` (
 --
 
 INSERT INTO `unidades` (`id`, `nombre`, `padre_id`, `centro_costo_id`, `jefe_actual_id`) VALUES
-(1, 'Departamento de informática', 5, 1, NULL),
+(1, 'Informática', 5, 1, NULL),
 (2, 'DIDECO', NULL, NULL, NULL),
 (3, 'PRESUPUESTO', NULL, NULL, NULL),
 (4, 'Adquisiciones', 10, NULL, NULL),
@@ -778,8 +761,10 @@ CREATE TABLE `usuarios` (
 
 INSERT INTO `usuarios` (`id`, `unidad_id`, `rol_id`, `rut`, `nombre_completo`, `email`, `password_hash`, `es_jefe_unidad`, `activo`, `cargo`, `token_verificacion`, `email_verificado`, `estado_aprobacion`, `fecha_registro`) VALUES
 (1, 1, 6, '11.111.111-1', 'Departamento de Informática', 'informatica@lebu.cl', '$2y$10$4/wrHWwJnBaCk/q5JGWrK./XJEVgXzQ.3S3p/3iZ1sxhoIXeYOSfq', 0, 1, 'Departamento de informática', NULL, 1, 'APROBADO', '2026-08-05 14:31:30'),
-(2, 5, 1, '16.981.872-K', 'Oscar Muñoz Arriagada', 'administrador@lebu.cl', '$2y$10$OHlyMewXSDy2C85PosohWurCRh3fvzGPy.XQ5sYUyIoiQl0IB6yXC', 1, 1, 'Administrador Municipal', NULL, 1, 'APROBADO', '2026-08-05 14:31:30'),
-(3, 5, 5, '55.555.555-5', 'Usuario prueba ClaveUnica', 'claveunica@lebu.cl', '$2y$10$eT/tzzWBBhGBN701KFAgfu4woRuPmRBk8UtbDlBgAQmOpjadYfCGC', 0, 1, 'Pruebas ClaveUnica', NULL, 1, 'APROBADO', '2026-08-05 17:01:02');
+(2, 5, 5, '15.737.866-K', 'Usuario de prueba', 'usuario2@usuario2.cl', '$2y$10$eiAkeJKv1tz5QFrGovud1eUXF9PfovjlpV1FzIr0rUbakNYIZ4eum', 0, 0, '', NULL, 1, 'APROBADO', '2026-08-24 17:59:39'),
+(3, 1, 6, '17439829-1', 'Juan Carlos Arriagada', 'juancarlosarriagada219@gmail.com', NULL, 1, 1, 'Técnico', NULL, 1, 'APROBADO', '2026-09-01 17:28:51'),
+(4, 1, 5, '19511214-2', 'Diego Gerardo Castro Carrillo', 'diego.castro.carrillo@gmail.com', NULL, 0, 1, 'Técnico', NULL, 1, 'APROBADO', '2026-09-02 09:22:57'),
+(5, 3, 3, '16108513-8', 'Roxana Bernal Vásquez', 'rbernal@lebu.cl', NULL, 0, 1, 'PROFESIONAL ADMINISTRACIÓN', NULL, 1, 'APROBADO', '2026-09-02 15:33:32');
 
 --
 -- Índices para tablas volcadas
@@ -809,14 +794,6 @@ ALTER TABLE `configuraciones_sistema`
 ALTER TABLE `cuentas_maestras`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `codigo` (`codigo`);
-
---
--- Indices de la tabla `cuentas_presupuestarias`
---
-ALTER TABLE `cuentas_presupuestarias`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `centro_costo_id` (`centro_costo_id`),
-  ADD KEY `fk_cuenta_ag` (`area_gestion_id`);
 
 --
 -- Indices de la tabla `estados_tramite`
@@ -967,25 +944,19 @@ ALTER TABLE `areas_gestion`
 -- AUTO_INCREMENT de la tabla `centros_costo`
 --
 ALTER TABLE `centros_costo`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `cuentas_maestras`
 --
 ALTER TABLE `cuentas_maestras`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
--- AUTO_INCREMENT de la tabla `cuentas_presupuestarias`
---
-ALTER TABLE `cuentas_presupuestarias`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de la tabla `expedientes`
 --
 ALTER TABLE `expedientes`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `expedientes_criterios`
@@ -997,25 +968,25 @@ ALTER TABLE `expedientes_criterios`
 -- AUTO_INCREMENT de la tabla `expedientes_documentos`
 --
 ALTER TABLE `expedientes_documentos`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT de la tabla `expedientes_firmas`
 --
 ALTER TABLE `expedientes_firmas`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `expedientes_historial`
 --
 ALTER TABLE `expedientes_historial`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT de la tabla `expedientes_items`
 --
 ALTER TABLE `expedientes_items`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `flujos_definicion`
@@ -1027,7 +998,7 @@ ALTER TABLE `flujos_definicion`
 -- AUTO_INCREMENT de la tabla `presupuestos_asignados`
 --
 ALTER TABLE `presupuestos_asignados`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `prioridades`
@@ -1075,18 +1046,11 @@ ALTER TABLE `unidades`
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- Restricciones para tablas volcadas
 --
-
---
--- Filtros para la tabla `cuentas_presupuestarias`
---
-ALTER TABLE `cuentas_presupuestarias`
-  ADD CONSTRAINT `cuentas_presupuestarias_ibfk_1` FOREIGN KEY (`centro_costo_id`) REFERENCES `centros_costo` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_cuenta_ag` FOREIGN KEY (`area_gestion_id`) REFERENCES `areas_gestion` (`id`);
 
 --
 -- Filtros para la tabla `expedientes`

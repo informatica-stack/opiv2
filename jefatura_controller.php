@@ -34,18 +34,92 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->beginTransaction();
         $id = isset($_POST['expediente_id']) ? (int)$_POST['expediente_id'] : null;
 
-        // Verificación de seguridad de pertenencia y estado
-        $sqlCheck = "SELECT id FROM expedientes WHERE id = ? AND estado_actual = 'EN_REVISION_JEFATURA'";
+        // Obtener estado y validar pertenencia
+        $sqlCheck = "SELECT id, estado_actual, codigo_interno FROM expedientes WHERE id = ?";
         if ($rol !== 'ADMIN_MUNICIPAL') { $sqlCheck .= " AND unidad_origen_id = $unidad_id"; }
         
         $stmtCheck = $pdo->prepare($sqlCheck);
         $stmtCheck->execute([$id]);
-        if (!$stmtCheck->fetch()) throw new Exception("El expediente no se encuentra disponible para visación por la Jefatura.");
+        $exp_actual = $stmtCheck->fetch();
+        if (!$exp_actual) throw new Exception("El expediente no se encuentra disponible para visación o firma por la Jefatura.");
 
         $accion = $_POST['accion'] ?? '';
         $transicion_id = $_POST['transicion_id'] ?? null;
+        $stAct = $exp_actual['estado_actual'];
 
-        if ($transicion_id) {
+        // A. FIRMA DIGITAL FIRMAGOB (1/3) O SUBIDA MANUAL EN ESTADO EN_FIRMA_JEFATURA
+        if ($accion === 'firmar_firmagob' || $accion === 'subir_pdf_manual' || ($stAct === 'EN_FIRMA_JEFATURA' && ($accion === 'aprobar' || $accion === 'firmar'))) {
+            $anio = date('Y');
+            $dir = __DIR__ . "/uploads/$anio/exp_$id/";
+            if (!file_exists($dir)) mkdir($dir, 0777, true);
+
+            $nombre_firmado = "OPI_FIRMADA_1_" . time() . ".pdf";
+            $ruta_firmado_abs = $dir . $nombre_firmado;
+            $ruta_firmado_rel = "uploads/$anio/exp_$id/" . $nombre_firmado;
+
+            $firmante = firmagob_obtener_firmante_activo($pdo, 'JEFE_UNIDAD', $user_id);
+            $run_firmante = $firmante['rut'] ?? $_SESSION['user_rut'];
+
+            if ($accion === 'subir_pdf_manual') {
+                if (empty($_FILES['pdf_firmado_manual']['name'])) {
+                    throw new Exception("Debe seleccionar el archivo PDF firmado manualmente.");
+                }
+                $ext = validar_subida_archivo($_FILES['pdf_firmado_manual'], null, ['pdf']);
+                if (!move_uploaded_file($_FILES['pdf_firmado_manual']['tmp_name'], $ruta_firmado_abs)) {
+                    throw new Exception("Error al guardar el archivo PDF firmado.");
+                }
+                $id_solicitud = null;
+                $chk_orig = null;
+                $chk_signed = hash_file('sha256', $ruta_firmado_abs);
+                $tipo_firma = 'MANUAL_DOCDIGITAL';
+            } else {
+                // Firma Digital con FirmaGob
+                $otp = $_POST['otp_code'] ?? null;
+                
+                // Buscar PDF Base de entrada
+                $ruta_base = null;
+                $stmtDoc = $pdo->prepare("SELECT ruta_archivo FROM expedientes_documentos WHERE expediente_id = ? AND tipo_doc = 'OPI_FIRMADA_PDF' ORDER BY id DESC LIMIT 1");
+                $stmtDoc->execute([$id]);
+                $doc_db = $stmtDoc->fetchColumn();
+                
+                if ($doc_db && file_exists(__DIR__ . '/' . $doc_db)) {
+                    $ruta_base = __DIR__ . '/' . $doc_db;
+                } else {
+                    $ruta_rel_creada = generar_pdf_base_opi($pdo, $id);
+                    $ruta_base = __DIR__ . '/' . $ruta_rel_creada;
+                }
+
+                $resFirma = firmagob_firmar_archivo($ruta_base, $run_firmante, "OPI " . $exp_actual['codigo_interno'] . " (Firma Jefatura 1/3)", $otp, 'JEFATURA');
+                file_put_contents($ruta_firmado_abs, $resFirma['content_binary']);
+
+                $id_solicitud = $resFirma['id_solicitud'];
+                $chk_orig = $resFirma['checksum_original'];
+                $chk_signed = $resFirma['checksum_signed'];
+                $tipo_firma = (FIRMAGOB_MODO === 'DESATENDIDA') ? 'FIRMAGOB_DESATENDIDA' : 'FIRMAGOB_ATENDIDA';
+            }
+
+            // Registrar Documento y Firma
+            $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'OPI_FIRMADA_PDF', ?, ?)")
+                ->execute([$id, $user_id, $ruta_firmado_rel, $nombre_firmado]);
+
+            $pdo->prepare("INSERT INTO expedientes_firmas (expediente_id, autoridad_id, cargo_firmante, etapa_firma, firmagob_solicitud_id, checksum_original, checksum_signed, tipo_firma, ip_origen) VALUES (?, ?, ?, 'JEFATURA', ?, ?, ?, ?, ?)")
+                ->execute([$id, $user_id, $firmante['cargo'] ?? 'JEFE DE UNIDAD', $id_solicitud, $chk_orig, $chk_signed, $tipo_firma, $_SERVER['REMOTE_ADDR'] ?? null]);
+
+            if ($transicion_id) {
+                $nuevo_destino = ejecutar_transicion_por_id($pdo, $id, $user_id, $transicion_id, "OPI firmada digitalmente por Jefatura (1/3).");
+            } else {
+                $nuevo_destino = avanzar_flujo($pdo, $id, $user_id, "OPI firmada digitalmente por Jefatura (1/3).");
+            }
+
+            $stmtNd = $pdo->prepare("SELECT nombre FROM estados_tramite WHERE codigo = ?");
+            $stmtNd->execute([$nuevo_destino]);
+            $nombre_dest = $stmtNd->fetchColumn();
+
+            $mensaje = "OPI firmada digitalmente con éxito (1/3). Trámite avanzado a: $nombre_dest.";
+            $tipo_mensaje = "success";
+            $vista = 'pendientes';
+
+        } elseif ($transicion_id) {
             $motivo = trim($_POST['motivo_rechazo'] ?? '');
             
             $stmtT = $pdo->prepare("SELECT * FROM flujos_definicion WHERE id = ?");
@@ -72,13 +146,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $mensaje = "Solicitud aprobada correctamente. Avanzó a: $nombre_dest.";
             $tipo_mensaje = "success";
         } elseif ($accion === 'devolver') {
-            $motivo = trim($_POST['motivo_rechazo']);
+            $motivo = trim($_POST['motivo_rechazo'] ?? '');
             if (empty($motivo)) throw new Exception("Debe ingresar un motivo para la devolución.");
             devolver_flujo($pdo, $id, $user_id, "Devuelto para corrección: " . $motivo);
             $mensaje = "Solicitud devuelta al creador para corrección.";
             $tipo_mensaje = "warning";
         } elseif ($accion === 'rechazar') {
-            $motivo = trim($_POST['motivo_rechazo']);
+            $motivo = trim($_POST['motivo_rechazo'] ?? '');
             if (empty($motivo)) throw new Exception("Debe ingresar un motivo para el rechazo.");
             rechazar_flujo($pdo, $id, $user_id, "Rechazado definitivamente: " . $motivo);
             $mensaje = "Solicitud rechazada y cerrada.";
@@ -100,11 +174,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // =====================================================================
 
 // CONTADORES PARA LAS PESTAÑAS HEADER
-$stmtCountPend = $pdo->prepare(($rol === 'ADMIN_MUNICIPAL') ? "SELECT COUNT(*) FROM expedientes WHERE estado_actual = 'EN_REVISION_JEFATURA'" : "SELECT COUNT(*) FROM expedientes WHERE unidad_origen_id = ? AND estado_actual = 'EN_REVISION_JEFATURA'");
+$stmtCountPend = $pdo->prepare(($rol === 'ADMIN_MUNICIPAL') ? "SELECT COUNT(*) FROM expedientes WHERE estado_actual IN ('EN_REVISION_JEFATURA', 'EN_FIRMA_JEFATURA')" : "SELECT COUNT(*) FROM expedientes WHERE unidad_origen_id = ? AND estado_actual IN ('EN_REVISION_JEFATURA', 'EN_FIRMA_JEFATURA')");
 if ($rol === 'ADMIN_MUNICIPAL') { $stmtCountPend->execute(); } else { $stmtCountPend->execute([$unidad_id]); }
 $count_pendientes = $stmtCountPend->fetchColumn();
 
-$stmtCountProc = $pdo->prepare("SELECT COUNT(DISTINCT e.id) FROM expedientes e JOIN expedientes_historial eh ON e.id = eh.expediente_id WHERE eh.usuario_id = ? AND eh.accion IN ('APROBAR', 'RECHAZAR', 'DEVOLVER')");
+$stmtCountProc = $pdo->prepare("SELECT COUNT(DISTINCT e.id) FROM expedientes e JOIN expedientes_historial eh ON e.id = eh.expediente_id WHERE eh.usuario_id = ? AND eh.accion IN ('APROBAR', 'RECHAZAR', 'DEVOLVER', 'FIRMAR_JEFATURA')");
 $stmtCountProc->execute([$user_id]);
 $count_procesadas = $stmtCountProc->fetchColumn();
 
@@ -131,9 +205,7 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
     $stmt->execute([$_GET['id']]); 
     $exp = $stmt->fetch();
     
-    if (!$exp) die("Expediente no encontrado o sin acceso.");
-
-    $es_accionable = ($exp['estado_actual'] === 'EN_REVISION_JEFATURA');
+    $es_accionable = in_array($exp['estado_actual'], ['EN_REVISION_JEFATURA', 'EN_FIRMA_JEFATURA']);
     
     // Ítems con su cuenta presupuestaria
     $stmtItems = $pdo->prepare("

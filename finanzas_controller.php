@@ -45,32 +45,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // A. SUBIR CDP Y APROBAR (ENVIAR A ADMINISTRADOR)
-        if ($accion === 'aprobar') {
-            if (empty($_FILES['archivo_cdp']['name'])) {
-                throw new Exception("Debe adjuntar obligatoriamente el Certificado de Disponibilidad Presupuestaria (CDP).");
-            }
-
-            // Validar y subir archivo
-            $ext = strtolower(pathinfo($_FILES['archivo_cdp']['name'], PATHINFO_EXTENSION));
-            if($ext !== 'pdf') throw new Exception("El archivo del CDP debe ser un PDF.");
-            
+        // A. FIRMA DIGITAL FIRMAGOB DEL CDP OFICIAL O SUBIDA MANUAL
+        if ($accion === 'firmar_firmagob' || $accion === 'subir_pdf_manual' || $accion === 'aprobar') {
             $anio = date('Y');
             $dir = __DIR__ . "/uploads/$anio/exp_$exp_id/";
             if (!file_exists($dir)) mkdir($dir, 0777, true);
-            
+
             $name = "CDP_FIRMADO_FINANZAS_" . time() . ".pdf";
-            $ruta = "uploads/$anio/exp_$exp_id/$name";
-            
-            if (!move_uploaded_file($_FILES['archivo_cdp']['tmp_name'], $dir . $name)) {
-                throw new Exception("Error al guardar el archivo en el servidor.");
+            $ruta_abs = $dir . $name;
+            $ruta_rel = "uploads/$anio/exp_$exp_id/$name";
+
+            $firmante = firmagob_obtener_firmante_activo($pdo, 'FINANZAS', $user_id);
+            $run_firmante = $firmante['rut'] ?? $_SESSION['user_rut'];
+
+            if ($accion === 'subir_pdf_manual' || (!empty($_FILES['archivo_cdp']['name']) && $accion === 'aprobar')) {
+                $file_input = !empty($_FILES['pdf_firmado_manual']['name']) ? $_FILES['pdf_firmado_manual'] : $_FILES['archivo_cdp'];
+                $ext = validar_subida_archivo($file_input, null, ['pdf']);
+                if (!move_uploaded_file($file_input['tmp_name'], $ruta_abs)) {
+                    throw new Exception("Error al guardar el archivo en el servidor.");
+                }
+                $id_solicitud = null;
+                $chk_orig = null;
+                $chk_signed = hash_file('sha256', $ruta_abs);
+                $tipo_firma = 'MANUAL_DOCDIGITAL';
+            } else {
+                $otp = $_POST['otp_code'] ?? null;
+
+                // Buscar el Borrador de CDP subido por Presupuesto
+                $stmtDoc = $pdo->prepare("SELECT ruta_archivo FROM expedientes_documentos WHERE expediente_id = ? AND tipo_doc = 'CDP_BORRADOR' ORDER BY id DESC LIMIT 1");
+                $stmtDoc->execute([$exp_id]);
+                $doc_db = $stmtDoc->fetchColumn();
+
+                if (!$doc_db || !file_exists(__DIR__ . '/' . $doc_db)) {
+                    // Si no hay borrador de CDP, buscar el documento de OPI
+                    $stmtOpi = $pdo->prepare("SELECT ruta_archivo FROM expedientes_documentos WHERE expediente_id = ? AND tipo_doc = 'OPI_FIRMADA_PDF' ORDER BY id DESC LIMIT 1");
+                    $stmtOpi->execute([$exp_id]);
+                    $doc_db = $stmtOpi->fetchColumn();
+                }
+
+                if (!$doc_db || !file_exists(__DIR__ . '/' . $doc_db)) {
+                    throw new Exception("No se encontró el archivo del Borrador de CDP para firmar.");
+                }
+
+                $ruta_base = __DIR__ . '/' . $doc_db;
+                $resFirma = firmagob_firmar_archivo($ruta_base, $run_firmante, "CDP Oficial OPI #$exp_id", $otp, 'CDP_FINANZAS');
+                file_put_contents($ruta_abs, $resFirma['content_binary']);
+
+                $id_solicitud = $resFirma['id_solicitud'];
+                $chk_orig = $resFirma['checksum_original'];
+                $chk_signed = $resFirma['checksum_signed'];
+                $tipo_firma = (FIRMAGOB_MODO === 'DESATENDIDA') ? 'FIRMAGOB_DESATENDIDA' : 'FIRMAGOB_ATENDIDA';
             }
 
-            // Registrar Documento
+            // Registrar Documento y Firma
             $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'CDP_BORRADOR', ?, ?)")
-                ->execute([$exp_id, $user_id, $ruta, $_FILES['archivo_cdp']['name']]);
+                ->execute([$exp_id, $user_id, $ruta_rel, $name]);
 
-            $comentario = "Certificado de Disponibilidad Presupuestaria (CDP) cargado exitosamente desde SMC por Finanzas.";
+            $pdo->prepare("INSERT INTO expedientes_firmas (expediente_id, autoridad_id, cargo_firmante, etapa_firma, firmagob_solicitud_id, checksum_original, checksum_signed, tipo_firma, ip_origen) VALUES (?, ?, ?, 'FINANZAS', ?, ?, ?, ?, ?)")
+                ->execute([$exp_id, $user_id, $firmante['cargo'] ?? 'DIRECTOR DE ADMINISTRACION Y FINANZAS', $id_solicitud, $chk_orig, $chk_signed, $tipo_firma, $_SERVER['REMOTE_ADDR'] ?? null]);
+
+            $comentario = "Certificado de Disponibilidad Presupuestaria (CDP) firmado digitalmente por Finanzas.";
 
             if ($transicion_id) {
                 $nuevo_estado = ejecutar_transicion_por_id($pdo, $exp_id, $user_id, $transicion_id, $comentario);
@@ -81,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmtNd = $pdo->prepare("SELECT nombre FROM estados_tramite WHERE codigo = ?");
             $stmtNd->execute([$nuevo_estado]);
             $nombre_dest = $stmtNd->fetchColumn();
-            $mensaje = "CDP adjuntado con éxito. Requerimiento devuelto a: $nombre_dest.";
+            $mensaje = "CDP firmado digitalmente con éxito. Expediente enviado a: $nombre_dest.";
             $tipo_mensaje = "success";
             $vista = 'pendientes';
         } 

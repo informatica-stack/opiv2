@@ -439,17 +439,17 @@ require_once __DIR__ . '/finanzas_controller.php';
                                         </div>
                                     </div>
 
-                                    <!-- BOTÓN DE APROBACIÓN PRINCIPAL SOBRIO -->
+                                    <!-- BOTÓN DE FIRMA DIGITAL FIRMAGOB PRINCIPAL -->
                                     <?php 
                                     $t_aprobar = null;
                                     foreach ($transiciones as $t) {
-                                        if ($t['accion_codigo'] === 'APROBAR') $t_aprobar = $t;
+                                        if ($t['accion_codigo'] === 'APROBAR' || $t['accion_codigo'] === 'FIRMAR_CDP_FINANZAS') $t_aprobar = $t;
                                     }
                                     if ($t_aprobar):
                                     ?>
-                                        <button type="submit" name="transicion_id" value="<?= $t_aprobar['id'] ?>" onclick="return confirm('¿Confirma que ha subido el CDP correcto y firmado?')" class="btn btn-primary py-2.5 w-100 mb-4 shadow-sm d-flex align-items-center justify-content-center gap-2 fw-semibold">
-                                            <i class="bi bi-check-circle-fill"></i>
-                                            <?= htmlspecialchars($t_aprobar['accion_label']) ?>
+                                        <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $exp['id'] ?>, transicion_id: <?= $t_aprobar['id'] ?>, etapa: 'CDP_FINANZAS', codigo_interno: '<?= htmlspecialchars($exp['codigo_interno']) ?>', monto: '<?= $exp['monto_definitivo'] ?: $exp['monto_estimado'] ?>', doc_titulo: 'Certificado de Disponibilidad Presupuestaria (CDP)'})" class="btn btn-primary py-2.5 w-100 mb-4 shadow d-flex align-items-center justify-content-center gap-2 fw-bold">
+                                            <i class="bi bi-pen-fill"></i>
+                                            Firmar CDP Oficial con FirmaGob
                                         </button>
                                     <?php endif; ?>
 
@@ -667,9 +667,9 @@ require_once __DIR__ . '/finanzas_controller.php';
         }
         
         if (modalVerItemsInstance) modalVerItemsInstance.show();
-    }
     </script>
     </div>
+    <?php include __DIR__ . '/components/modal_firmagob.php'; ?>
 <?php include __DIR__ . '/footer.php'; ?>
 </body>
 </html>

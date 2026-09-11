@@ -42,21 +42,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // A. VISAR (APROBAR Y/O COMPROMETER FONDOS)
-        if ($accion === 'aprobar') {
+        // A. VISAR O FIRMAR CON FIRMAGOB
+        if ($accion === 'aprobar' || $accion === 'firmar_firmagob' || $accion === 'subir_pdf_manual') {
             if ($estado_actual === 'EN_VALIDACION_PRESUPUESTARIA') {
-                $comentario = "Certificado de Disponibilidad Presupuestaria (CDP) generado. Visación presupuestaria aprobada.";
+                $comentario = "Visación de saldo presupuestario estimado completada.";
                 
             } elseif ($estado_actual === 'EN_VALIDACION_PRESUPUESTARIA_FINAL') {
+                $anio = date('Y');
+                $dir = __DIR__ . "/uploads/$anio/exp_$exp_id/";
+                if (!file_exists($dir)) mkdir($dir, 0777, true);
+
                 // Subir Borrador CDP si fue adjuntado
                 if (!empty($_FILES['archivo_cdp_borrador']['name'])) {
-                    $ext_borrador = strtolower(pathinfo($_FILES['archivo_cdp_borrador']['name'], PATHINFO_EXTENSION));
-                    if ($ext_borrador !== 'pdf') throw new Exception("El Borrador de CDP debe estar en formato PDF.");
-                    
-                    $anio = date('Y');
-                    $dir = __DIR__ . "/uploads/$anio/exp_$exp_id/";
-                    if (!file_exists($dir)) mkdir($dir, 0777, true);
-
+                    $ext_borrador = validar_subida_archivo($_FILES['archivo_cdp_borrador'], null, ['pdf']);
                     $name_borrador = "CDP_BORRADOR_" . time() . ".pdf";
                     $ruta_borrador = "uploads/$anio/exp_$exp_id/$name_borrador";
                     if (move_uploaded_file($_FILES['archivo_cdp_borrador']['tmp_name'], $dir . $name_borrador)) {
@@ -67,13 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Subir Situación de Gastos si fue adjuntada
                 if (!empty($_FILES['archivo_situacion_gastos']['name'])) {
-                    $ext_situacion = strtolower(pathinfo($_FILES['archivo_situacion_gastos']['name'], PATHINFO_EXTENSION));
-                    if ($ext_situacion !== 'pdf') throw new Exception("La Situación Presupuestaria de Gastos debe estar en formato PDF.");
-
-                    $anio = date('Y');
-                    $dir = __DIR__ . "/uploads/$anio/exp_$exp_id/";
-                    if (!file_exists($dir)) mkdir($dir, 0777, true);
-
+                    $ext_situacion = validar_subida_archivo($_FILES['archivo_situacion_gastos'], null, ['pdf']);
                     $name_situacion = "SITUACION_GASTOS_" . time() . ".pdf";
                     $ruta_situacion = "uploads/$anio/exp_$exp_id/$name_situacion";
                     if (move_uploaded_file($_FILES['archivo_situacion_gastos']['tmp_name'], $dir . $name_situacion)) {
@@ -82,24 +74,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
 
-                $comentario = "Visación final por gasto real aprobada. Borrador de CDP y Situación de Gastos cargados. Expediente enviado a Finanzas para firma.";
-            }
+                // Firma Digital de la OPI (2/3 - V°B° Presupuestario)
+                $nombre_firmado_2 = "OPI_FIRMADA_2_" . time() . ".pdf";
+                $ruta_firmado_2_abs = $dir . $nombre_firmado_2;
+                $ruta_firmado_2_rel = "uploads/$anio/exp_$exp_id/" . $nombre_firmado_2;
 
-            // Subir CDP si fue adjuntado
-            if (!empty($_FILES['archivo_cdp']['name'])) {
-                $ext = strtolower(pathinfo($_FILES['archivo_cdp']['name'], PATHINFO_EXTENSION));
-                if($ext !== 'pdf') throw new Exception("El archivo del CDP debe ser un PDF.");
-                
-                $anio = date('Y');
-                $dir = __DIR__ . "/uploads/$anio/exp_$exp_id/";
-                if (!file_exists($dir)) mkdir($dir, 0777, true);
-                
-                $name = "CDP_OFICIAL_" . time() . ".pdf";
-                if (move_uploaded_file($_FILES['archivo_cdp']['tmp_name'], $dir . $name)) {
-                    $ruta = "uploads/$anio/exp_$exp_id/$name";
-                    $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'OTRO', ?, ?)")
-                        ->execute([$exp_id, $user_id, $ruta, $_FILES['archivo_cdp']['name']]);
+                $firmante = firmagob_obtener_firmante_activo($pdo, 'PRESUPUESTO', $user_id);
+                $run_firmante = $firmante['rut'] ?? $_SESSION['user_rut'];
+
+                if ($accion === 'subir_pdf_manual') {
+                    if (empty($_FILES['pdf_firmado_manual']['name'])) {
+                        throw new Exception("Debe seleccionar el archivo PDF firmado manualmente.");
+                    }
+                    $ext = validar_subida_archivo($_FILES['pdf_firmado_manual'], null, ['pdf']);
+                    if (!move_uploaded_file($_FILES['pdf_firmado_manual']['tmp_name'], $ruta_firmado_2_abs)) {
+                        throw new Exception("Error al guardar el archivo PDF firmado.");
+                    }
+                    $id_solicitud = null;
+                    $chk_orig = null;
+                    $chk_signed = hash_file('sha256', $ruta_firmado_2_abs);
+                    $tipo_firma = 'MANUAL_DOCDIGITAL';
+                } else {
+                    $otp = $_POST['otp_code'] ?? null;
+                    
+                    // Buscar PDF de entrada (OPI_FIRMADA_1 o OPI_BASE)
+                    $stmtDoc = $pdo->prepare("SELECT ruta_archivo FROM expedientes_documentos WHERE expediente_id = ? AND tipo_doc = 'OPI_FIRMADA_PDF' ORDER BY id DESC LIMIT 1");
+                    $stmtDoc->execute([$exp_id]);
+                    $doc_db = $stmtDoc->fetchColumn();
+
+                    $ruta_base = ($doc_db && file_exists(__DIR__ . '/' . $doc_db)) ? __DIR__ . '/' . $doc_db : __DIR__ . '/' . generar_pdf_base_opi($pdo, $exp_id);
+
+                    $resFirma = firmagob_firmar_archivo($ruta_base, $run_firmante, "OPI #$exp_id (Firma Presupuesto 2/3)", $otp, 'PRESUPUESTO');
+                    file_put_contents($ruta_firmado_2_abs, $resFirma['content_binary']);
+
+                    $id_solicitud = $resFirma['id_solicitud'];
+                    $chk_orig = $resFirma['checksum_original'];
+                    $chk_signed = $resFirma['checksum_signed'];
+                    $tipo_firma = (FIRMAGOB_MODO === 'DESATENDIDA') ? 'FIRMAGOB_DESATENDIDA' : 'FIRMAGOB_ATENDIDA';
                 }
+
+                $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'OPI_FIRMADA_PDF', ?, ?)")
+                    ->execute([$exp_id, $user_id, $ruta_firmado_2_rel, $nombre_firmado_2]);
+
+                $pdo->prepare("INSERT INTO expedientes_firmas (expediente_id, autoridad_id, cargo_firmante, etapa_firma, firmagob_solicitud_id, checksum_original, checksum_signed, tipo_firma, ip_origen) VALUES (?, ?, ?, 'PRESUPUESTO', ?, ?, ?, ?, ?)")
+                    ->execute([$exp_id, $user_id, $firmante['cargo'] ?? 'CONTROL PRESUPUESTARIO', $id_solicitud, $chk_orig, $chk_signed, $tipo_firma, $_SERVER['REMOTE_ADDR'] ?? null]);
+
+                $comentario = "OPI firmada digitalmente por Presupuesto (2/3). Borrador de CDP emitido y enviado a Dirección de Finanzas.";
             }
 
             $pdo->prepare("UPDATE expedientes SET fecha_visa_presupuesto = NOW() WHERE id = ?")->execute([$exp_id]);

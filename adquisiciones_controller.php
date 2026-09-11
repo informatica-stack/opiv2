@@ -162,20 +162,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // E. ORDEN RECHAZADA (Devuelve a evaluación)
         if ($accion === 'oc_rechazada') {
-            $motivo_rechazo = trim($_POST['motivo_rechazo_proveedor']);
-            if(empty($motivo_rechazo)) throw new Exception("Debe indicar el motivo del rechazo.");
+            $motivo_rechazo = trim($_POST['motivo_rechazo_proveedor'] ?? '');
+            if (empty($motivo_rechazo)) throw new Exception("Debe indicar el motivo del rechazo del proveedor.");
+
+            if (empty($_FILES['comprobante_rechazo_oc']['name'])) {
+                throw new Exception("Debe adjuntar el Comprobante de Rechazo oficial de Mercado Público (PDF).");
+            }
+
+            $ext = validar_subida_archivo($_FILES['comprobante_rechazo_oc']);
+            $file = $_FILES['comprobante_rechazo_oc'];
+            $anio_actual = date('Y');
+            $dir = __DIR__ . "/uploads/$anio_actual/exp_$exp_id/";
+            if (!file_exists($dir)) mkdir($dir, 0777, true);
+            
+            $nombre_final = "rechazo_oc_" . time() . "." . $ext;
+            if (move_uploaded_file($file['tmp_name'], $dir . $nombre_final)) {
+                $ruta = "uploads/$anio_actual/exp_$exp_id/" . $nombre_final;
+                $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'OTRO', ?, ?)")
+                    ->execute([$exp_id, $user_id, $ruta, $file['name']]);
+            } else {
+                throw new Exception("Error al guardar el comprobante de rechazo.");
+            }
 
             $stmtTc = $pdo->prepare("SELECT tc.codigo FROM expedientes e JOIN tipos_compra tc ON e.tipo_compra_id = tc.id WHERE e.id = ?");
             $stmtTc->execute([$exp_id]);
             $tc_cod = $stmtTc->fetchColumn();
             $nuevo_estado = in_array(strtoupper($tc_cod), ['AGIL', 'COMPRA_AGIL', 'LICITACION']) ? 'EN_EVALUACION_OFERTAS' : 'EN_CORRECCION'; 
             
+            // Limpiar datos de adjudicación previa y resetear firmas para la nueva ronda
             $pdo->prepare("UPDATE expedientes SET proveedor_adjudicado_id = NULL, monto_definitivo = NULL, estado_actual = ? WHERE id = ?")->execute([$nuevo_estado, $exp_id]);
+            $pdo->prepare("DELETE FROM expedientes_firmas WHERE expediente_id = ?")->execute([$exp_id]);
             
             $pdo->prepare("INSERT INTO expedientes_historial (expediente_id, usuario_id, accion, estado_anterior, estado_nuevo, comentario) VALUES (?, ?, 'RECHAZO_PROVEEDOR', 'ESPERANDO_ACEPTACION_OC', ?, ?)")
-                ->execute([$exp_id, $user_id, $nuevo_estado, "Proveedor rechazó OC. Motivo: $motivo_rechazo. Se devuelve a evaluación para readjudicar (OPI Vigente)."]);
+                ->execute([$exp_id, $user_id, $nuevo_estado, "Proveedor rechazó OC en portal. Motivo: $motivo_rechazo. Comprobante adjunto. Trámite devuelto a evaluación para readjudicar."]);
 
-            $mensaje = "Se devolvió para readjudicar con otro proveedor. La OPI sigue vigente."; $tipo_mensaje = "warning"; $vista = 'lista';
+            $mensaje = "Rechazo registrado. Se devolvió el expediente al solicitante para readjudicar."; $tipo_mensaje = "warning"; $vista = 'lista';
         }
 
         // F. ANULAR OPI DEFINITIVAMENTE

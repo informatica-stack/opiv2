@@ -498,29 +498,19 @@ require_once __DIR__ . '/admin_controller.php';
                                         </a>
                                     </div>
 
-                                    <!-- SUBIR OPI FIRMADA Y AUTORIZAR -->
+                                    <!-- FIRMAR OPI CON FIRMAGOB O SUBIR MANUAL -->
                                     <?php if ($t_aprobar): ?>
                                         <div class="bg-white border rounded-3 p-3.5 mb-2">
                                             <h6 class="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
-                                                <i class="bi bi-upload text-primary"></i>
-                                                Subir OPI Firmada y Finalizar
+                                                <i class="bi bi-shield-lock-fill text-primary"></i>
+                                                Firma Electrónica Avanzada Oficial
                                             </h6>
+                                            <p class="small text-secondary mb-3" style="font-size: 11.5px;">Estampe la firma digital final sobre la OPI. El documento ya cuenta con las visaciones de Jefatura y Presupuesto, y el CDP de Finanzas.</p>
                                             
-                                            <form method="POST" enctype="multipart/form-data">
-                                                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                                <input type="hidden" name="transicion_id" value="<?= $t_aprobar['id'] ?>">
-                                                <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
-                                                
-                                                <div class="mb-3">
-                                                    <label class="form-label text-secondary fw-bold small text-uppercase" style="font-size: 9px;">Seleccionar Archivo OPI Firmado (PDF)</label>
-                                                    <input type="file" name="pdf_firmado" accept="application/pdf" required class="form-control form-control-sm bg-light">
-                                                </div>
-                                                
-                                                <button type="submit" onclick="return confirm('¿Confirma la acción de: <?= htmlspecialchars($t_aprobar['accion_label']) ?>?')" class="btn btn-primary py-2.5 w-100 fw-semibold shadow-sm transition d-flex justify-content-center align-items-center gap-2">
-                                                    <i class="bi bi-shield-check"></i>
-                                                    Subir OPI Firmada y Autorizar
-                                                </button>
-                                            </form>
+                                            <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $exp['id'] ?>, transicion_id: <?= $t_aprobar['id'] ?>, etapa: 'ADMIN_MUNICIPAL', codigo_interno: '<?= htmlspecialchars($exp['codigo_interno']) ?>', monto: '<?= $exp['monto_definitivo'] ?: $exp['monto_estimado'] ?>', doc_titulo: 'OPI Oficial Definitiva (Firma 3/3)'})" class="btn btn-primary py-2.5 w-100 fw-bold shadow transition d-flex justify-content-center align-items-center gap-2 mb-2">
+                                                <i class="bi bi-pen-fill"></i>
+                                                Firmar y Emitir OPI con FirmaGob (3/3)
+                                            </button>
                                         </div>
                                     <?php else: ?>
                                         <div class="alert alert-secondary text-center small py-2 mb-4">No hay transiciones de firma/aprobación disponibles en esta fase.</div>
@@ -613,6 +603,7 @@ require_once __DIR__ . '/admin_controller.php';
         <?php endif; ?>
 
     </div>
+    <?php include __DIR__ . '/components/modal_firmagob.php'; ?>
 <?php include __DIR__ . '/footer.php'; ?>
 </body>
 </html>

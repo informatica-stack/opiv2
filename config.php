@@ -17,7 +17,7 @@ if (empty($_SESSION['csrf_token'])) {
 }
 
 // 1.2 Validación de Token CSRF en peticiones POST
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $token = $_POST['csrf_token'] ?? '';
     if (!hash_equals($_SESSION['csrf_token'], $token)) {
         http_response_code(403);
@@ -82,13 +82,34 @@ if (php_sapi_name() !== 'cli' && ($config_sistema['modo_mantenimiento'] ?? '0') 
 define('ESTADO_BORRADOR', 'BORRADOR');
 define('ESTADO_REV_JEFE', 'EN_REVISION_JEFATURA');
 define('ESTADO_VAL_PRESUPUESTO', 'EN_VALIDACION_PRESUPUESTARIA');
+define('ESTADO_AUT_COTIZACION', 'EN_AUTORIZACION_COTIZACION');
 define('ESTADO_GESTION_COMPRA', 'EN_GESTION_ADQUISICIONES');
 define('ESTADO_SELECCION', 'EN_EVALUACION_OFERTAS');
+define('ESTADO_FIRMA_JEFATURA', 'EN_FIRMA_JEFATURA');
+define('ESTADO_VAL_PRESUPUESTO_FINAL', 'EN_VALIDACION_PRESUPUESTARIA_FINAL');
+define('ESTADO_CDP_FINANZAS_FINAL', 'ESPERANDO_CDP_FINANZAS_FINAL');
 define('ESTADO_APROB_ADM', 'EN_APROBACION_ADMINISTRADOR');
 define('ESTADO_OPI_EMITIDA', 'EN_EMISION_OC');
+define('ESTADO_FINALIZADO', 'FINALIZADO');
+define('ESTADO_CORRECCION', 'EN_CORRECCION');
 define('ESTADO_ANULADO', 'ANULADO');
+define('ESTADO_RECHAZADO', 'RECHAZADO');
 
-// 5. Función helper para URLs (opcional)
+// 5. Configuración de Firma Digital FirmaGob (Gobierno Digital)
+// Variables de entorno de Dockploy con fallback a SIMULADO para pruebas locales inmediatas
+define('FIRMAGOB_AMBIENTE', getenv('FIRMAGOB_AMBIENTE') ?: ($_ENV['FIRMAGOB_AMBIENTE'] ?? 'SIMULADO'));
+define('FIRMAGOB_API_URL', getenv('FIRMAGOB_API_URL') ?: ($_ENV['FIRMAGOB_API_URL'] ?? (
+    FIRMAGOB_AMBIENTE === 'PRODUCCION' 
+    ? 'https://api.firma.digital.gob.cl/firma/v2/files/tickets'
+    : 'https://api.firma.cert.digital.gob.cl/firma/v2/files/tickets'
+)));
+define('FIRMAGOB_API_TOKEN_KEY', getenv('FIRMAGOB_API_TOKEN_KEY') ?: ($_ENV['FIRMAGOB_API_TOKEN_KEY'] ?? 'sandbox'));
+define('FIRMAGOB_SECRET', getenv('FIRMAGOB_SECRET') ?: ($_ENV['FIRMAGOB_SECRET'] ?? '27a216342c744f89b7b82fa290519ba0'));
+define('FIRMAGOB_ENTITY', getenv('FIRMAGOB_ENTITY') ?: ($_ENV['FIRMAGOB_ENTITY'] ?? 'Subsecretaría General de la Presidencia'));
+define('FIRMAGOB_PURPOSE', getenv('FIRMAGOB_PURPOSE') ?: ($_ENV['FIRMAGOB_PURPOSE'] ?? 'Propósito General'));
+define('FIRMAGOB_MODO', getenv('FIRMAGOB_MODO') ?: ($_ENV['FIRMAGOB_MODO'] ?? 'ATENDIDA'));
+
+// 6. Función helper para URLs (opcional)
 function base_url($path = '') {
     // Ajusta esto a tu carpeta real, ej: /sistema-opi/
     return "/sistema_opi/" . ltrim($path, '/');
@@ -126,4 +147,6 @@ function validar_subida_archivo($file, $index = null, $allowed_exts = ['pdf', 'z
 }
 
 require_once __DIR__ . '/flujos_helper.php';
+require_once __DIR__ . '/firmagob_helper.php';
+require_once __DIR__ . '/pdf_helper.php';
 ?>

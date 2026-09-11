@@ -481,24 +481,29 @@ require_once __DIR__ . '/jefatura_controller.php';
                                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                     <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
                                     
-                                    <!-- ACCIONES DE APROBACIÓN (BOTÓN SOBRIO PRINCIPAL) -->
+                                    <!-- ACCIONES DE APROBACIÓN O FIRMA DIGITAL -->
                                     <?php 
                                     $t_aprobar = null;
                                     foreach ($transiciones as $t) {
-                                        if ($t['accion_codigo'] === 'APROBAR') {
-                                            $t_aprobar = $t;
-                                            break;
-                                        }
-                                    }
-                                    if ($t_aprobar):
-                                    ?>
-                                        <button type="submit" name="transicion_id" value="<?= $t_aprobar['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t_aprobar['accion_label']) ?>?')" class="btn btn-primary py-2.5 w-100 mb-4 shadow-sm d-flex align-items-center justify-content-center gap-2 fw-semibold">
-                                            <i class="bi bi-check-circle-fill"></i>
-                                            <?= htmlspecialchars($t_aprobar['accion_label']) ?>
-                                        </button>
-                                    <?php else: ?>
-                                        <div class="alert alert-secondary text-center small py-2 mb-4">No hay transiciones de aprobación disponibles.</div>
-                                    <?php endif; ?>
+                                         if ($t['accion_codigo'] === 'APROBAR' || $t['accion_codigo'] === 'FIRMAR_JEFATURA') {
+                                             $t_aprobar = $t;
+                                             break;
+                                         }
+                                     }
+                                     if ($exp['estado_actual'] === 'EN_FIRMA_JEFATURA'):
+                                     ?>
+                                         <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $exp['id'] ?>, transicion_id: <?= $t_aprobar ? $t_aprobar['id'] : 'null' ?>, etapa: 'JEFATURA', codigo_interno: '<?= htmlspecialchars($exp['codigo_interno']) ?>', monto: '<?= $exp['monto_definitivo'] ?: $exp['monto_estimado'] ?>', doc_titulo: 'OPI Adjudicada - V°B° Jefatura (1/3)'})" class="btn btn-primary py-2.5 w-100 mb-4 shadow d-flex align-items-center justify-content-center gap-2 fw-bold">
+                                             <i class="bi bi-pen-fill"></i>
+                                             Firmar OPI con FirmaGob (1/3)
+                                         </button>
+                                     <?php elseif ($t_aprobar): ?>
+                                         <button type="submit" name="transicion_id" value="<?= $t_aprobar['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t_aprobar['accion_label']) ?>?')" class="btn btn-primary py-2.5 w-100 mb-4 shadow-sm d-flex align-items-center justify-content-center gap-2 fw-semibold">
+                                             <i class="bi bi-check-circle-fill"></i>
+                                             <?= htmlspecialchars($t_aprobar['accion_label']) ?>
+                                         </button>
+                                     <?php else: ?>
+                                         <div class="alert alert-secondary text-center small py-2 mb-4">No hay transiciones de aprobación disponibles.</div>
+                                     <?php endif; ?>
 
                                     <!-- ÁREA DE COMENTARIOS (OBLIGATORIA PARA RETORNAR O RECHAZAR) -->
                                     <div class="border-top pt-3.5">
@@ -736,6 +741,7 @@ require_once __DIR__ . '/jefatura_controller.php';
             if (modalVerItemsInstance) modalVerItemsInstance.show();
         }
     </script>
+    <?php include __DIR__ . '/components/modal_firmagob.php'; ?>
 <?php include __DIR__ . '/footer.php'; ?>
 </body>
 </html>

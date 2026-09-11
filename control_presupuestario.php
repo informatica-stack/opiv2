@@ -551,9 +551,14 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
                                                  break;
                                              }
                                          }
-                                         if ($t_aprobar):
+                                         if ($exp['estado_actual'] === 'EN_VALIDACION_PRESUPUESTARIA_FINAL'):
                                          ?>
-                                             <button type="submit" name="transicion_id" value="<?= $t_aprobar['id'] ?>" onclick="return <?= $es_fase_final ? 'validarSolicitudCDP(event)' : "confirm('¿Confirma la acción de: " . htmlspecialchars($t_aprobar['accion_label']) . "?')" ?>" class="btn btn-primary py-2.5 w-100 mb-4 shadow-sm d-flex align-items-center justify-content-center gap-2 fw-semibold">
+                                             <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $exp['id'] ?>, transicion_id: <?= $t_aprobar ? $t_aprobar['id'] : 'null' ?>, etapa: 'PRESUPUESTO', codigo_interno: '<?= htmlspecialchars($exp['codigo_interno']) ?>', monto: '<?= $exp['monto_definitivo'] ?: $exp['monto_estimado'] ?>', doc_titulo: 'OPI - V°B° Presupuestario (2/3)'})" class="btn btn-primary py-2.5 w-100 mb-4 shadow d-flex align-items-center justify-content-center gap-2 fw-bold">
+                                                 <i class="bi bi-pen-fill"></i>
+                                                 Firmar OPI con FirmaGob (2/3)
+                                             </button>
+                                         <?php elseif ($t_aprobar): ?>
+                                             <button type="submit" name="transicion_id" value="<?= $t_aprobar['id'] ?>" onclick="return confirm('¿Confirma la acción de: <?= htmlspecialchars($t_aprobar['accion_label']) ?>?')" class="btn btn-primary py-2.5 w-100 mb-4 shadow-sm d-flex align-items-center justify-content-center gap-2 fw-semibold">
                                                  <i class="bi bi-check-circle-fill"></i>
                                                  <?= htmlspecialchars($t_aprobar['accion_label']) ?>
                                              </button>
@@ -807,8 +812,8 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
         }
         
         return confirm('¿Confirma enviar el CDP a Finanzas para firma?');
-    }
     </script>
+    <?php include __DIR__ . '/components/modal_firmagob.php'; ?>
 <?php include __DIR__ . '/footer.php'; ?>
 </body>
 </html>

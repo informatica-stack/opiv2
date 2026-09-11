@@ -115,14 +115,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
             throw new Exception("No se pudo guardar el archivo del Acta de Adjudicación.");
         }
 
-        // Actualizar Expediente
+        // Actualizar Expediente con datos definitivos
         $stmtUpd = $pdo->prepare("UPDATE expedientes SET proveedor_adjudicado_id = ?, monto_definitivo = ?, fecha_adjudicacion = NOW() WHERE id = ?");
         $stmtUpd->execute([$prov_id, $monto_final_calculado, $exp_id]);
 
-        avanzar_flujo($pdo, $exp_id, $user_id, "Proveedor seleccionado: $nombre_prov_historial. Acta de Adjudicación adjunta. Montos actualizados.");
+        // Limpiar cualquier registro previo de firmas si se trata de una readjudicación
+        $pdo->prepare("DELETE FROM expedientes_firmas WHERE expediente_id = ?")->execute([$exp_id]);
+
+        // Generar automáticamente el archivo inmutable OPI_BASE.pdf
+        generar_pdf_base_opi($pdo, $exp_id);
+
+        $nuevo_destino = avanzar_flujo($pdo, $exp_id, $user_id, "Proveedor adjudicado: $nombre_prov_historial. Monto definitivo: $ " . number_format($monto_final_calculado, 0, ',', '.') . ". OPI Base compilada y enviada a Jefatura para Firma Digital.");
 
         $pdo->commit();
-        $mensaje = "Selección registrada correctamente. Enviado a Presupuesto para visación final.";
+        $mensaje = "Adjudicación registrada exitosamente. OPI enviada a Jefatura de Unidad para Firma Digital.";
         $tipo_mensaje = "success";
 
     } catch (Exception $e) {
