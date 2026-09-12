@@ -42,7 +42,12 @@ if (isset($proveedores_db)) {
                                         <div class="col-md-12">
                                             <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px; letter-spacing: 0.5px;">🔎 Buscar y Seleccionar Proveedor (RUT o Razón Social)</label>
                                             <div class="custom-select-container" id="containerProveedorModal">
-                                                <input type="text" id="buscadorProvModal" class="form-control form-control-sm bg-white custom-select-input" placeholder="🔎 Escriba RUT o Razón Social para buscar..." autocomplete="off" onfocus="showProvDropdownModal()" oninput="filterProvDropdownModal()">
+                                                <div class="input-group input-group-sm">
+                                                    <input type="text" id="buscadorProvModal" class="form-control form-control-sm bg-white custom-select-input" placeholder="🔎 Escriba RUT o Razón Social para buscar..." autocomplete="off" onfocus="showProvDropdownModal()" onclick="this.select()" oninput="filterProvDropdownModal()">
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btnLimpiarProvModal" onclick="cancelNuevoProvModal()" title="Limpiar y volver a buscar" style="display: none;">
+                                                        <i class="bi bi-x-lg"></i>
+                                                    </button>
+                                                </div>
                                                 <input type="hidden" name="proveedor_id" id="selProvModal" value="" required>
                                                 <div class="custom-select-dropdown" id="dropdownProvModal">
                                                     <!-- Opciones dinámicas por JS -->
@@ -51,10 +56,17 @@ if (isset($proveedores_db)) {
                                         </div>
                                     </div>
                                     
-                                    <div id="panelNuevoProvModal" class="panel-slide bg-white border border-info rounded-3 shadow-sm d-none">
+                                    <div id="panelNuevoProvModal" class="panel-slide bg-white border border-info rounded-3 shadow-sm d-none mt-3">
                                         <div class="p-3">
-                                            <h6 class="text-info-emphasis fw-bold mb-1">Pre-registro de Nuevo Proveedor Adjudicado</h6>
-                                            <p class="text-muted mb-3" style="font-size: 11px;">Ingrese los datos para pre-registro. <b>Es obligatorio</b> subir la Ficha o Cotización formal del proveedor.</p>
+                                            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                                                <div>
+                                                    <h6 class="text-info-emphasis fw-bold mb-0">Pre-registro de Nuevo Proveedor Adjudicado</h6>
+                                                    <p class="text-muted mb-0" style="font-size: 11px;">Ingrese los datos para pre-registro. <b>Es obligatorio</b> subir la Ficha o Cotización formal del proveedor.</p>
+                                                </div>
+                                                <button type="button" class="btn btn-outline-secondary btn-sm py-1 px-2.5 fw-semibold d-flex align-items-center gap-1 shadow-sm" onclick="cancelNuevoProvModal()" style="font-size: 11px; white-space: nowrap;">
+                                                    <i class="bi bi-arrow-left"></i> Volver a la lista
+                                                </button>
+                                            </div>
                                             
                                             <div class="row g-3">
                                                 <div class="col-md-6">
@@ -172,6 +184,8 @@ if (isset($proveedores_db)) {
         // Reset Proveedor
         document.getElementById('buscadorProvModal').value = '';
         document.getElementById('selProvModal').value = '';
+        const btnLimpiar = document.getElementById('btnLimpiarProvModal');
+        if (btnLimpiar) btnLimpiar.style.display = 'none';
         toggleNuevoProvModal();
 
         // Dibujar Items con valor inicial 0
@@ -330,7 +344,7 @@ if (isset($proveedores_db)) {
         
         // Opción nuevo
         const optNew = document.createElement('div');
-        optNew.className = 'custom-select-option text-primary-emphasis fw-bold border-bottom';
+        optNew.className = 'custom-select-option text-primary fw-bold border-bottom bg-light';
         optNew.innerHTML = '➕ INGRESAR NUEVO PROVEEDOR MANUALMENTE';
         optNew.onclick = () => selectProviderModal('NUEVO', 'INGRESAR NUEVO PROVEEDOR MANUALMENTE', '');
         dropdown.appendChild(optNew);
@@ -365,7 +379,15 @@ if (isset($proveedores_db)) {
         currentFocusedIndexModal = -1;
         
         const selectVal = document.getElementById('selProvModal').value;
-        if (selectVal && selectVal !== 'NUEVO') {
+        const buscador = document.getElementById('buscadorProvModal');
+        
+        // Si estaba seleccionado NUEVO o contiene el texto del botón manual,
+        // al hacer foco seleccionamos el texto y mostramos todo el listado para poder buscar directamente
+        if (selectVal === 'NUEVO' || (buscador && buscador.value.includes('INGRESAR NUEVO PROVEEDOR'))) {
+            buscador.select();
+            renderProvDropdownModal(listadoProveedoresModal);
+        } else if (selectVal && selectVal !== 'NUEVO') {
+            buscador.select();
             renderProvDropdownModal(listadoProveedoresModal);
         } else {
             filterProvDropdownModal();
@@ -373,8 +395,27 @@ if (isset($proveedores_db)) {
     }
 
     function filterProvDropdownModal() {
-        const query = document.getElementById('buscadorProvModal').value;
+        const buscador = document.getElementById('buscadorProvModal');
+        const query = buscador.value;
         const selectVal = document.getElementById('selProvModal').value;
+        const btnLimpiar = document.getElementById('btnLimpiarProvModal');
+        
+        if (query.trim() === '') {
+            document.getElementById('selProvModal').value = '';
+            toggleNuevoProvModal();
+            if (btnLimpiar) btnLimpiar.style.display = 'none';
+            filteredItemsModal = listadoProveedoresModal;
+            renderProvDropdownModal(filteredItemsModal);
+            return;
+        }
+        
+        if (btnLimpiar) btnLimpiar.style.display = 'block';
+        
+        if (query.includes('INGRESAR NUEVO PROVEEDOR')) {
+            renderProvDropdownModal(listadoProveedoresModal);
+            return;
+        }
+        
         if (selectVal && selectVal !== 'NUEVO') {
             const p = listadoProveedoresModal.find(x => x.id == selectVal);
             if (p && `${p.rut} - ${p.razon_social}` === query) {
@@ -388,9 +429,33 @@ if (isset($proveedores_db)) {
 
     function selectProviderModal(id, name, rut) {
         document.getElementById('selProvModal').value = id;
-        document.getElementById('buscadorProvModal').value = id ? (id === 'NUEVO' ? name : `${rut} - ${name}`) : '';
+        const buscador = document.getElementById('buscadorProvModal');
+        const btnLimpiar = document.getElementById('btnLimpiarProvModal');
+        
+        if (id === 'NUEVO') {
+            buscador.value = '➕ INGRESAR NUEVO PROVEEDOR MANUALMENTE';
+            if (btnLimpiar) btnLimpiar.style.display = 'block';
+        } else if (id) {
+            buscador.value = `${rut} - ${name}`;
+            if (btnLimpiar) btnLimpiar.style.display = 'block';
+        } else {
+            buscador.value = '';
+            if (btnLimpiar) btnLimpiar.style.display = 'none';
+        }
+        
         document.getElementById('dropdownProvModal').classList.remove('show');
         toggleNuevoProvModal();
+    }
+
+    function cancelNuevoProvModal() {
+        document.getElementById('selProvModal').value = '';
+        const buscador = document.getElementById('buscadorProvModal');
+        buscador.value = '';
+        const btnLimpiar = document.getElementById('btnLimpiarProvModal');
+        if (btnLimpiar) btnLimpiar.style.display = 'none';
+        toggleNuevoProvModal();
+        buscador.focus();
+        showProvDropdownModal();
     }
 
     function toggleNuevoProvModal() {
@@ -398,16 +463,19 @@ if (isset($proveedores_db)) {
         const panel = document.getElementById('panelNuevoProvModal');
         const reqInputs = panel.querySelectorAll('.inp-nuevo-modal');
         const inpFicha = document.getElementById('inpFichaModal');
+        const btnLimpiar = document.getElementById('btnLimpiarProvModal');
         
         if (val === 'NUEVO') {
             toggleSlidePanel('panelNuevoProvModal', true);
             reqInputs.forEach(i => i.setAttribute('required', 'required'));
             inpFicha.setAttribute('required', 'required');
+            if (btnLimpiar) btnLimpiar.style.display = 'block';
         } else {
             toggleSlidePanel('panelNuevoProvModal', false);
             reqInputs.forEach(i => { i.removeAttribute('required'); i.value = ''; });
             inpFicha.removeAttribute('required');
             inpFicha.value = '';
+            if (val === '' && btnLimpiar) btnLimpiar.style.display = 'none';
             
             const icon = document.getElementById('rutStatusIconModal');
             if (icon) {
@@ -519,20 +587,27 @@ if (isset($proveedores_db)) {
     // Cerrar dropdown al hacer click afuera
     document.addEventListener('click', function(e) {
         const container = document.getElementById('containerProveedorModal');
-        if (container && !container.contains(e.target)) {
-            document.getElementById('dropdownProvModal').classList.remove('show');
+        const panel = document.getElementById('panelNuevoProvModal');
+        if (container && !container.contains(e.target) && (!panel || !panel.contains(e.target))) {
+            const dropdown = document.getElementById('dropdownProvModal');
+            if (dropdown) dropdown.classList.remove('show');
             
             const val = document.getElementById('selProvModal').value;
             const text = document.getElementById('buscadorProvModal').value;
+            const btnLimpiar = document.getElementById('btnLimpiarProvModal');
+            
             if (!val) {
                 document.getElementById('buscadorProvModal').value = '';
+                if (btnLimpiar) btnLimpiar.style.display = 'none';
             } else if (val === 'NUEVO') {
-                document.getElementById('buscadorProvModal').value = 'INGRESAR NUEVO PROVEEDOR MANUALMENTE';
+                document.getElementById('buscadorProvModal').value = '➕ INGRESAR NUEVO PROVEEDOR MANUALMENTE';
+                if (btnLimpiar) btnLimpiar.style.display = 'block';
             } else {
                 const p = listadoProveedoresModal.find(x => x.id == val);
                 if (p && `${p.rut} - ${p.razon_social}` !== text) {
                     document.getElementById('buscadorProvModal').value = `${p.rut} - ${p.razon_social}`;
                 }
+                if (btnLimpiar) btnLimpiar.style.display = 'block';
             }
         }
     });
