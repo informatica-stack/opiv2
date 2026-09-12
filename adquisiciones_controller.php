@@ -126,14 +126,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            // 2. Guardar datos de adjudicación final si vienen en el POST
+            // 2. Guardar IDs de Mercado Público si se envían
+            if (!empty($_POST['id_compra_agil'])) {
+                $pdo->prepare("UPDATE expedientes SET id_compra_agil = ? WHERE id = ?")->execute([trim($_POST['id_compra_agil']), $exp_id]);
+            }
+            if (!empty($_POST['id_licitacion'])) {
+                $pdo->prepare("UPDATE expedientes SET id_licitacion = ? WHERE id = ?")->execute([trim($_POST['id_licitacion']), $exp_id]);
+            }
+
+            // 3. Guardar datos de adjudicación final si vienen en el POST
             if (isset($_POST['proveedor_id']) && !empty($_POST['proveedor_id']) && isset($_POST['monto_definitivo'])) {
                 $prov_id = $_POST['proveedor_id'];
                 $monto_final = str_replace('.', '', $_POST['monto_definitivo']);
                 $pdo->prepare("UPDATE expedientes SET proveedor_adjudicado_id = ?, monto_definitivo = ?, fecha_adjudicacion = NOW() WHERE id = ?")->execute([$prov_id, $monto_final, $exp_id]);
             }
 
-            // 3. Guardar Número de Orden de Compra, Decreto Alcaldicio y Conv. Marco OC
+            // 4. Guardar Número de Orden de Compra, Decreto Alcaldicio y Conv. Marco OC
             if ($accion === 'emitir_oc') {
                 $oc_num = trim($_POST['orden_compra_numero'] ?? $_POST['conv_marco_oc'] ?? '');
                 $dec_num = trim($_POST['decreto_alcaldicio_numero'] ?? '');

@@ -438,61 +438,52 @@ require_once __DIR__ . '/adquisiciones_controller.php';
                             
                             <?php $estado = $exp['estado_actual']; ?>
 
-                            <!-- FASE 1: INGRESO AL PORTAL DE REFERENCIA -->
-                            <?php if ($estado === 'RECEPCIONADO_POR_ADQUISICIONES'): ?>
+                            <!-- FASE 1: GESTIÓN DE COTIZACIONES / OFERTAS EN PORTAL -->
+                            <?php if (in_array($estado, ['EN_GESTION_ADQUISICIONES', 'EN_COTIZACION_ADQ', 'EN_PUBLICACION_MERCADO', 'RECEPCIONADO_POR_ADQUISICIONES'])): ?>
                                 <div class="card-body p-4">
-                                    <h6 class="fw-bold text-dark mb-1">Ingreso al Portal (Mercado Público)</h6>
-                                    <p class="text-secondary small mb-4">Cree el requerimiento de compra en el portal oficial de Mercado Público. Luego registre aquí el ID identificador generado.</p>
-                                    
-                                    <form method="POST">
-                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                        <input type="hidden" name="accion" value="ingresar_id_portal">
-                                        <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
-                                        
-                                        <div class="mb-4">
-                                            <?php if ($exp['tipo_compra_cod'] === 'COMPRA_AGIL'): ?>
-                                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">ID Compra Ágil (Mercado Público) <span class="text-danger">*</span></label>
-                                                <input type="text" name="id_compra_agil" required class="form-control">
-                                            <?php elseif ($exp['tipo_compra_cod'] === 'LICITACION'): ?>
-                                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">ID de Licitación (Mercado Público) <span class="text-danger">*</span></label>
-                                                <input type="text" name="id_licitacion" required class="form-control">
-                                            <?php else: ?>
-                                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">ID de Referencia en Portal <span class="text-danger">*</span></label>
-                                                <input type="text" name="id_referencia" required class="form-control">
-                                            <?php endif; ?>
-                                        </div>
-
-                                        <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold shadow d-flex align-items-center justify-content-center gap-2">
-                                            <span>Guardar ID y Avanzar a Búsqueda de Ofertas</span>
-                                            <i class="bi bi-arrow-right-short fs-4"></i>
-                                        </button>
-                                    </form>
-                                </div>
-
-                            <!-- FASE 2: SUBIDA DE OFERTAS / COTIZACIONES -->
-                            <?php elseif ($estado === 'EN_COTIZACION_ADQ' || $estado === 'EN_PUBLICACION_MERCADO'): ?>
-                                <div class="card-body p-4">
-                                    <h6 class="fw-bold text-dark mb-1"><?= $estado === 'EN_COTIZACION_ADQ' ? 'Recepción de Cotizaciones / Ofertas' : 'Cierre y Ofertas de Licitación' ?></h6>
-                                    <p class="text-secondary small mb-4">Descargue las ofertas o cotizaciones recibidas en Mercado Público y suba un archivo comprimido o PDF consolidado para la evaluación del solicitante.</p>
+                                    <h6 class="fw-bold text-dark mb-1"><?= ($exp['tipo_compra_cod'] === 'LICITACION') ? 'Gestión y Publicación de Licitación' : 'Gestión en Portal / Subida de Ofertas y Cotizaciones' ?></h6>
+                                    <p class="text-secondary small mb-4"><?= ($exp['tipo_compra_cod'] === 'LICITACION') ? 'Registre el ID de Licitación de Mercado Público y suba las bases u ofertas recibidas para la evaluación técnica.' : 'Publique la solicitud en Mercado Público, registre el ID correspondiente y adjunte el archivo consolidado de cotizaciones u ofertas para la evaluación del usuario requirente.' ?></p>
                                     
                                     <form method="POST" enctype="multipart/form-data">
                                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                        <input type="hidden" name="accion" value="<?= $estado === 'EN_COTIZACION_ADQ' ? 'subir_cotizaciones' : 'publicar_licitacion' ?>">
+                                        <input type="hidden" name="accion" value="subir_cotizaciones">
                                         <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
                                         
-                                        <div class="mb-4">
-                                            <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Archivo de Ofertas/Bases (PDF, ZIP, RAR) <span class="text-danger">*</span></label>
-                                            <input type="file" name="<?= $estado === 'EN_COTIZACION_ADQ' ? 'archivo_cotizacion' : 'archivo_bases' ?>" accept=".pdf,.zip,.rar,application/pdf,application/zip,application/x-rar-compressed" required class="form-control form-control-sm">
+                                        <div class="row g-3 mb-3">
+                                            <div class="col-md-12">
+                                                <?php if ($exp['tipo_compra_cod'] === 'COMPRA_AGIL'): ?>
+                                                    <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">ID Compra Ágil (Mercado Público) <span class="text-danger">*</span></label>
+                                                    <input type="text" name="id_compra_agil" required class="form-control" placeholder="Ej: 1057544-cot-24" value="<?= htmlspecialchars($exp['id_compra_agil'] ?? '') ?>">
+                                                <?php elseif ($exp['tipo_compra_cod'] === 'LICITACION'): ?>
+                                                    <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">ID de Licitación (Mercado Público) <span class="text-danger">*</span></label>
+                                                    <input type="text" name="id_licitacion" required class="form-control" placeholder="Ej: 2404-12-LP24" value="<?= htmlspecialchars($exp['id_licitacion'] ?? '') ?>">
+                                                <?php else: ?>
+                                                    <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">ID de Referencia en Portal</label>
+                                                    <input type="text" name="id_referencia" class="form-control" placeholder="ID o número de referencia" value="<?= htmlspecialchars($exp['id_compra_agil'] ?? $exp['id_licitacion'] ?? '') ?>">
+                                                <?php endif; ?>
+                                            </div>
                                         </div>
-                                                <button type="submit" class="btn btn-primary w-100 py-2.5 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-2">
-                                            <span>Enviar Ofertas a Evaluación Técnica</span>
+
+                                        <div class="mb-4">
+                                            <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Archivo de Cotizaciones / Ofertas Recibidas (PDF, ZIP, RAR) <span class="text-danger">*</span></label>
+                                            <input type="file" name="archivo_cotizacion" accept=".pdf,.zip,.rar,application/pdf,application/zip,application/x-rar-compressed" required class="form-control form-control-sm">
+                                            <div class="form-text small text-muted">Adjunte el archivo consolidado de las cotizaciones u ofertas descargadas desde Mercado Público.</div>
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Observación / Comentarios de Adquisiciones (Opcional)</label>
+                                            <textarea name="comentario_flujo" class="form-control form-control-sm" rows="2" placeholder="Observaciones sobre las cotizaciones recibidas o el proceso en portal..."></textarea>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary w-100 py-2.5 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-2">
+                                            <span>Enviar Ofertas a Evaluación del Solicitante</span>
                                             <i class="bi bi-send-fill fs-6"></i>
                                         </button>
                                     </form>
                                 </div>
 
-                            <!-- FASE 3: INGRESO DE ORDEN DE COMPRA Y PROVEEDOR -->
-                            <?php elseif (in_array($estado, ['EN_EMISION_OC', 'EN_ADJUDICACION', 'EN_GESTION_ADQUISICIONES'])): ?>
+                            <!-- FASE 2: INGRESO DE ORDEN DE COMPRA Y PROVEEDOR -->
+                            <?php elseif (in_array($estado, ['EN_EMISION_OC', 'EN_ADJUDICACION'])): ?>
                                 <div class="card-body p-4">
                                     <h6 class="fw-bold text-dark mb-1">Emisión de Orden de Compra (OC)</h6>
                                     <p class="text-secondary small mb-4">Genere la Orden de Compra en el portal de Mercado Público. A continuación registre el código OC y el documento PDF para el expediente.</p>
