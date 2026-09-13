@@ -7,7 +7,8 @@ $is_cli = (php_sapi_name() === 'cli');
 if (!$is_cli) {
     if (session_status() === PHP_SESSION_NONE) session_start();
     if (!isset($_SESSION['user_id'])) {
-        die("Acceso Denegado. Debe inicar sesión.");
+        header("Location: login.php");
+        exit;
     }
     $rol = $_SESSION['user_rol'] ?? '';
     if ($rol !== 'SYSADMIN' && $rol !== 'ADMIN_MUNICIPAL') {
@@ -17,19 +18,29 @@ if (!$is_cli) {
 
 $ejecutar = false;
 $mensaje = '';
+$tipo_mensaje = 'success';
 $detalles = [];
 $archivos_borrados = 0;
+$limpiar_proveedores_test = false;
 
 if ($is_cli) {
     // Si viene desde CLI con flag --confirm o confirm
     $args = $_SERVER['argv'] ?? [];
     if (in_array('--confirm', $args) || in_array('confirm', $args)) {
         $ejecutar = true;
+        $limpiar_proveedores_test = in_array('--clean-providers', $args);
     }
 } else {
     // Si viene por POST en Web
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirmar_limpieza'])) {
-        $ejecutar = true;
+        $token = $_POST['csrf_token'] ?? '';
+        if (empty($token) || $token !== ($_SESSION['csrf_token'] ?? '')) {
+            $mensaje = "Error de validación de seguridad (Token CSRF inválido o expirado). Recargue la página e intente nuevamente.";
+            $tipo_mensaje = 'danger';
+        } else {
+            $ejecutar = true;
+            $limpiar_proveedores_test = !empty($_POST['limpiar_proveedores_test']);
+        }
     }
 }
 
@@ -54,7 +65,15 @@ if ($ejecutar) {
             $detalles[$t] = $cnt;
         }
 
-        $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
+        // Limpiar proveedores de prueba creados durante los ensayos (preservando los iniciales id <= 2)
+        if ($limpiar_proveedores_test) {
+            $cnt_prov = $pdo->query("SELECT COUNT(*) FROM `proveedores` WHERE id > 2")->fetchColumn();
+            $pdo->exec("DELETE FROM `proveedores` WHERE id > 2");
+            $max_prov_id = (int)$pdo->query("SELECT IFNULL(MAX(id), 0) FROM `proveedores`")->fetchColumn();
+            $next_prov_id = max(3, $max_prov_id + 1);
+            $pdo->exec("ALTER TABLE `proveedores` AUTO_INCREMENT = $next_prov_id");
+            $detalles['proveedores (test)'] = $cnt_prov;
+        }
 
         // Borrar archivos en carpeta uploads
         $uploads_dir = __DIR__ . '/uploads';
@@ -66,6 +85,11 @@ if ($ejecutar) {
 
             foreach ($files as $fileinfo) {
                 $todo = $fileinfo->getRealPath();
+                $filename = $fileinfo->getFilename();
+                // Preservar .gitkeep o index.html en uploads
+                if ($fileinfo->isFile() && in_array($filename, ['.gitkeep', 'index.html'])) {
+                    continue;
+                }
                 if ($fileinfo->isDir()) {
                     @rmdir($todo);
                 } else {
@@ -73,12 +97,22 @@ if ($ejecutar) {
                     $archivos_borrados++;
                 }
             }
+        } else {
+            @mkdir($uploads_dir, 0777, true);
+        }
+
+        // Asegurar existencia de index.html vacío protector
+        if (!file_exists($uploads_dir . '/index.html')) {
+            @file_put_contents($uploads_dir . '/index.html', '<!DOCTYPE html><html><head><title>403 Forbidden</title></head><body><h1>Directory access is forbidden.</h1></body></html>');
         }
 
         $mensaje = "Limpieza ejecutada con éxito. El sistema ha sido reiniciado a cero para nuevas pruebas.";
 
     } catch (Exception $e) {
         $mensaje = "Error al ejecutar limpieza: " . $e->getMessage();
+        $tipo_mensaje = 'danger';
+    } finally {
+        $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
     }
 }
 
@@ -90,7 +124,8 @@ if ($is_cli) {
         echo "ADVERTENCIA: Esta acción vaciará todos los expedientes, firmas,\n";
         echo "documentos e historial de prueba y reseteará los IDs a 1.\n\n";
         echo "Para ejecutar, incluya el flag --confirm:\n";
-        echo "php limpiar_datos_pruebas.php --confirm\n";
+        echo "php limpiar_datos_pruebas.php --confirm\n\n";
+        echo "Opcional: incluir --clean-providers para purgar también proveedores de prueba creados.\n";
         echo "====================================================\n";
         exit(0);
     } else {
@@ -127,12 +162,12 @@ if ($is_cli) {
             </div>
             <div class="card-body p-4">
                 
-                <?php if ($ejecutar): ?>
+                <?php if ($ejecutar && $tipo_mensaje === 'success'): ?>
                     <div class="alert alert-success d-flex align-items-center gap-2 mb-4">
                         <i class="bi bi-check-circle-fill fs-4 shrink-0"></i>
                         <div>
                             <h6 class="fw-bold mb-0"><?= htmlspecialchars($mensaje) ?></h6>
-                            <span class="small text-muted">Las tablas transaccionales han sido vaciadas y los IDs reseteados a 1.</span>
+                            <span class="small text-muted">Las tablas transaccionales han sido vaciadas y los correlativos reseteados a 1.</span>
                         </div>
                     </div>
 
@@ -145,14 +180,14 @@ if ($is_cli) {
                                 <thead>
                                     <tr>
                                         <th>Tabla Transaccional</th>
-                                        <th class="text-end">Registros Purga</th>
+                                        <th class="text-end">Registros Purgados</th>
                                         <th class="text-center">Estado Auto Increment</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($detalles as $t => $c): ?>
                                         <tr>
-                                            <td class="font-monospace fw-bold text-primary"><?= $t ?></td>
+                                            <td class="font-monospace fw-bold text-primary"><?= htmlspecialchars($t) ?></td>
                                             <td class="text-end fw-bold"><?= number_format($c, 0, ',', '.') ?></td>
                                             <td class="text-center text-success small fw-bold">Reset a 1</td>
                                         </tr>
@@ -172,6 +207,16 @@ if ($is_cli) {
                     </a>
 
                 <?php else: ?>
+
+                    <?php if (!empty($mensaje) && $tipo_mensaje === 'danger'): ?>
+                        <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                            <i class="bi bi-exclamation-octagon-fill fs-4 shrink-0"></i>
+                            <div>
+                                <h6 class="fw-bold mb-0">Error en la operación</h6>
+                                <span class="small"><?= htmlspecialchars($mensaje) ?></span>
+                            </div>
+                        </div>
+                    <?php endif; ?>
 
                     <div class="alert alert-warning border-warning p-3 mb-4">
                         <div class="d-flex align-items-start gap-2">
@@ -200,7 +245,16 @@ if ($is_cli) {
                     </div>
 
                     <form method="POST">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
                         <input type="hidden" name="confirmar_limpieza" value="1">
+                        
+                        <div class="form-check form-switch mb-4 p-3 bg-white border rounded-3">
+                            <input class="form-check-input ms-0 me-2" type="checkbox" name="limpiar_proveedores_test" id="chkProvTest" value="1" checked>
+                            <label class="form-check-label fw-bold small text-dark" for="chkProvTest">
+                                Limpiar también proveedores temporales creados en pruebas (preserva proveedores del catálogo base)
+                            </label>
+                        </div>
+
                         <button type="submit" onclick="return confirm('¿Está COMPLETAMENTE SEGURO de reiniciar todas las solicitudes e iniciar pruebas desde cero?')" class="btn btn-danger btn-lg w-100 py-3 fw-bold shadow transition d-flex align-items-center justify-content-center gap-2">
                             <i class="bi bi-trash3-fill"></i>
                             Confirmar y Reiniciar Sistema a Cero
