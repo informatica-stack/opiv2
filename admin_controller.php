@@ -122,7 +122,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         }
 
         // C. APROBAR Y FIRMAR
-        if ($accion === 'firmar' || $accion === 'aprobar' || $accion === 'firmar_firmagob' || $accion === 'subir_pdf_manual' || $accion === 'cargar_opi_manual') {
+        if (in_array($accion, ['firmar', 'aprobar', 'firmar_firmagob', 'subir_pdf_manual', 'cargar_opi_manual', 'firmar_admin', 'autorizar'])) {
             
             $stmtEst = $pdo->prepare("SELECT estado_actual, codigo_interno FROM expedientes WHERE id = ?");
             $stmtEst->execute([$id]);

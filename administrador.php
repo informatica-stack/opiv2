@@ -480,6 +480,29 @@ require_once __DIR__ . '/admin_controller.php';
                     </div>
                     <?php endif; ?>
 
+                    <!-- VISOR DE DOCUMENTO OPI A FIRMAR (FASE 3 / FIRMA 3/3) -->
+                    <?php if(!$es_etapa_cotizacion): ?>
+                    <div class="card shadow-sm border-light mb-4">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                                <i class="bi bi-file-earmark-pdf-fill text-danger fs-5"></i>
+                                <span>Vista Previa: OPI Oficial a Firmar (Visaciones 1/3 y 2/3)</span>
+                            </h6>
+                            <div class="d-flex gap-2">
+                                <a href="imprimir_opi.php?id=<?= $exp['id'] ?>" target="_blank" class="btn btn-outline-primary btn-sm py-1 px-2.5 fw-bold d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                    <i class="bi bi-box-arrow-up-right"></i> Abrir en Pestaña Nueva
+                                </a>
+                                <a href="imprimir_opi.php?id=<?= $exp['id'] ?>&auto_download=1" target="_blank" class="btn btn-outline-secondary btn-sm py-1 px-2.5 fw-bold d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                    <i class="bi bi-download"></i> Descargar PDF
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-body p-0 bg-secondary-subtle">
+                            <iframe src="imprimir_opi.php?id=<?= $exp['id'] ?>#toolbar=1&view=FitH" class="w-100 border-0 rounded-bottom" style="height: 540px; background-color: #525659;"></iframe>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
                     <!-- TARJETA DE RESOLUCIÓN UNIFICADA (HOMOLOGADA) -->
                     <div class="card shadow-sm border-light">
                         <div class="card-header bg-white border-bottom py-3">
@@ -498,7 +521,7 @@ require_once __DIR__ . '/admin_controller.php';
                                 $t_devolver = null;
                                 $t_rechazar = null;
                                 foreach ($transiciones as $t) {
-                                    if ($t['accion_codigo'] === 'APROBAR') $t_aprobar = $t;
+                                    if (in_array($t['accion_codigo'], ['APROBAR', 'FIRMAR', 'FIRMAR_ADMIN', 'AUTORIZAR', 'FIRMAR_JEFATURA'])) $t_aprobar = $t;
                                     if ($t['accion_codigo'] === 'DEVOLVER') $t_devolver = $t;
                                     if ($t['accion_codigo'] === 'RECHAZAR') $t_rechazar = $t;
                                 }
@@ -532,24 +555,10 @@ require_once __DIR__ . '/admin_controller.php';
                                 <?php else: ?>
                                     <!-- EN_APROBACION_ADMINISTRADOR: FIRMA DIGITAL FIRMAGOB 3/3 -->
                                     <?php if ($t_aprobar): ?>
-                                        <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $exp['id'] ?>, transicion_id: <?= $t_aprobar['id'] ?>, etapa: 'ADMIN_MUNICIPAL', codigo_interno: '<?= htmlspecialchars($exp['codigo_interno']) ?>', monto: '<?= $exp['monto_definitivo'] ?: $exp['monto_estimado'] ?>', doc_titulo: 'OPI Oficial Definitiva (Firma 3/3)', firmante_nombre: '<?= htmlspecialchars($firmante_activo['nombre'] ?? $_SESSION['user_nombre'] ?? '') ?>', firmante_rut: '<?= htmlspecialchars($firmante_activo['rut'] ?? $_SESSION['user_rut'] ?? '') ?>', firmante_cargo: '<?= htmlspecialchars($firmante_activo['cargo'] ?? 'ADMINISTRADOR MUNICIPAL') ?>'})" class="btn btn-primary py-2.5 w-100 mb-3 fw-bold shadow d-flex justify-content-center align-items-center gap-2" style="background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%);">
-                                            <i class="bi bi-pen-fill"></i>
-                                            Firmar y Emitir OPI con FirmaGob (3/3)
+                                        <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $exp['id'] ?>, transicion_id: <?= $t_aprobar['id'] ?>, etapa: 'ADMIN_MUNICIPAL', codigo_interno: '<?= htmlspecialchars($exp['codigo_interno']) ?>', monto: '<?= $exp['monto_definitivo'] ?: $exp['monto_estimado'] ?>', doc_titulo: 'OPI Oficial Definitiva (Firma 3/3)', firmante_nombre: '<?= htmlspecialchars($firmante_activo['nombre'] ?? $_SESSION['user_nombre'] ?? '') ?>', firmante_rut: '<?= htmlspecialchars($firmante_activo['rut'] ?? $_SESSION['user_rut'] ?? '') ?>', firmante_cargo: '<?= htmlspecialchars($firmante_activo['cargo'] ?? 'ADMINISTRADOR MUNICIPAL') ?>'})" class="btn btn-primary py-3 w-100 mb-4 fs-6 fw-bold shadow d-flex justify-content-center align-items-center gap-2" style="background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%);">
+                                            <i class="bi bi-pen-fill fs-5"></i>
+                                            Firmar y Emitir OPI Oficial con FirmaGob (3/3)
                                         </button>
-
-                                        <!-- ACCESO RÁPIDO A VISUALIZAR OPI -->
-                                        <div class="d-flex justify-content-between align-items-center mb-4 bg-light p-2.5 rounded-3 border">
-                                            <div class="d-flex align-items-center gap-2">
-                                                <i class="bi bi-file-earmark-pdf-fill text-primary fs-5"></i>
-                                                <div>
-                                                    <span class="small fw-bold text-dark d-block">OPI con visaciones previas (1/3 y 2/3)</span>
-                                                    <span class="text-muted" style="font-size: 10px;">Verifique las visaciones estampadas antes de emitir</span>
-                                                </div>
-                                            </div>
-                                            <a href="imprimir_opi.php?id=<?= $exp['id'] ?>&auto_download=1" target="_blank" class="btn btn-outline-primary btn-sm py-1 px-2.5 fw-semibold" style="font-size: 11px;">
-                                                <i class="bi bi-eye me-1"></i> Visualizar OPI
-                                            </a>
-                                        </div>
                                     <?php endif; ?>
                                 <?php endif; ?>
 
