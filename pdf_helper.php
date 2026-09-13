@@ -401,14 +401,52 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
     // Guardar archivo binario
     $pdf->Output('F', $ruta_absoluta);
 
-    // Registrar en expedientes_documentos si no está registrado
-    $stmtCheck = $pdo->prepare("SELECT id FROM expedientes_documentos WHERE expediente_id = ? AND tipo_doc = 'OPI_FIRMADA_PDF' AND ruta_archivo = ?");
-    $stmtCheck->execute([$expediente_id, $ruta_relativa]);
-    if (!$stmtCheck->fetchColumn()) {
-        $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'OPI_FIRMADA_PDF', ?, ?)")
-            ->execute([$expediente_id, $exp['usuario_creador_id'], $ruta_relativa, $nombre_archivo]);
-    }
+    // Registrar / Actualizar en expedientes_documentos como documento OPI único oficial
+    registrar_o_actualizar_opi_documento($pdo, $expediente_id, $exp['usuario_creador_id'], $ruta_relativa, $nombre_archivo);
 
     return $ruta_relativa;
 }
+
+/**
+ * Registra o actualiza el documento oficial único de la OPI en expedientes_documentos.
+ * Garantiza que siempre exista una sola versión oficial de la OPI a lo largo del flujo de firmas.
+ */
+function registrar_o_actualizar_opi_documento($pdo, $expediente_id, $usuario_id, $ruta_relativa, $nombre_original) {
+    $stmtCheck = $pdo->prepare("SELECT id, ruta_archivo FROM expedientes_documentos WHERE expediente_id = ? AND tipo_doc = 'OPI_FIRMADA_PDF' ORDER BY id ASC");
+    $stmtCheck->execute([$expediente_id]);
+    $existentes = $stmtCheck->fetchAll(PDO::FETCH_ASSOC);
+
+    if (!empty($existentes)) {
+        $primer = $existentes[0];
+        $antigua_ruta = $primer['ruta_archivo'];
+
+        // Si la ruta anterior es distinta y el archivo físico existe, eliminar el borrador anterior
+        if ($antigua_ruta && $antigua_ruta !== $ruta_relativa) {
+            $archivo_viejo_abs = __DIR__ . '/' . $antigua_ruta;
+            if (file_exists($archivo_viejo_abs) && is_file($archivo_viejo_abs)) {
+                @unlink($archivo_viejo_abs);
+            }
+        }
+
+        // Actualizar el registro único
+        $pdo->prepare("UPDATE expedientes_documentos SET subido_por_id = ?, ruta_archivo = ?, nombre_original = ?, fecha_subida = NOW() WHERE id = ?")
+            ->execute([$usuario_id, $ruta_relativa, $nombre_original, $primer['id']]);
+
+        // Si existieran duplicados previos por historial antiguo, limpiarlos
+        for ($i = 1; $i < count($existentes); $i++) {
+            $dup_ruta = $existentes[$i]['ruta_archivo'];
+            if ($dup_ruta && $dup_ruta !== $ruta_relativa) {
+                $dup_abs = __DIR__ . '/' . $dup_ruta;
+                if (file_exists($dup_abs) && is_file($dup_abs)) {
+                    @unlink($dup_abs);
+                }
+            }
+            $pdo->prepare("DELETE FROM expedientes_documentos WHERE id = ?")->execute([$existentes[$i]['id']]);
+        }
+    } else {
+        $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'OPI_FIRMADA_PDF', ?, ?)")
+            ->execute([$expediente_id, $usuario_id, $ruta_relativa, $nombre_original]);
+    }
+}
+
 

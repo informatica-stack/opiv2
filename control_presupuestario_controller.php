@@ -168,8 +168,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $tipo_firma = (FIRMAGOB_MODO === 'DESATENDIDA') ? 'FIRMAGOB_DESATENDIDA' : 'FIRMAGOB_ATENDIDA';
                 }
 
-                $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'OPI_FIRMADA_PDF', ?, ?)")
-                    ->execute([$exp_id, $user_id, $ruta_firmado_2_rel, $nombre_firmado_2]);
+                // Registrar / Actualizar Documento OPI único oficial
+                registrar_o_actualizar_opi_documento($pdo, $exp_id, $user_id, $ruta_firmado_2_rel, $nombre_firmado_2);
 
                 $pdo->prepare("INSERT INTO expedientes_firmas (expediente_id, usuario_firmante_id, autoridad_id, nombre_firmante, rut_firmante, cargo_firmante, etapa_firma, firmagob_solicitud_id, checksum_original, checksum_signed, tipo_firma, ip_origen, nombre_archivo_firmado) VALUES (?, ?, ?, ?, ?, ?, 'PRESUPUESTO', ?, ?, ?, ?, ?, ?)")
                     ->execute([
