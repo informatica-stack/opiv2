@@ -181,8 +181,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ->execute([$id, $_SESSION['user_id'], $ruta_db, $nombre_final]);
 
                 // Registrar Firma
-                $pdo->prepare("INSERT INTO expedientes_firmas (expediente_id, autoridad_id, cargo_firmante, etapa_firma, firmagob_solicitud_id, checksum_original, checksum_signed, tipo_firma, ip_origen) VALUES (?, ?, ?, 'ADMIN_MUNICIPAL', ?, ?, ?, ?, ?)")
-                    ->execute([$id, $_SESSION['user_id'], $firmante['cargo'] ?? 'ADMINISTRADOR MUNICIPAL', $id_solicitud, $chk_orig, $chk_signed, $tipo_firma, $_SERVER['REMOTE_ADDR'] ?? null]);
+                $pdo->prepare("INSERT INTO expedientes_firmas (expediente_id, usuario_firmante_id, autoridad_id, nombre_firmante, rut_firmante, cargo_firmante, etapa_firma, firmagob_solicitud_id, checksum_original, checksum_signed, tipo_firma, ip_origen, nombre_archivo_firmado) VALUES (?, ?, ?, ?, ?, ?, 'ADMIN_MUNICIPAL', ?, ?, ?, ?, ?, ?)")
+                    ->execute([
+                        $id,
+                        $_SESSION['user_id'],
+                        $firmante['id'] ?? null,
+                        $firmante['nombre'] ?? $_SESSION['user_nombre'] ?? 'Administrador Municipal',
+                        $run_firmante,
+                        $firmante['cargo'] ?? 'ADMINISTRADOR MUNICIPAL',
+                        $id_solicitud,
+                        $chk_orig,
+                        $chk_signed,
+                        $tipo_firma,
+                        $_SERVER['REMOTE_ADDR'] ?? null,
+                        $nombre_final
+                    ]);
 
                 // Avanzar el Flujo
                 if ($transicion_id) {

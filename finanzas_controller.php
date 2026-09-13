@@ -101,8 +101,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'CDP_BORRADOR', ?, ?)")
                 ->execute([$exp_id, $user_id, $ruta_rel, $name]);
 
-            $pdo->prepare("INSERT INTO expedientes_firmas (expediente_id, autoridad_id, cargo_firmante, etapa_firma, firmagob_solicitud_id, checksum_original, checksum_signed, tipo_firma, ip_origen) VALUES (?, ?, ?, 'FINANZAS', ?, ?, ?, ?, ?)")
-                ->execute([$exp_id, $user_id, $firmante['cargo'] ?? 'DIRECTOR DE ADMINISTRACION Y FINANZAS', $id_solicitud, $chk_orig, $chk_signed, $tipo_firma, $_SERVER['REMOTE_ADDR'] ?? null]);
+            $pdo->prepare("INSERT INTO expedientes_firmas (expediente_id, usuario_firmante_id, autoridad_id, nombre_firmante, rut_firmante, cargo_firmante, etapa_firma, firmagob_solicitud_id, checksum_original, checksum_signed, tipo_firma, ip_origen, nombre_archivo_firmado) VALUES (?, ?, ?, ?, ?, ?, 'FINANZAS', ?, ?, ?, ?, ?, ?)")
+                ->execute([
+                    $exp_id,
+                    $user_id,
+                    $firmante['id'] ?? null,
+                    $firmante['nombre'] ?? $_SESSION['user_nombre'] ?? 'Director de Finanzas',
+                    $run_firmante,
+                    $firmante['cargo'] ?? 'DIRECTOR DE ADMINISTRACION Y FINANZAS',
+                    $id_solicitud,
+                    $chk_orig,
+                    $chk_signed,
+                    $tipo_firma,
+                    $_SERVER['REMOTE_ADDR'] ?? null,
+                    $name
+                ]);
 
             $comentario = "Certificado de Disponibilidad Presupuestaria (CDP) firmado digitalmente por Finanzas.";
 

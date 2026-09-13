@@ -102,8 +102,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'OPI_FIRMADA_PDF', ?, ?)")
                 ->execute([$id, $user_id, $ruta_firmado_rel, $nombre_firmado]);
 
-            $pdo->prepare("INSERT INTO expedientes_firmas (expediente_id, autoridad_id, cargo_firmante, etapa_firma, firmagob_solicitud_id, checksum_original, checksum_signed, tipo_firma, ip_origen) VALUES (?, ?, ?, 'JEFATURA', ?, ?, ?, ?, ?)")
-                ->execute([$id, $user_id, $firmante['cargo'] ?? 'JEFE DE UNIDAD', $id_solicitud, $chk_orig, $chk_signed, $tipo_firma, $_SERVER['REMOTE_ADDR'] ?? null]);
+            $pdo->prepare("INSERT INTO expedientes_firmas (expediente_id, usuario_firmante_id, autoridad_id, nombre_firmante, rut_firmante, cargo_firmante, etapa_firma, firmagob_solicitud_id, checksum_original, checksum_signed, tipo_firma, ip_origen, nombre_archivo_firmado) VALUES (?, ?, ?, ?, ?, ?, 'JEFATURA', ?, ?, ?, ?, ?, ?)")
+                ->execute([
+                    $id,
+                    $user_id,
+                    $firmante['id'] ?? null,
+                    $firmante['nombre'] ?? $_SESSION['user_nombre'] ?? 'Jefe de Unidad',
+                    $run_firmante,
+                    $firmante['cargo'] ?? 'JEFE DE UNIDAD',
+                    $id_solicitud,
+                    $chk_orig,
+                    $chk_signed,
+                    $tipo_firma,
+                    $_SERVER['REMOTE_ADDR'] ?? null,
+                    $nombre_firmado
+                ]);
 
             if ($transicion_id) {
                 $nuevo_destino = ejecutar_transicion_por_id($pdo, $id, $user_id, $transicion_id, "OPI firmada digitalmente por Jefatura (1/3).");

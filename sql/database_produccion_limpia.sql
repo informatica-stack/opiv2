@@ -566,10 +566,10 @@ DROP TABLE IF EXISTS `expedientes_firmas`;
 CREATE TABLE `expedientes_firmas` (
   `id` int NOT NULL AUTO_INCREMENT,
   `expediente_id` int NOT NULL,
-  `usuario_firmante_id` int NOT NULL,
+  `usuario_firmante_id` int DEFAULT NULL,
   `autoridad_id` int DEFAULT NULL,
-  `nombre_firmante` varchar(150) NOT NULL,
-  `rut_firmante` varchar(12) NOT NULL,
+  `nombre_firmante` varchar(150) DEFAULT NULL,
+  `rut_firmante` varchar(12) DEFAULT NULL,
   `cargo_firmante` varchar(150) DEFAULT NULL,
   `firmagob_solicitud_id` varchar(50) DEFAULT NULL,
   `etapa_firma` enum('JEFATURA','PRESUPUESTO','FINANZAS','ADMIN_MUNICIPAL') NOT NULL DEFAULT 'ADMIN_MUNICIPAL',
@@ -585,7 +585,7 @@ CREATE TABLE `expedientes_firmas` (
   KEY `fk_firmas_exp` (`expediente_id`),
   KEY `fk_firmas_usr` (`usuario_firmante_id`),
   CONSTRAINT `fk_firmas_exp` FOREIGN KEY (`expediente_id`) REFERENCES `expedientes` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_firmas_usr` FOREIGN KEY (`usuario_firmante_id`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT
+  CONSTRAINT `fk_firmas_usr` FOREIGN KEY (`usuario_firmante_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
