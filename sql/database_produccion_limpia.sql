@@ -335,6 +335,7 @@ INSERT INTO `estados_tramite` (`codigo`, `nombre`, `rol_responsable`, `descripci
 ('ESPERANDO_CDP_FINANZAS_FINAL', 'Esperando Firma Oficial CDP (Finanzas)', 'FINANZAS', 'Firma electrónica FirmaGob en CDP Oficial por Director/a DAF'),
 ('EN_APROBACION_ADMINISTRADOR', 'Esperando Firma Administrador (3/3)', 'ADMIN_MUNICIPAL', '3ª Firma electrónica FirmaGob OPI, asignación de folio y pase a OC'),
 ('EN_EMISION_OC', 'Esperando Emisión de Orden de Compra', 'ADQUISICIONES', 'Adquisiciones emite y sube OC de Mercado Público'),
+('ESPERANDO_ACEPTACION_OC', 'Esperando Aceptación del Proveedor', 'ADQUISICIONES', 'Adquisiciones supervisa la aceptación o rechazo de la OC en Mercado Público'),
 ('FINALIZADO', 'OPI Tramitada y Finalizada', 'SISTEMA', 'Trámite concluido con OC y decreto adjuntos'),
 ('EN_CORRECCION', 'Devuelto para Correcciones', 'USUARIO_REQ', 'Expediente devuelto para subsanar observaciones'),
 ('RECHAZADO', 'Rechazado Definitivamente', 'SISTEMA', 'Expediente rechazado y archivado'),
@@ -394,8 +395,10 @@ INSERT INTO `flujos_definicion` (`tipo_compra_id`, `estado_actual`, `requiere_ar
 (6, 'EN_APROBACION_ADMINISTRADOR', 0, 'FIRMAR_ADMIN', 'Firmar y Emitir OPI Definitiva (3/3)', 'EN_EMISION_OC', 0),
 (6, 'EN_APROBACION_ADMINISTRADOR', 0, 'DEVOLVER', 'Devolver para Corrección', 'EN_VALIDACION_PRESUPUESTARIA_FINAL', 1),
 (6, 'EN_APROBACION_ADMINISTRADOR', 0, 'RECHAZAR', 'Rechazar OPI', 'RECHAZADO', 1),
-(6, 'EN_EMISION_OC', 0, 'ADJUNTAR_OC', 'Adjuntar OC y Finalizar', 'FINALIZADO', 0),
-(6, 'EN_EMISION_OC', 0, 'DEVOLVER', 'Devolver a Administrador', 'EN_APROBACION_ADMINISTRADOR', 1);
+(6, 'EN_EMISION_OC', 0, 'APROBAR', 'Registrar OC y Esperar Aceptación', 'ESPERANDO_ACEPTACION_OC', 0),
+(6, 'EN_EMISION_OC', 0, 'DEVOLVER', 'Devolver a Administrador', 'EN_APROBACION_ADMINISTRADOR', 1),
+(6, 'ESPERANDO_ACEPTACION_OC', 0, 'APROBAR', 'OC Aceptada en Portal', 'FINALIZADO', 0),
+(6, 'ESPERANDO_ACEPTACION_OC', 0, 'DEVOLVER', 'Rechazo de OC - Devolver a Evaluación', 'EN_EVALUACION_OFERTAS', 1);
 
 -- TRANSICIONES LIMPIAS: LICITACIÓN PÚBLICA (tipo 3)
 INSERT INTO `flujos_definicion` (`tipo_compra_id`, `estado_actual`, `requiere_archivo`, `accion_codigo`, `accion_label`, `estado_destino`, `requiere_comentario`)
@@ -426,8 +429,10 @@ INSERT INTO `flujos_definicion` (`tipo_compra_id`, `estado_actual`, `requiere_ar
 (4, 'EN_APROBACION_ADMINISTRADOR', 0, 'FIRMAR_ADMIN', 'Firmar y Emitir OPI Definitiva (3/3)', 'EN_EMISION_OC', 0),
 (4, 'EN_APROBACION_ADMINISTRADOR', 0, 'DEVOLVER', 'Devolver para Corrección', 'EN_VALIDACION_PRESUPUESTARIA_FINAL', 1),
 (4, 'EN_APROBACION_ADMINISTRADOR', 0, 'RECHAZAR', 'Rechazar OPI', 'RECHAZADO', 1),
-(4, 'EN_EMISION_OC', 0, 'ADJUNTAR_OC', 'Adjuntar OC y Finalizar', 'FINALIZADO', 0),
-(4, 'EN_EMISION_OC', 0, 'DEVOLVER', 'Devolver a Administrador', 'EN_APROBACION_ADMINISTRADOR', 1);
+(4, 'EN_EMISION_OC', 0, 'APROBAR', 'Registrar OC y Esperar Aceptación', 'ESPERANDO_ACEPTACION_OC', 0),
+(4, 'EN_EMISION_OC', 0, 'DEVOLVER', 'Devolver a Administrador', 'EN_APROBACION_ADMINISTRADOR', 1),
+(4, 'ESPERANDO_ACEPTACION_OC', 0, 'APROBAR', 'OC Aceptada en Portal', 'FINALIZADO', 0),
+(4, 'ESPERANDO_ACEPTACION_OC', 0, 'DEVOLVER', 'Rechazo de OC - Devolver para Corrección', 'EN_CORRECCION', 1);
 
 -- TRANSICIONES LIMPIAS: TRATO DIRECTO (tipo 2)
 INSERT INTO `flujos_definicion` (`tipo_compra_id`, `estado_actual`, `requiere_archivo`, `accion_codigo`, `accion_label`, `estado_destino`, `requiere_comentario`)

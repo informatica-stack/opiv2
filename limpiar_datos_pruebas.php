@@ -22,6 +22,8 @@ $tipo_mensaje = 'success';
 $detalles = [];
 $archivos_borrados = 0;
 $limpiar_proveedores_test = false;
+$sincronizar_flujos = true;
+$reglas_sincronizadas = 0;
 
 if ($is_cli) {
     // Si viene desde CLI con flag --confirm o confirm
@@ -29,6 +31,7 @@ if ($is_cli) {
     if (in_array('--confirm', $args) || in_array('confirm', $args)) {
         $ejecutar = true;
         $limpiar_proveedores_test = in_array('--clean-providers', $args);
+        $sincronizar_flujos = !in_array('--no-sync-flujos', $args);
     }
 } else {
     // Si viene por POST en Web
@@ -40,6 +43,7 @@ if ($is_cli) {
         } else {
             $ejecutar = true;
             $limpiar_proveedores_test = !empty($_POST['limpiar_proveedores_test']);
+            $sincronizar_flujos = !empty($_POST['sincronizar_flujos']);
         }
     }
 }
@@ -60,7 +64,7 @@ if ($ejecutar) {
         foreach ($tablas as $t) {
             // Contar antes de borrar
             $cnt = $pdo->query("SELECT COUNT(*) FROM `$t`")->fetchColumn();
-            $pdo->exec("TRUNCATE TABLE `$t`");
+            $pdo->exec("DELETE FROM `$t`");
             $pdo->exec("ALTER TABLE `$t` AUTO_INCREMENT = 1");
             $detalles[$t] = $cnt;
         }
@@ -73,6 +77,36 @@ if ($ejecutar) {
             $next_prov_id = max(3, $max_prov_id + 1);
             $pdo->exec("ALTER TABLE `proveedores` AUTO_INCREMENT = $next_prov_id");
             $detalles['proveedores (test)'] = $cnt_prov;
+        }
+
+        // Sincronizar estados_tramite y flujos_definicion desde el archivo SQL maestro
+        if ($sincronizar_flujos) {
+            $sql_file = __DIR__ . '/sql/database_produccion_limpia.sql';
+            if (!file_exists($sql_file)) {
+                $sql_file = __DIR__ . '/OPI_produccion.sql';
+            }
+
+            if (file_exists($sql_file)) {
+                $sql_content = file_get_contents($sql_file);
+
+                // 1. Sincronizar estados_tramite
+                if (preg_match('/INSERT INTO `estados_tramite`[^;]+;/s', $sql_content, $m_est)) {
+                    $insert_est = rtrim(trim($m_est[0]), ';') . " ON DUPLICATE KEY UPDATE nombre = VALUES(nombre), rol_responsable = VALUES(rol_responsable), descripcion = VALUES(descripcion);";
+                    $pdo->exec($insert_est);
+                }
+
+                // 2. Sincronizar flujos_definicion
+                $pdo->exec("DELETE FROM `flujos_definicion`");
+                $pdo->exec("ALTER TABLE `flujos_definicion` AUTO_INCREMENT = 1");
+
+                if (preg_match_all('/INSERT INTO `flujos_definicion`[^;]+;/s', $sql_content, $m_fluj)) {
+                    foreach ($m_fluj[0] as $q) {
+                        $pdo->exec($q);
+                    }
+                }
+                $reglas_sincronizadas = (int)$pdo->query("SELECT COUNT(*) FROM `flujos_definicion`")->fetchColumn();
+                $detalles['flujos_definicion (reglas sincronizadas)'] = $reglas_sincronizadas;
+            }
         }
 
         // Borrar archivos en carpeta uploads
@@ -106,7 +140,7 @@ if ($ejecutar) {
             @file_put_contents($uploads_dir . '/index.html', '<!DOCTYPE html><html><head><title>403 Forbidden</title></head><body><h1>Directory access is forbidden.</h1></body></html>');
         }
 
-        $mensaje = "Limpieza ejecutada con éxito. El sistema ha sido reiniciado a cero para nuevas pruebas.";
+        $mensaje = "Limpieza y sincronización ejecutadas con éxito. El sistema ha sido reiniciado a cero con los flujos de trabajo actualizados.";
 
     } catch (Exception $e) {
         $mensaje = "Error al ejecutar limpieza: " . $e->getMessage();
@@ -122,10 +156,13 @@ if ($is_cli) {
         echo "HERRAMIENTA DE LIMPIEZA DE DATOS DE PRUEBA (MUNI LEBU)\n";
         echo "====================================================\n";
         echo "ADVERTENCIA: Esta acción vaciará todos los expedientes, firmas,\n";
-        echo "documentos e historial de prueba y reseteará los IDs a 1.\n\n";
+        echo "documentos e historial de prueba y reseteará los IDs a 1.\n";
+        echo "También sincronizará las reglas de flujo desde el SQL maestro.\n\n";
         echo "Para ejecutar, incluya el flag --confirm:\n";
         echo "php limpiar_datos_pruebas.php --confirm\n\n";
-        echo "Opcional: incluir --clean-providers para purgar también proveedores de prueba creados.\n";
+        echo "Opciones:\n";
+        echo "  --clean-providers  Purgar también proveedores de prueba creados.\n";
+        echo "  --no-sync-flujos   Omitir la re-sincronización de reglas de flujo.\n";
         echo "====================================================\n";
         exit(0);
     } else {
@@ -133,7 +170,7 @@ if ($is_cli) {
         echo "RESUMEN DE LIMPIEZA EJECUTADA CON ÉXITO\n";
         echo "====================================================\n";
         foreach ($detalles as $t => $c) {
-            echo "Tabla '$t': $c registros eliminados (AUTO_INCREMENT reset a 1).\n";
+            echo "Elemento '$t': $c registros procesados.\n";
         }
         echo "Archivos borrados en uploads/: $archivos_borrados\n";
         echo "====================================================\n";
@@ -248,6 +285,13 @@ if ($is_cli) {
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
                         <input type="hidden" name="confirmar_limpieza" value="1">
                         
+                        <div class="form-check form-switch mb-3 p-3 bg-white border rounded-3">
+                            <input class="form-check-input ms-0 me-2" type="checkbox" name="sincronizar_flujos" id="chkSyncFlujos" value="1" checked>
+                            <label class="form-check-label fw-bold small text-dark" for="chkSyncFlujos">
+                                Sincronizar y actualizar reglas de flujos y estados de compra según el archivo SQL maestro
+                            </label>
+                        </div>
+
                         <div class="form-check form-switch mb-4 p-3 bg-white border rounded-3">
                             <input class="form-check-input ms-0 me-2" type="checkbox" name="limpiar_proveedores_test" id="chkProvTest" value="1" checked>
                             <label class="form-check-label fw-bold small text-dark" for="chkProvTest">
