@@ -21,7 +21,7 @@
             </div>
 
             <!-- FORMULARIO DE FIRMA -->
-            <form method="POST" id="formFirmaGob" onsubmit="return submitFirmaGob(event)">
+            <form method="POST" id="formFirmaGob" enctype="multipart/form-data" onsubmit="return submitFirmaGob(event)">
                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                 <input type="hidden" name="accion" id="fgAccion" value="firmar_firmagob">
                 <input type="hidden" name="expediente_id" id="fgExpedienteId" value="">
@@ -191,6 +191,31 @@ function submitFirmaGob(e) {
         }
         document.getElementById('fgAccion').value = 'subir_pdf_manual';
     }
+
+    // Copiar dinámicamente cualquier archivo adjuntado en los formularios de la página previa (ej: Borrador CDP, Situación Gastos)
+    const pageFileInputs = document.querySelectorAll('form:not(#formFirmaGob) input[type="file"]');
+    const formFirmaGob = document.getElementById('formFirmaGob');
+    pageFileInputs.forEach(inp => {
+        if (inp.name && inp.files && inp.files.length > 0) {
+            let targetInp = formFirmaGob.querySelector('input[type="file"][name="' + inp.name + '"]');
+            if (!targetInp) {
+                targetInp = document.createElement('input');
+                targetInp.type = 'file';
+                targetInp.name = inp.name;
+                targetInp.style.display = 'none';
+                formFirmaGob.appendChild(targetInp);
+            }
+            try {
+                const dt = new DataTransfer();
+                for (let i = 0; i < inp.files.length; i++) {
+                    dt.items.add(inp.files[i]);
+                }
+                targetInp.files = dt.files;
+            } catch (err) {
+                console.warn('No se pudo transferir archivo via DataTransfer:', err);
+            }
+        }
+    });
 
     // Mostrar spinner
     document.getElementById('fgAlertaError').classList.add('d-none');
