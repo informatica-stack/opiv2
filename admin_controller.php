@@ -15,8 +15,53 @@ if ($rol !== 'ADMIN_MUNICIPAL' && $rol !== 'SYSADMIN') {
 $mensaje = '';
 $tipo_mensaje = '';
 $vista = $_GET['view'] ?? 'lista';
+$tab = $_GET['tab'] ?? 'cotizaciones';
 
-// --- ACCIONES POST ---
+// =====================================================================
+// DESCARGA DE ADJUNTOS EN FORMATO ZIP
+// =====================================================================
+if (isset($_GET['descargar_zip'])) {
+    $exp_id = (int)$_GET['descargar_zip'];
+    $check = $pdo->prepare("SELECT codigo_interno FROM expedientes WHERE id = ?");
+    $check->execute([$exp_id]);
+    $exp_zip = $check->fetch();
+    
+    if ($exp_zip) {
+        $stmtDocs = $pdo->prepare("SELECT ruta_archivo, nombre_original FROM expedientes_documentos WHERE expediente_id = ?");
+        $stmtDocs->execute([$exp_id]);
+        $docs_zip = $stmtDocs->fetchAll();
+        
+        if (count($docs_zip) > 0) {
+            $zip = new ZipArchive();
+            $zipName = "Adjuntos_" . $exp_zip['codigo_interno'] . ".zip";
+            $zipPath = sys_get_temp_dir() . '/' . $zipName;
+            
+            if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
+                foreach ($docs_zip as $doc) {
+                    $filePath = __DIR__ . '/' . $doc['ruta_archivo'];
+                    if (file_exists($filePath)) {
+                        $zip->addFile($filePath, $doc['nombre_original'] ?: basename($filePath));
+                    }
+                }
+                $zip->close();
+                
+                header('Content-Type: application/zip');
+                header('Content-disposition: attachment; filename=' . $zipName);
+                header('Content-Length: ' . filesize($zipPath));
+                readfile($zipPath);
+                @unlink($zipPath);
+                exit;
+            } else {
+                $mensaje = "Error al generar el archivo comprimido.";
+                $tipo_mensaje = "error";
+            }
+        } else {
+            $mensaje = "No hay documentos adjuntos para descargar.";
+            $tipo_mensaje = "warning";
+        }
+    }
+}
+
 // --- ACCIONES POST ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
@@ -77,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // C. APROBAR Y FIRMAR
-        if ($accion === 'firmar' || $accion === 'aprobar' || $accion === 'firmar_firmagob' || $accion === 'subir_pdf_manual') {
+        if ($accion === 'firmar' || $accion === 'aprobar' || $accion === 'firmar_firmagob' || $accion === 'subir_pdf_manual' || $accion === 'cargar_opi_manual') {
             
             $stmtEst = $pdo->prepare("SELECT estado_actual, codigo_interno FROM expedientes WHERE id = ?");
             $stmtEst->execute([$id]);
@@ -111,9 +156,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $firmante = firmagob_obtener_firmante_activo($pdo, 'ADMIN_MUNICIPAL', $_SESSION['user_id']);
                 $run_firmante = $firmante['rut'] ?? $_SESSION['user_rut'];
+                $nombre_firmante = $firmante['nombre_completo'] ?? $firmante['nombre'] ?? $_SESSION['user_nombre'] ?? 'Administrador Municipal';
+                $cargo_firmante = $firmante['cargo'] ?? 'ADMINISTRADOR MUNICIPAL';
 
-                if ($accion === 'subir_pdf_manual' || (!empty($_FILES['pdf_firmado']['name']) && $accion === 'aprobar')) {
-                    $file_input = !empty($_FILES['pdf_firmado_manual']['name']) ? $_FILES['pdf_firmado_manual'] : $_FILES['pdf_firmado'];
+                if ($accion === 'subir_pdf_manual' || $accion === 'cargar_opi_manual' || (!empty($_FILES['pdf_firmado']['name']) && $accion === 'aprobar')) {
+                    $file_input = !empty($_FILES['pdf_firmado_manual']['name']) ? $_FILES['pdf_firmado_manual'] : ($_FILES['pdf_firmado'] ?? null);
+                    if (!$file_input || empty($file_input['name'])) {
+                        throw new Exception("Debe seleccionar el archivo PDF firmado manualmente.");
+                    }
                     $ext = validar_subida_archivo($file_input, null, ['pdf']);
                     if (!move_uploaded_file($file_input['tmp_name'], $ruta_abs)) {
                         throw new Exception("Error al mover el archivo al servidor.");
@@ -186,9 +236,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $id,
                         $_SESSION['user_id'],
                         $firmante['id'] ?? null,
-                        $firmante['nombre'] ?? $_SESSION['user_nombre'] ?? 'Administrador Municipal',
+                        $nombre_firmante,
                         $run_firmante,
-                        $firmante['cargo'] ?? 'ADMINISTRADOR MUNICIPAL',
+                        $cargo_firmante,
                         $id_solicitud,
                         $chk_orig,
                         $chk_signed,
@@ -226,23 +276,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // --- CONSULTAS GET ---
 
+$f_q = trim($_GET['f_q'] ?? $_GET['q'] ?? '');
+$f_tipo = trim($_GET['f_tipo'] ?? '');
+$f_desde = trim($_GET['f_desde'] ?? '');
+$f_hasta = trim($_GET['f_hasta'] ?? '');
+
+$tipos_compra_filtro = $pdo->query("SELECT id, nombre FROM tipos_compra WHERE activo=1 ORDER BY nombre")->fetchAll();
+
 if ($vista === 'lista') {
-    $sql_base = "
-        SELECT e.*, u.nombre_completo as solicitante, cc.nombre as centro_costo, p.razon_social as proveedor, et.nombre as estado_nombre, tc.nombre as tipo_compra_nom
+    // Contadores generales
+    $count_cotizacion = $pdo->query("SELECT COUNT(*) FROM expedientes WHERE estado_actual = 'EN_AUTORIZACION_COTIZACION'")->fetchColumn();
+    $count_opi = $pdo->query("SELECT COUNT(*) FROM expedientes WHERE estado_actual = 'EN_APROBACION_ADMINISTRADOR'")->fetchColumn();
+    
+    $stmtProcCount = $pdo->prepare("SELECT COUNT(DISTINCT e.id) FROM expedientes e JOIN expedientes_historial eh ON e.id = eh.expediente_id WHERE eh.usuario_id = ? AND eh.accion IN ('APROBAR', 'RECHAZAR', 'DEVOLVER') AND (eh.estado_anterior IN ('EN_AUTORIZACION_COTIZACION', 'EN_APROBACION_ADMINISTRADOR') OR e.folio_opi IS NOT NULL)");
+    $stmtProcCount->execute([$_SESSION['user_id']]);
+    $count_procesados = $stmtProcCount->fetchColumn();
+
+    $where = [];
+    $params = [];
+
+    if ($tab === 'cotizaciones') {
+        $where[] = "e.estado_actual = 'EN_AUTORIZACION_COTIZACION'";
+    } elseif ($tab === 'opis') {
+        $where[] = "e.estado_actual = 'EN_APROBACION_ADMINISTRADOR'";
+    } elseif ($tab === 'procesados') {
+        $where[] = "(EXISTS (SELECT 1 FROM expedientes_historial eh WHERE eh.expediente_id = e.id AND eh.usuario_id = :uid AND eh.estado_anterior IN ('EN_AUTORIZACION_COTIZACION', 'EN_APROBACION_ADMINISTRADOR')) OR e.folio_opi IS NOT NULL)";
+        $params[':uid'] = $_SESSION['user_id'];
+    }
+
+    if ($f_q) {
+        $where[] = "(e.codigo_interno LIKE :q OR e.folio_opi LIKE :q OR e.titulo_compra LIKE :q OR e.motivo_compra LIKE :q)";
+        $params[':q'] = "%$f_q%";
+    }
+    if ($f_tipo) {
+        $where[] = "e.tipo_compra_id = :tipo";
+        $params[':tipo'] = $f_tipo;
+    }
+    if ($f_desde) {
+        $where[] = "DATE(e.created_at) >= :desde";
+        $params[':desde'] = $f_desde;
+    }
+    if ($f_hasta) {
+        $where[] = "DATE(e.created_at) <= :hasta";
+        $params[':hasta'] = $f_hasta;
+    }
+
+    $where_sql = $where ? "WHERE " . implode(" AND ", $where) : "";
+
+    $sql_lista = "
+        SELECT e.*, u.nombre_completo as solicitante, un.nombre as unidad_nombre, cc.nombre as centro_costo, 
+               p.razon_social as proveedor, et.nombre as estado_nombre, tc.nombre as tipo_compra_nom,
+               pr.nombre as prioridad_nom, pr.clase_css as prioridad_css,
+               (SELECT GROUP_CONCAT(CONCAT(ruta_archivo, '::', IFNULL(nombre_original, 'Adjunto'), '::', tipo_doc, '::', DATE_FORMAT(fecha_subida, '%d/%m/%Y %H:%i')) SEPARATOR '||') 
+                FROM expedientes_documentos ed WHERE ed.expediente_id = e.id) as docs_adjuntos
         FROM expedientes e
         JOIN usuarios u ON e.usuario_creador_id = u.id
+        JOIN unidades un ON e.unidad_origen_id = un.id
         JOIN centros_costo cc ON e.centro_costo_id = cc.id
         JOIN tipos_compra tc ON e.tipo_compra_id = tc.id
+        JOIN prioridades pr ON e.prioridad_id = pr.id
         JOIN estados_tramite et ON e.estado_actual = et.codigo
         LEFT JOIN proveedores p ON e.proveedor_adjudicado_id = p.id
+        $where_sql
+        ORDER BY pr.id DESC, e.created_at DESC
     ";
-    
-    $pendientes_cotizacion = $pdo->query($sql_base . " WHERE e.estado_actual = 'EN_AUTORIZACION_COTIZACION' ORDER BY e.prioridad_id DESC, e.created_at ASC")->fetchAll();
-    $pendientes_opi = $pdo->query($sql_base . " WHERE e.estado_actual = 'EN_APROBACION_ADMINISTRADOR' ORDER BY e.prioridad_id DESC, e.created_at ASC")->fetchAll();
+    $stmtL = $pdo->prepare($sql_lista);
+    $stmtL->execute($params);
+    $solicitudes = $stmtL->fetchAll(PDO::FETCH_ASSOC);
 
-    $count_cotizacion = count($pendientes_cotizacion);
-    $count_opi = count($pendientes_opi);
-    $pendientes = array_merge($pendientes_cotizacion, $pendientes_opi);
+    foreach ($solicitudes as &$row) {
+        $stmtItems = $pdo->prepare("SELECT id, descripcion, cantidad, precio_unitario, unidad_medida FROM expedientes_items WHERE expediente_id = ?");
+        $stmtItems->execute([$row['id']]);
+        $row['items_detalle'] = $stmtItems->fetchAll(PDO::FETCH_ASSOC);
+    }
+    unset($row);
 }
 
 if ($vista === 'revisar' && isset($_GET['id'])) {
