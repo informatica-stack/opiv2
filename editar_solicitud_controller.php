@@ -255,7 +255,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
                 $dir = __DIR__ . "/uploads/$anio_actual/exp_$id/";
                 if (!file_exists($dir)) {
                     if (!@mkdir($dir, 0777, true) && !is_dir($dir)) {
-                        throw new Exception("Error de permisos: No se pudo crear el directorio de destino en '$dir'. Verifique los permisos de /app/uploads.");
+                        throw new Exception("Error de permisos: No se pudo crear el directorio de destino en '$dir'. Verifique los permisos de uploads/ (/var/www/html/uploads).");
                     }
                 }
                 $nombre_final_ficha = "ficha_prov_" . time() . "." . $ext_ficha;
@@ -306,7 +306,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
                 $dir = __DIR__ . "/uploads/$anio/exp_$id/";
                 if (!file_exists($dir)) {
                     if (!@mkdir($dir, 0777, true) && !is_dir($dir)) {
-                        throw new Exception("Error de permisos: No se pudo crear el directorio de destino en '$dir'. Verifique los permisos de /app/uploads.");
+                        throw new Exception("Error de permisos: No se pudo crear el directorio de destino en '$dir'. Verifique los permisos de uploads/ (/var/www/html/uploads).");
                     }
                 }
                 
