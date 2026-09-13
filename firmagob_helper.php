@@ -262,6 +262,7 @@ function firmagob_obtener_firmante_activo($pdo, $rol_codigo, $usuario_sesion_id 
             if ($subrogante) {
                 return [
                     'id'              => $subrogante['id'],
+                    'nombre'          => $subrogante['nombre_completo'],
                     'nombre_completo' => $subrogante['nombre_completo'],
                     'rut'             => $subrogante['rut'],
                     'cargo'           => $subrogante['cargo'] ?: 'ADMINISTRADOR MUNICIPAL (S)',
@@ -271,6 +272,7 @@ function firmagob_obtener_firmante_activo($pdo, $rol_codigo, $usuario_sesion_id 
 
             return [
                 'id'              => $titular['id'],
+                'nombre'          => $titular['nombre_completo'],
                 'nombre_completo' => $titular['nombre_completo'],
                 'rut'             => $titular['rut'],
                 'cargo'           => $titular['cargo'] ?: 'ADMINISTRADOR MUNICIPAL',
@@ -287,6 +289,7 @@ function firmagob_obtener_firmante_activo($pdo, $rol_codigo, $usuario_sesion_id 
         if ($usr) {
             return [
                 'id'              => $usr['id'],
+                'nombre'          => $usr['nombre_completo'],
                 'nombre_completo' => $usr['nombre_completo'],
                 'rut'             => $usr['rut'],
                 'cargo'           => $usr['cargo'] ?: $rol_codigo,

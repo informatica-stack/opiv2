@@ -386,77 +386,122 @@ require_once __DIR__ . '/finanzas_controller.php';
                         <div class="card-body p-4">
                             
                             <?php if($es_accionable): ?>
-                                <p class="text-secondary small mb-4">Genere la plantilla de apoyo si es necesario, firme el certificado emitido por SMC y adjúntelo.</p>
+                                <p class="text-secondary small mb-3">Revise los antecedentes presupuestarios y proceda a estampar la firma electrónica en el Certificado de Disponibilidad (CDP).</p>
                                 
                                 <?php 
                                 $transiciones = obtener_transiciones_disponibles($pdo, $expediente['id']); 
-                                ?>
-                                <form method="POST" enctype="multipart/form-data">
-                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                    <input type="hidden" name="expediente_id" value="<?= $expediente['id'] ?>">
-                                    
-                                    <?php
-                                    $doc_borrador = null;
-                                    $doc_situacion = null;
-                                    foreach ($docs as $d) {
-                                        if ($d['tipo_doc'] === 'CDP_BORRADOR') $doc_borrador = $d;
-                                        if ($d['tipo_doc'] === 'SITUACION_PRESUPUESTARIA') $doc_situacion = $d;
+                                $doc_borrador = null;
+                                $doc_situacion = null;
+                                $doc_opi_visada = null;
+                                foreach ($docs as $d) {
+                                    if ($d['tipo_doc'] === 'CDP_BORRADOR' && !$doc_borrador) $doc_borrador = $d;
+                                    if ($d['tipo_doc'] === 'SITUACION_PRESUPUESTARIA' && !$doc_situacion) $doc_situacion = $d;
+                                    if ($d['tipo_doc'] === 'OPI_FIRMADA_PDF' && !$doc_opi_visada) $doc_opi_visada = $d;
+                                }
+
+                                $t_aprobar = null;
+                                foreach ($transiciones as $t) {
+                                    if ($t['accion_codigo'] === 'APROBAR' || $t['accion_codigo'] === 'FIRMAR_CDP_FINANZAS') {
+                                        $t_aprobar = $t;
+                                        break;
                                     }
-                                    ?>
-                                    <div class="card border border-light-subtle bg-light shadow-sm mb-4">
-                                        <div class="card-body p-3">
-                                            <div class="mb-3">
-                                                <h6 class="text-dark fw-bold mb-2 d-flex align-items-center gap-1.5" style="font-size: 11px;">
-                                                    <i class="bi bi-download text-primary"></i>
-                                                    Paso 1: Descargar Documentos Adjuntos del Analista
-                                                </h6>
-                                                <div class="d-flex flex-column gap-2 bg-white p-2.5 rounded border">
-                                                    <?php if($doc_borrador): ?>
-                                                        <a href="<?= htmlspecialchars($doc_borrador['ruta_archivo']) ?>" download target="_blank" class="btn btn-outline-primary btn-sm text-start fw-semibold d-flex align-items-center justify-content-between px-3 py-2">
-                                                            <span><i class="bi bi-file-earmark-pdf-fill me-1.5"></i> Descargar Borrador de CDP (Sin Firmar)</span>
-                                                            <i class="bi bi-cloud-arrow-down-fill fs-5"></i>
-                                                        </a>
-                                                    <?php else: ?>
-                                                        <div class="alert alert-warning py-1.5 px-2.5 mb-0 small"><i class="bi bi-exclamation-triangle me-1"></i> No se encontró Borrador de CDP adjunto.</div>
-                                                    <?php endif; ?>
+                                }
+                                ?>
 
-                                                    <?php if($doc_situacion): ?>
-                                                        <a href="<?= htmlspecialchars($doc_situacion['ruta_archivo']) ?>" target="_blank" class="btn btn-outline-secondary btn-sm text-start fw-semibold d-flex align-items-center justify-content-between px-3 py-2">
-                                                            <span><i class="bi bi-file-earmark-text-fill me-1.5"></i> Ver Situación Presupuestaria de Gastos</span>
-                                                            <i class="bi bi-eye-fill fs-5"></i>
-                                                        </a>
-                                                    <?php else: ?>
-                                                        <div class="alert alert-warning py-1.5 px-2.5 mb-0 small"><i class="bi bi-exclamation-triangle me-1"></i> No se encontró Situación Presupuestaria de Gastos.</div>
-                                                    <?php endif; ?>
+                                <!-- PASO 1: REVISIÓN DE DOCUMENTOS DE RESPALDO -->
+                                <div class="card border border-light-subtle bg-light shadow-sm mb-4">
+                                    <div class="card-header bg-white border-bottom py-2.5 fw-bold text-sm d-flex justify-content-between align-items-center">
+                                        <span class="text-dark"><i class="bi bi-file-earmark-ruled text-primary me-1.5"></i> 1. Documentos de Respaldo Presupuestario</span>
+                                    </div>
+                                    <div class="card-body p-3">
+                                        <div class="d-flex flex-column gap-2 bg-white p-2.5 rounded-3 border">
+                                            <?php if($doc_borrador): ?>
+                                                <a href="<?= htmlspecialchars($doc_borrador['ruta_archivo']) ?>" target="_blank" class="btn btn-outline-primary btn-sm text-start fw-semibold d-flex align-items-center justify-content-between px-3 py-2">
+                                                    <span><i class="bi bi-file-earmark-pdf-fill text-danger me-2 fs-5 align-middle"></i> <strong>Borrador de CDP</strong> (Emitido por Control Presupuestario)</span>
+                                                    <i class="bi bi-box-arrow-up-right fs-6"></i>
+                                                </a>
+                                            <?php else: ?>
+                                                <div class="alert alert-warning py-2 px-3 mb-0 small d-flex align-items-center gap-2">
+                                                    <i class="bi bi-exclamation-triangle-fill fs-5 shrink-0"></i>
+                                                    <div><strong>Atención:</strong> Control Presupuestario no adjuntó archivo de Borrador de CDP. Puede solicitarlo devolviendo la solicitud o adjuntar directamente el certificado desde SMC.</div>
                                                 </div>
-                                            </div>
+                                            <?php endif; ?>
 
-                                            <div class="border-top pt-3">
-                                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Paso 2: Adjuntar Certificado de Disponibilidad SMC Firmado (Obligatorio)</label>
-                                                <input type="file" name="archivo_cdp" accept="application/pdf" required class="form-control form-control-sm bg-white">
-                                                <p class="text-muted mt-1 mb-0" style="font-size: 9px;">Solo se permiten archivos en formato PDF.</p>
+                                            <?php if($doc_situacion): ?>
+                                                <a href="<?= htmlspecialchars($doc_situacion['ruta_archivo']) ?>" target="_blank" class="btn btn-outline-secondary btn-sm text-start fw-semibold d-flex align-items-center justify-content-between px-3 py-2">
+                                                    <span><i class="bi bi-file-earmark-text-fill text-info me-2 fs-5 align-middle"></i> <strong>Situación Presupuestaria de Gastos</strong></span>
+                                                    <i class="bi bi-box-arrow-up-right fs-6"></i>
+                                                </a>
+                                            <?php endif; ?>
+
+                                            <?php if($doc_opi_visada): ?>
+                                                <a href="<?= htmlspecialchars($doc_opi_visada['ruta_archivo']) ?>" target="_blank" class="btn btn-outline-dark btn-sm text-start fw-semibold d-flex align-items-center justify-content-between px-3 py-2">
+                                                    <span><i class="bi bi-file-earmark-check-fill text-success me-2 fs-5 align-middle"></i> <strong>OPI con V°B° Presupuestario (2/3)</strong></span>
+                                                    <i class="bi bi-box-arrow-up-right fs-6"></i>
+                                                </a>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- PASO 2: ACCIÓN PRINCIPAL DE FIRMA DIGITAL FIRMAGOB -->
+                                <div class="card border border-primary-subtle bg-blue-50/50 shadow-sm mb-4" style="background-color: #f8faff;">
+                                    <div class="card-body p-3 text-center">
+                                        <h6 class="fw-bold text-dark mb-1 d-flex align-items-center justify-content-center gap-2">
+                                            <i class="bi bi-shield-lock-fill text-primary"></i>
+                                            2. Firma Electrónica Oficial del CDP
+                                        </h6>
+                                        <p class="text-secondary small mb-3" style="font-size: 11.5px;">Estampe su Firma Electrónica Avanzada Oficial FirmaGob en el Certificado de Disponibilidad Presupuestaria.</p>
+                                        
+                                        <?php if ($t_aprobar): ?>
+                                            <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $expediente['id'] ?>, transicion_id: <?= $t_aprobar['id'] ?>, etapa: 'CDP_FINANZAS', codigo_interno: '<?= htmlspecialchars($expediente['codigo_interno']) ?>', monto: '<?= $expediente['monto_definitivo'] ?: $expediente['monto_estimado'] ?>', doc_titulo: 'Certificado de Disponibilidad Presupuestaria (CDP)'})" class="btn btn-primary py-2.5 px-4 shadow fw-bold d-inline-flex align-items-center justify-content-center gap-2 w-100">
+                                                <i class="bi bi-fingerprint fs-5"></i>
+                                                <span>Firmar CDP Oficial con FirmaGob (OTP)</span>
+                                            </button>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+
+                                <!-- ALTERNATIVA: SUBIDA MANUAL DE CDP EMITIDO EN SMC -->
+                                <div class="accordion mb-4" id="accFirmaManual">
+                                    <div class="accordion-item border rounded-3 overflow-hidden">
+                                        <h2 class="accordion-header" id="headingManual">
+                                            <button class="accordion-button collapsed py-2.5 px-3 bg-light text-secondary small fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseManual" aria-expanded="false" aria-controls="collapseManual" style="font-size: 11px;">
+                                                <i class="bi bi-upload me-2 text-primary"></i> Alternativa: Cargar CDP Firmado desde Sistema SMC (DocDigital / Externo)
+                                            </button>
+                                        </h2>
+                                        <div id="collapseManual" class="accordion-collapse collapse" aria-labelledby="headingManual" data-bs-parent="#accFirmaManual">
+                                            <div class="accordion-body p-3 bg-white">
+                                                <form method="POST" enctype="multipart/form-data">
+                                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                                    <input type="hidden" name="expediente_id" value="<?= $expediente['id'] ?>">
+                                                    <input type="hidden" name="accion" value="cargar_cdp_manual">
+                                                    <?php if ($t_aprobar): ?>
+                                                        <input type="hidden" name="transicion_id" value="<?= $t_aprobar['id'] ?>">
+                                                    <?php endif; ?>
+                                                    
+                                                    <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Adjuntar Certificado PDF Emitido y Firmado:</label>
+                                                    <div class="input-group mb-2">
+                                                        <input type="file" name="archivo_cdp" accept="application/pdf" class="form-control form-control-sm bg-light" required>
+                                                        <button type="submit" class="btn btn-outline-primary btn-sm fw-bold px-3">
+                                                            <i class="bi bi-cloud-arrow-up-fill me-1"></i> Cargar CDP y Finalizar
+                                                        </button>
+                                                    </div>
+                                                    <span class="text-muted" style="font-size: 10px;"><i class="bi bi-info-circle me-1"></i> Use esta vía si el certificado fue firmado externamente fuera del portal FirmaGob.</span>
+                                                </form>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
 
-                                    <!-- BOTÓN DE FIRMA DIGITAL FIRMAGOB PRINCIPAL -->
-                                    <?php 
-                                    $t_aprobar = null;
-                                    foreach ($transiciones as $t) {
-                                        if ($t['accion_codigo'] === 'APROBAR' || $t['accion_codigo'] === 'FIRMAR_CDP_FINANZAS') $t_aprobar = $t;
-                                    }
-                                    if ($t_aprobar):
-                                    ?>
-                                        <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $expediente['id'] ?>, transicion_id: <?= $t_aprobar['id'] ?>, etapa: 'CDP_FINANZAS', codigo_interno: '<?= htmlspecialchars($expediente['codigo_interno']) ?>', monto: '<?= $expediente['monto_definitivo'] ?: $expediente['monto_estimado'] ?>', doc_titulo: 'Certificado de Disponibilidad Presupuestaria (CDP)'})" class="btn btn-primary py-2.5 w-100 mb-4 shadow d-flex align-items-center justify-content-center gap-2 fw-bold">
-                                            <i class="bi bi-pen-fill"></i>
-                                            Firmar CDP Oficial con FirmaGob
-                                        </button>
-                                    <?php endif; ?>
+                                <!-- FORMULARIO DE DEVOLUCIÓN Y RECHAZO -->
+                                <form method="POST">
+                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                    <input type="hidden" name="expediente_id" value="<?= $expediente['id'] ?>">
 
-                                    <!-- REPAROS Y OBS -->
                                     <div class="border-top pt-3.5">
-                                        <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Reparos y Observaciones (Obligatorio para Devolver/Rechazar)</label>
-                                        <textarea name="motivo_rechazo" rows="3" class="form-control text-sm mb-3 bg-light"></textarea>
+                                        <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Reparos y Observaciones (Requerido para Devolver o Rechazar)</label>
+                                        <textarea name="motivo_rechazo" rows="3" placeholder="Indique las razones de devolución u observaciones para Control Presupuestario..." class="form-control text-sm mb-3 bg-light"></textarea>
                                         
                                         <div class="row g-2">
                                             <!-- Botones de Devolución -->
@@ -464,7 +509,7 @@ require_once __DIR__ . '/finanzas_controller.php';
                                                 if ($t['accion_codigo'] === 'DEVOLVER'):
                                             ?>
                                                 <div class="col-sm-6">
-                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma devolver la solicitud?')" class="btn btn-outline-secondary w-100 py-2 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
+                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" formnovalidate onclick="return confirm('¿Confirma devolver la solicitud a Control Presupuestario?')" class="btn btn-outline-secondary w-100 py-2 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
                                                         <i class="bi bi-arrow-counterclockwise"></i>
                                                         <?= htmlspecialchars($t['accion_label']) ?>
                                                     </button>
@@ -476,7 +521,7 @@ require_once __DIR__ . '/finanzas_controller.php';
                                                 if ($t['accion_codigo'] === 'RECHAZAR'):
                                             ?>
                                                 <div class="col-sm-6">
-                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma rechazar definitivamente la solicitud?')" class="btn btn-outline-danger w-100 py-2 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
+                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" formnovalidate onclick="return confirm('¿Confirma rechazar definitivamente la solicitud?')" class="btn btn-outline-danger w-100 py-2 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
                                                         <i class="bi bi-x-circle"></i>
                                                         <?= htmlspecialchars($t['accion_label']) ?>
                                                     </button>
@@ -667,6 +712,7 @@ require_once __DIR__ . '/finanzas_controller.php';
         }
         
         if (modalVerItemsInstance) modalVerItemsInstance.show();
+    }
     </script>
     </div>
     <?php include __DIR__ . '/components/modal_firmagob.php'; ?>

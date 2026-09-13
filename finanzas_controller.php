@@ -17,6 +17,51 @@ $mensaje = ''; $tipo_mensaje = '';
 $vista = $_GET['view'] ?? 'pendientes'; // 'pendientes', 'procesados', 'revisar'
 
 // =====================================================================
+// DESCARGA DE ADJUNTOS EN FORMATO ZIP
+// =====================================================================
+if (isset($_GET['descargar_zip'])) {
+    $exp_id = (int)$_GET['descargar_zip'];
+    $check = $pdo->prepare("SELECT codigo_interno FROM expedientes WHERE id = ?");
+    $check->execute([$exp_id]);
+    $exp_zip = $check->fetch();
+    
+    if ($exp_zip) {
+        $stmtDocs = $pdo->prepare("SELECT ruta_archivo, nombre_original FROM expedientes_documentos WHERE expediente_id = ?");
+        $stmtDocs->execute([$exp_id]);
+        $docs_zip = $stmtDocs->fetchAll();
+        
+        if (count($docs_zip) > 0) {
+            $zip = new ZipArchive();
+            $zipName = "Adjuntos_" . $exp_zip['codigo_interno'] . ".zip";
+            $zipPath = sys_get_temp_dir() . '/' . $zipName;
+            
+            if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
+                foreach ($docs_zip as $doc) {
+                    $filePath = __DIR__ . '/' . $doc['ruta_archivo'];
+                    if (file_exists($filePath)) {
+                        $zip->addFile($filePath, $doc['nombre_original'] ?: basename($filePath));
+                    }
+                }
+                $zip->close();
+                
+                header('Content-Type: application/zip');
+                header('Content-disposition: attachment; filename=' . $zipName);
+                header('Content-Length: ' . filesize($zipPath));
+                readfile($zipPath);
+                @unlink($zipPath);
+                exit;
+            } else {
+                $mensaje = "Error al generar el archivo comprimido.";
+                $tipo_mensaje = "error";
+            }
+        } else {
+            $mensaje = "No hay documentos adjuntos para descargar.";
+            $tipo_mensaje = "warning";
+        }
+    }
+}
+
+// =====================================================================
 // MANEJO DE ACCIONES (POST) - MOTOR DE FLUJOS DINÁMICO
 // =====================================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -46,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // A. FIRMA DIGITAL FIRMAGOB DEL CDP OFICIAL O SUBIDA MANUAL
-        if ($accion === 'firmar_firmagob' || $accion === 'subir_pdf_manual' || $accion === 'aprobar') {
+        if ($accion === 'firmar_firmagob' || $accion === 'subir_pdf_manual' || $accion === 'cargar_cdp_manual' || $accion === 'aprobar' || $accion === 'firmar_cdp_finanzas') {
             $anio = date('Y');
             $dir = __DIR__ . "/uploads/$anio/exp_$exp_id/";
             if (!file_exists($dir)) mkdir($dir, 0777, true);
@@ -57,9 +102,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $firmante = firmagob_obtener_firmante_activo($pdo, 'FINANZAS', $user_id);
             $run_firmante = $firmante['rut'] ?? $_SESSION['user_rut'];
+            $nombre_firmante = $firmante['nombre_completo'] ?? $firmante['nombre'] ?? $_SESSION['user_nombre'] ?? 'Director de Finanzas';
+            $cargo_firmante = $firmante['cargo'] ?? 'DIRECTOR DE ADMINISTRACION Y FINANZAS';
 
-            if ($accion === 'subir_pdf_manual' || (!empty($_FILES['archivo_cdp']['name']) && $accion === 'aprobar')) {
-                $file_input = !empty($_FILES['pdf_firmado_manual']['name']) ? $_FILES['pdf_firmado_manual'] : $_FILES['archivo_cdp'];
+            if ($accion === 'subir_pdf_manual' || $accion === 'cargar_cdp_manual' || (!empty($_FILES['archivo_cdp']['name']) && in_array($accion, ['aprobar', 'firmar_cdp_finanzas']))) {
+                $file_input = !empty($_FILES['pdf_firmado_manual']['name']) ? $_FILES['pdf_firmado_manual'] : ($_FILES['archivo_cdp'] ?? null);
+                if (!$file_input || empty($file_input['name'])) {
+                    throw new Exception("Debe seleccionar el archivo PDF del Certificado de Disponibilidad emitido por SMC.");
+                }
                 $ext = validar_subida_archivo($file_input, null, ['pdf']);
                 if (!move_uploaded_file($file_input['tmp_name'], $ruta_abs)) {
                     throw new Exception("Error al guardar el archivo en el servidor.");
@@ -77,14 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $doc_db = $stmtDoc->fetchColumn();
 
                 if (!$doc_db || !file_exists(__DIR__ . '/' . $doc_db)) {
-                    // Si no hay borrador de CDP, buscar el documento de OPI
-                    $stmtOpi = $pdo->prepare("SELECT ruta_archivo FROM expedientes_documentos WHERE expediente_id = ? AND tipo_doc = 'OPI_FIRMADA_PDF' ORDER BY id DESC LIMIT 1");
-                    $stmtOpi->execute([$exp_id]);
-                    $doc_db = $stmtOpi->fetchColumn();
-                }
-
-                if (!$doc_db || !file_exists(__DIR__ . '/' . $doc_db)) {
-                    throw new Exception("No se encontró el archivo del Borrador de CDP para firmar.");
+                    throw new Exception("No se encontró el archivo del Borrador de CDP para firmar. Si el analista no lo adjuntó, puede devolver el expediente a Presupuesto o cargar el certificado firmado manualmente desde SMC.");
                 }
 
                 $ruta_base = __DIR__ . '/' . $doc_db;
@@ -106,9 +149,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $exp_id,
                     $user_id,
                     $firmante['id'] ?? null,
-                    $firmante['nombre'] ?? $_SESSION['user_nombre'] ?? 'Director de Finanzas',
+                    $nombre_firmante,
                     $run_firmante,
-                    $firmante['cargo'] ?? 'DIRECTOR DE ADMINISTRACION Y FINANZAS',
+                    $cargo_firmante,
                     $id_solicitud,
                     $chk_orig,
                     $chk_signed,
