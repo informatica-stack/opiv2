@@ -42,8 +42,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // A. VISAR O FIRMAR CON FIRMAGOB
-        if ($accion === 'aprobar' || $accion === 'firmar_firmagob' || $accion === 'subir_pdf_manual') {
+        // A1. GUARDAR DOCUMENTOS DE RESPALDO (BORRADOR CDP Y SITUACIÓN DE GASTOS)
+        if ($accion === 'guardar_documentos_respaldo') {
+            $anio = date('Y');
+            $dir = __DIR__ . "/uploads/$anio/exp_$exp_id/";
+            if (!file_exists($dir)) mkdir($dir, 0777, true);
+
+            $subidos = 0;
+
+            // Subir Borrador CDP
+            if (!empty($_FILES['archivo_cdp_borrador']['name'])) {
+                $ext_borrador = validar_subida_archivo($_FILES['archivo_cdp_borrador'], null, ['pdf']);
+                $name_borrador = "CDP_BORRADOR_" . time() . ".pdf";
+                $ruta_borrador = "uploads/$anio/exp_$exp_id/$name_borrador";
+                if (move_uploaded_file($_FILES['archivo_cdp_borrador']['tmp_name'], $dir . $name_borrador)) {
+                    $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'CDP_BORRADOR', ?, ?)")
+                        ->execute([$exp_id, $user_id, $ruta_borrador, $_FILES['archivo_cdp_borrador']['name']]);
+                    $subidos++;
+                }
+            }
+
+            // Subir Situación de Gastos
+            if (!empty($_FILES['archivo_situacion_gastos']['name'])) {
+                $ext_situacion = validar_subida_archivo($_FILES['archivo_situacion_gastos'], null, ['pdf']);
+                $name_situacion = "SITUACION_GASTOS_" . time() . ".pdf";
+                $ruta_situacion = "uploads/$anio/exp_$exp_id/$name_situacion";
+                if (move_uploaded_file($_FILES['archivo_situacion_gastos']['tmp_name'], $dir . $name_situacion)) {
+                    $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'SITUACION_PRESUPUESTARIA', ?, ?)")
+                        ->execute([$exp_id, $user_id, $ruta_situacion, $_FILES['archivo_situacion_gastos']['name']]);
+                    $subidos++;
+                }
+            }
+
+            if ($subidos === 0) {
+                throw new Exception("Debe seleccionar al menos un archivo PDF para adjuntar.");
+            }
+
+            $mensaje = "Documentos de respaldo presupuestario guardados correctamente.";
+            $tipo_mensaje = "success";
+            $vista = 'revisar';
+            $_GET['id'] = $exp_id;
+        }
+
+        // A2. VISAR O FIRMAR CON FIRMAGOB
+        elseif ($accion === 'aprobar' || $accion === 'firmar_firmagob' || $accion === 'subir_pdf_manual') {
             if ($estado_actual === 'EN_VALIDACION_PRESUPUESTARIA') {
                 $comentario = "Visación de saldo presupuestario estimado completada.";
                 
@@ -52,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $dir = __DIR__ . "/uploads/$anio/exp_$exp_id/";
                 if (!file_exists($dir)) mkdir($dir, 0777, true);
 
-                // Subir Borrador CDP si fue adjuntado
+                // Subir Borrador CDP si fue adjuntado en este mismo envío
                 if (!empty($_FILES['archivo_cdp_borrador']['name'])) {
                     $ext_borrador = validar_subida_archivo($_FILES['archivo_cdp_borrador'], null, ['pdf']);
                     $name_borrador = "CDP_BORRADOR_" . time() . ".pdf";
@@ -63,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
 
-                // Subir Situación de Gastos si fue adjuntada
+                // Subir Situación de Gastos si fue adjuntada en este mismo envío
                 if (!empty($_FILES['archivo_situacion_gastos']['name'])) {
                     $ext_situacion = validar_subida_archivo($_FILES['archivo_situacion_gastos'], null, ['pdf']);
                     $name_situacion = "SITUACION_GASTOS_" . time() . ".pdf";
@@ -72,6 +114,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'SITUACION_PRESUPUESTARIA', ?, ?)")
                             ->execute([$exp_id, $user_id, $ruta_situacion, $_FILES['archivo_situacion_gastos']['name']]);
                     }
+                }
+
+                // VALIDACIÓN ESTRICTA: Se requiere Borrador de CDP y Situación Presupuestaria de Gastos
+                $stmtCheckBorrador = $pdo->prepare("SELECT id FROM expedientes_documentos WHERE expediente_id = ? AND tipo_doc = 'CDP_BORRADOR' LIMIT 1");
+                $stmtCheckBorrador->execute([$exp_id]);
+                $tiene_borrador = (bool)$stmtCheckBorrador->fetchColumn();
+
+                $stmtCheckSituacion = $pdo->prepare("SELECT id FROM expedientes_documentos WHERE expediente_id = ? AND tipo_doc = 'SITUACION_PRESUPUESTARIA' LIMIT 1");
+                $stmtCheckSituacion->execute([$exp_id]);
+                $tiene_situacion = (bool)$stmtCheckSituacion->fetchColumn();
+
+                if (!$tiene_borrador || !$tiene_situacion) {
+                    throw new Exception("Control Presupuestario no puede firmar sin antes subir los archivos requeridos (Borrador de CDP y Situación Presupuestaria de Gastos en PDF).");
                 }
 
                 // Firma Digital de la OPI (2/3 - V°B° Presupuestario)
@@ -387,20 +442,33 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
     $stmtDocs->execute([$_GET['id']]);
     $docs = $stmtDocs->fetchAll();
 
-    // Verificar si existe el CDP firmado subido por Finanzas
+    // Documentos de respaldo en Visación Final
     $has_cdp_finanzas = false;
     $doc_cdp_firmado = null;
+    $doc_cdp_borrador = null;
+    $doc_situacion_gastos = null;
+
     foreach ($docs as $d) {
+        if ($d['tipo_doc'] === 'CDP_BORRADOR' && !$doc_cdp_borrador) {
+            $doc_cdp_borrador = $d;
+        }
+        if ($d['tipo_doc'] === 'SITUACION_PRESUPUESTARIA' && !$doc_situacion_gastos) {
+            $doc_situacion_gastos = $d;
+        }
         if ($d['tipo_doc'] === 'CDP_FIRMADO_FINANZAS' || 
             $d['tipo_doc'] === 'CDP_OFICIAL_FINANZAS' || 
             $d['tipo_doc'] === 'CDP_OFICIAL' || 
             strpos($d['ruta_archivo'], 'CDP_FIRMADO_FINANZAS') !== false ||
             strpos($d['ruta_archivo'], 'CDP_OFICIAL_FINANZAS') !== false) {
-            $has_cdp_finanzas = true;
-            $doc_cdp_firmado = $d;
-            break;
+            if (!$doc_cdp_firmado) {
+                $has_cdp_finanzas = true;
+                $doc_cdp_firmado = $d;
+            }
         }
     }
+
+    $tiene_archivos_respaldo = ($doc_cdp_borrador !== null && $doc_situacion_gastos !== null);
+    $firmante_activo = firmagob_obtener_firmante_activo($pdo, 'PRESUPUESTO', $_SESSION['user_id']);
 
     // Traer Criterios de Evaluación para Licitaciones
     $stmtCrit = $pdo->prepare("SELECT * FROM expedientes_criterios WHERE expediente_id = ? ORDER BY numero_criterio ASC");

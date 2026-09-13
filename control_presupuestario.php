@@ -490,79 +490,150 @@ require_once __DIR__ . '/control_presupuestario_controller.php';
                                 
 
                                 <?php 
-                                $transiciones = obtener_transiciones_disponibles($pdo, $expediente['id']); 
-                                $es_reserva_inicial_compra_agil = ($expediente['estado_actual'] === 'EN_VALIDACION_PRESUPUESTARIA' && $expediente['tipo_compra_cod'] === 'COMPRA_AGIL');
-                                ?>
-                                <form method="POST" enctype="multipart/form-data">
-                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                    <input type="hidden" name="expediente_id" value="<?= $expediente['id'] ?>">
-                                    
+                                 $transiciones = obtener_transiciones_disponibles($pdo, $expediente['id']); 
+                                 $es_reserva_inicial_compra_agil = ($expediente['estado_actual'] === 'EN_VALIDACION_PRESUPUESTARIA' && $expediente['tipo_compra_cod'] === 'COMPRA_AGIL');
+                                 ?>
+                                 <form method="POST" enctype="multipart/form-data">
+                                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                     <input type="hidden" name="expediente_id" value="<?= $expediente['id'] ?>">
+                                     
 
-                                         <?php if(!$es_reserva_inicial_compra_agil): ?>
-                                             <!-- PANEL EMISIÓN Y GESTIÓN DE CDP -->
-                                             <div class="card border border-light-subtle bg-light shadow-sm mb-4">
-                                                 <div class="card-header bg-white border-bottom py-2.5 fw-bold text-sm d-flex justify-content-between align-items-center">
-                                                     <span class="text-dark"><i class="bi bi-file-earmark-check text-primary me-1"></i> Certificado de Disponibilidad Presupuestaria (CDP)</span>
-                                                     <!-- CDP cargado externamente -->
-                                                 </div>
-                                                 <div class="card-body p-3">
-                                                     
-                                                     <!-- SOLICITAR FIRMA A FINANZAS -->
-                                                     <div class="p-3 bg-white border rounded-3">
-                                                         <h6 class="text-secondary fw-bold mb-2 uppercase tracking-wider" style="font-size: 10px;">Solicitud de Firma a Finanzas</h6>
-                                                         
-                                                         <div class="mb-2">
-                                                             <label class="form-label text-secondary fw-bold mb-1" style="font-size: 8.5px; text-transform: uppercase;">1. Adjuntar Borrador de CDP (PDF)</label>
-                                                             <input type="file" name="archivo_cdp_borrador" id="archivo_cdp_borrador" accept="application/pdf" class="form-control form-control-sm bg-light">
-                                                         </div>
-                                                         
-                                                         <div class="mb-3">
-                                                             <label class="form-label text-secondary fw-bold mb-1" style="font-size: 8.5px; text-transform: uppercase;">2. Adjuntar Situación Presupuestaria de Gastos (PDF)</label>
-                                                             <input type="file" name="archivo_situacion_gastos" id="archivo_situacion_gastos" accept="application/pdf" class="form-control form-control-sm bg-light">
-                                                         </div>
-                                                     </div>
+                                          <?php if($expediente['estado_actual'] === 'EN_VALIDACION_PRESUPUESTARIA_FINAL'): ?>
+                                              <!-- PANEL EMISIÓN Y GESTIÓN OBLIGATORIA DE ARCHIVOS DE RESPALDO -->
+                                              <div class="card border <?= $tiene_archivos_respaldo ? 'border-success-subtle bg-success-subtle/10' : 'border-warning-subtle bg-warning-subtle/20' ?> shadow-sm mb-4">
+                                                  <div class="card-header bg-white border-bottom py-2.5 fw-bold text-sm d-flex justify-content-between align-items-center">
+                                                      <span class="text-dark d-flex align-items-center gap-2">
+                                                          <i class="bi <?= $tiene_archivos_respaldo ? 'bi-check2-circle text-success' : 'bi-file-earmark-arrow-up text-warning' ?> fs-5"></i>
+                                                          <strong>Documentos de Respaldo Presupuestario (Obligatorios)</strong>
+                                                      </span>
+                                                      <?php if ($tiene_archivos_respaldo): ?>
+                                                          <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle fw-bold" style="font-size: 10px;">
+                                                              <i class="bi bi-check-lg me-0.5"></i> Respaldo Completo
+                                                          </span>
+                                                      <?php else: ?>
+                                                          <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-bold" style="font-size: 10px;">
+                                                              <i class="bi bi-exclamation-triangle me-0.5"></i> Pendiente de Carga
+                                                          </span>
+                                                      <?php endif; ?>
+                                                  </div>
+                                                  <div class="card-body p-3 d-flex flex-column gap-3">
+                                                      
+                                                      <!-- 1. BORRADOR DE CDP -->
+                                                      <div class="p-3 bg-white border rounded-3 shadow-xs">
+                                                          <div class="d-flex justify-content-between align-items-center mb-1.5">
+                                                              <label class="form-label text-dark fw-bold mb-0 small text-uppercase" style="font-size: 9.5px;">
+                                                                  1. Borrador de CDP (PDF) <span class="text-danger">*</span>
+                                                              </label>
+                                                              <?php if ($doc_cdp_borrador): ?>
+                                                                  <span class="badge bg-success-subtle text-success fw-bold" style="font-size: 8.5px;">Cargado</span>
+                                                              <?php else: ?>
+                                                                  <span class="badge bg-danger-subtle text-danger fw-bold" style="font-size: 8.5px;">Faltante</span>
+                                                              <?php endif; ?>
+                                                          </div>
 
-                                                 </div>
-                                             </div>
-                                         <?php endif; ?>
+                                                          <?php if ($doc_cdp_borrador): ?>
+                                                              <div class="d-flex align-items-center justify-content-between p-2 bg-light rounded border">
+                                                                  <div class="d-flex align-items-center gap-2 min-w-0">
+                                                                      <i class="bi bi-file-earmark-pdf-fill text-danger fs-5"></i>
+                                                                      <span class="small text-truncate fw-semibold text-dark" style="max-width: 250px;"><?= htmlspecialchars($doc_cdp_borrador['nombre_original']) ?></span>
+                                                                  </div>
+                                                                  <a href="<?= htmlspecialchars($doc_cdp_borrador['ruta_archivo']) ?>" target="_blank" class="btn btn-outline-primary btn-sm py-0.5 px-2 fw-bold" style="font-size: 10px;">
+                                                                      <i class="bi bi-box-arrow-up-right"></i> Ver
+                                                                  </a>
+                                                              </div>
+                                                          <?php else: ?>
+                                                              <input type="file" name="archivo_cdp_borrador" id="archivo_cdp_borrador" accept="application/pdf" class="form-control form-control-sm bg-light">
+                                                          <?php endif; ?>
+                                                      </div>
 
-                                         <!-- BADGE CDP FIRMADO (SI EXISTE) -->
-                                         <?php if($doc_cdp_firmado): ?>
-                                             <div class="alert alert-success d-flex align-items-center justify-content-between gap-3 mb-4 shadow-sm py-2.5">
-                                                 <div class="d-flex align-items-center gap-2">
-                                                     <i class="bi bi-patch-check-fill fs-5 text-success shrink-0"></i>
-                                                     <div>
-                                                         <strong class="d-block text-dark small">CDP Firmado por Finanzas Adjunto</strong>
-                                                         <span class="text-muted" style="font-size: 11px;"><?= htmlspecialchars($doc_cdp_firmado['nombre_original']) ?></span>
-                                                     </div>
-                                                 </div>
-                                                 <a href="<?= htmlspecialchars($doc_cdp_firmado['ruta_archivo']) ?>" target="_blank" class="btn btn-sm btn-outline-success fw-bold text-nowrap" style="font-size: 11px;">
-                                                     <i class="bi bi-file-earmark-pdf"></i> Ver CDP Firmado
-                                                 </a>
-                                             </div>
-                                         <?php endif; ?>
+                                                      <!-- 2. SITUACIÓN PRESUPUESTARIA DE GASTOS -->
+                                                      <div class="p-3 bg-white border rounded-3 shadow-xs">
+                                                          <div class="d-flex justify-content-between align-items-center mb-1.5">
+                                                              <label class="form-label text-dark fw-bold mb-0 small text-uppercase" style="font-size: 9.5px;">
+                                                                  2. Situación Presupuestaria de Gastos (PDF) <span class="text-danger">*</span>
+                                                              </label>
+                                                              <?php if ($doc_situacion_gastos): ?>
+                                                                  <span class="badge bg-success-subtle text-success fw-bold" style="font-size: 8.5px;">Cargado</span>
+                                                              <?php else: ?>
+                                                                  <span class="badge bg-danger-subtle text-danger fw-bold" style="font-size: 8.5px;">Faltante</span>
+                                                              <?php endif; ?>
+                                                          </div>
 
-                                         <!-- BOTÓN DE APROBACIÓN PRINCIPAL SOBRIO -->
-                                         <?php 
-                                         $t_aprobar = null;
-                                         foreach ($transiciones as $t) {
-                                             if ($t['accion_codigo'] === 'APROBAR') {
-                                                 $t_aprobar = $t;
-                                                 break;
-                                             }
-                                         }
-                                         if ($expediente['estado_actual'] === 'EN_VALIDACION_PRESUPUESTARIA_FINAL'):
-                                         ?>
-                                             <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $expediente['id'] ?>, transicion_id: <?= $t_aprobar ? $t_aprobar['id'] : 'null' ?>, etapa: 'PRESUPUESTO', codigo_interno: '<?= htmlspecialchars($expediente['codigo_interno']) ?>', monto: '<?= $expediente['monto_definitivo'] ?: $expediente['monto_estimado'] ?>', doc_titulo: 'OPI - V°B° Presupuestario (2/3)'})" class="btn btn-primary py-2.5 w-100 mb-4 shadow d-flex align-items-center justify-content-center gap-2 fw-bold">
-                                                 <i class="bi bi-pen-fill"></i>
-                                                 Firmar OPI con FirmaGob (2/3)
-                                             </button>
-                                         <?php elseif ($t_aprobar): ?>
-                                             <button type="submit" name="transicion_id" value="<?= $t_aprobar['id'] ?>" onclick="return confirm('¿Confirma la acción de: <?= htmlspecialchars($t_aprobar['accion_label']) ?>?')" class="btn btn-primary py-2.5 w-100 mb-4 shadow-sm d-flex align-items-center justify-content-center gap-2 fw-semibold">
-                                                 <i class="bi bi-check-circle-fill"></i>
-                                                 <?= htmlspecialchars($t_aprobar['accion_label']) ?>
-                                             </button>
-                                         <?php endif; ?>
+                                                          <?php if ($doc_situacion_gastos): ?>
+                                                              <div class="d-flex align-items-center justify-content-between p-2 bg-light rounded border">
+                                                                  <div class="d-flex align-items-center gap-2 min-w-0">
+                                                                      <i class="bi bi-file-earmark-pdf-fill text-danger fs-5"></i>
+                                                                      <span class="small text-truncate fw-semibold text-dark" style="max-width: 250px;"><?= htmlspecialchars($doc_situacion_gastos['nombre_original']) ?></span>
+                                                                  </div>
+                                                                  <a href="<?= htmlspecialchars($doc_situacion_gastos['ruta_archivo']) ?>" target="_blank" class="btn btn-outline-primary btn-sm py-0.5 px-2 fw-bold" style="font-size: 10px;">
+                                                                      <i class="bi bi-box-arrow-up-right"></i> Ver
+                                                                  </a>
+                                                              </div>
+                                                          <?php else: ?>
+                                                              <input type="file" name="archivo_situacion_gastos" id="archivo_situacion_gastos" accept="application/pdf" class="form-control form-control-sm bg-light">
+                                                          <?php endif; ?>
+                                                      </div>
+
+                                                      <?php if (!$tiene_archivos_respaldo): ?>
+                                                          <button type="submit" name="accion" value="guardar_documentos_respaldo" class="btn btn-primary btn-sm w-100 py-2 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
+                                                              <i class="bi bi-cloud-arrow-up-fill fs-6"></i>
+                                                              Subir y Guardar Archivos de Respaldo
+                                                          </button>
+                                                      <?php endif; ?>
+
+                                                  </div>
+                                              </div>
+                                          <?php endif; ?>
+
+                                          <!-- BADGE CDP FIRMADO (SI YA EXISTE DE ETAPAS POSTERIORES) -->
+                                          <?php if($doc_cdp_firmado): ?>
+                                              <div class="alert alert-success d-flex align-items-center justify-content-between gap-3 mb-4 shadow-sm py-2.5">
+                                                  <div class="d-flex align-items-center gap-2">
+                                                      <i class="bi bi-patch-check-fill fs-5 text-success shrink-0"></i>
+                                                      <div>
+                                                          <strong class="d-block text-dark small">CDP Firmado por Finanzas Adjunto</strong>
+                                                          <span class="text-muted" style="font-size: 11px;"><?= htmlspecialchars($doc_cdp_firmado['nombre_original']) ?></span>
+                                                      </div>
+                                                  </div>
+                                                  <a href="<?= htmlspecialchars($doc_cdp_firmado['ruta_archivo']) ?>" target="_blank" class="btn btn-sm btn-outline-success fw-bold text-nowrap" style="font-size: 11px;">
+                                                      <i class="bi bi-file-earmark-pdf"></i> Ver CDP Firmado
+                                                  </a>
+                                              </div>
+                                          <?php endif; ?>
+
+                                          <!-- BOTÓN DE APROBACIÓN PRINCIPAL / FIRMAGOB -->
+                                          <?php 
+                                          $t_aprobar = null;
+                                          foreach ($transiciones as $t) {
+                                              if ($t['accion_codigo'] === 'APROBAR') {
+                                                  $t_aprobar = $t;
+                                                  break;
+                                              }
+                                          }
+                                          if ($expediente['estado_actual'] === 'EN_VALIDACION_PRESUPUESTARIA_FINAL'):
+                                          ?>
+                                              <?php if ($tiene_archivos_respaldo): ?>
+                                                  <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $expediente['id'] ?>, transicion_id: <?= $t_aprobar ? $t_aprobar['id'] : 'null' ?>, etapa: 'PRESUPUESTO', codigo_interno: '<?= htmlspecialchars($expediente['codigo_interno']) ?>', monto: '<?= $expediente['monto_definitivo'] ?: $expediente['monto_estimado'] ?>', doc_titulo: 'OPI - V°B° Presupuestario (2/3)', firmante_nombre: '<?= htmlspecialchars($firmante_activo['nombre'] ?? $_SESSION['user_nombre'] ?? '') ?>', firmante_rut: '<?= htmlspecialchars($firmante_activo['rut'] ?? $_SESSION['user_rut'] ?? '') ?>', firmante_cargo: '<?= htmlspecialchars($firmante_activo['cargo'] ?? 'CONTROL PRESUPUESTARIO') ?>'})" class="btn btn-primary py-3 w-100 mb-4 shadow d-flex align-items-center justify-content-center gap-2 fw-bold fs-6" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
+                                                      <i class="bi bi-pen-fill fs-5"></i>
+                                                      Firmar OPI con FirmaGob (2/3)
+                                                  </button>
+                                              <?php else: ?>
+                                                  <div class="alert alert-warning py-2.5 px-3 small d-flex align-items-center gap-2 mb-3">
+                                                      <i class="bi bi-shield-lock-fill fs-4 text-warning shrink-0"></i>
+                                                      <div><strong>Firma Digital 2/3 Bloqueada:</strong> Debe adjuntar y guardar el Borrador de CDP y la Situación Presupuestaria de Gastos para habilitar la firma de la OPI.</div>
+                                                  </div>
+                                                  <button type="button" disabled class="btn btn-secondary py-2.5 w-100 mb-4 opacity-50 d-flex align-items-center justify-content-center gap-2 fw-bold" style="cursor: not-allowed;">
+                                                      <i class="bi bi-lock-fill"></i>
+                                                      Firmar OPI con FirmaGob (2/3) - Bloqueado
+                                                  </button>
+                                              <?php endif; ?>
+
+                                          <?php elseif ($t_aprobar): ?>
+                                              <button type="submit" name="transicion_id" value="<?= $t_aprobar['id'] ?>" onclick="return confirm('¿Confirma la acción de: <?= htmlspecialchars($t_aprobar['accion_label']) ?>?')" class="btn btn-primary py-2.5 w-100 mb-4 shadow-sm d-flex align-items-center justify-content-center gap-2 fw-semibold">
+                                                  <i class="bi bi-check-circle-fill"></i>
+                                                  <?= htmlspecialchars($t_aprobar['accion_label']) ?>
+                                              </button>
+                                          <?php endif; ?>
 
 
                                     <!-- REPAROS Y OBS -->
