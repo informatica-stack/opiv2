@@ -480,36 +480,38 @@ require_once __DIR__ . '/admin_controller.php';
                     </div>
                     <?php endif; ?>
 
-                    <!-- ACCIÓN REQUERIDA DINÁMICA -->
-                    <?php 
-                    $transiciones = obtener_transiciones_disponibles($pdo, $exp['id']);
-                    $t_aprobar = null;
-                    $t_devolver = null;
-                    $t_rechazar = null;
-                    foreach ($transiciones as $t) {
-                        if ($t['accion_codigo'] === 'APROBAR') $t_aprobar = $t;
-                        if ($t['accion_codigo'] === 'DEVOLVER') $t_devolver = $t;
-                        if ($t['accion_codigo'] === 'RECHAZAR') $t_rechazar = $t;
-                    }
-                    ?>
+                    <!-- TARJETA DE RESOLUCIÓN UNIFICADA (HOMOLOGADA) -->
+                    <div class="card shadow-sm border-light">
+                        <div class="card-header bg-white border-bottom py-3">
+                            <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                                <i class="bi bi-bank text-primary"></i>
+                                <?= $es_etapa_cotizacion ? 'Resolución: Autorización de Cotización' : 'Resolución y Firma de OPI' ?>
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <?php if (!empty($es_accionable)): ?>
+                                <p class="text-secondary small mb-4">Seleccione una de las acciones autorizadas por el flujo para proceder con el requerimiento.</p>
+                                
+                                <?php 
+                                $transiciones = obtener_transiciones_disponibles($pdo, $exp['id']);
+                                $t_aprobar = null;
+                                $t_devolver = null;
+                                $t_rechazar = null;
+                                foreach ($transiciones as $t) {
+                                    if ($t['accion_codigo'] === 'APROBAR') $t_aprobar = $t;
+                                    if ($t['accion_codigo'] === 'DEVOLVER') $t_devolver = $t;
+                                    if ($t['accion_codigo'] === 'RECHAZAR') $t_rechazar = $t;
+                                }
+                                ?>
 
-                    <?php if (!empty($es_accionable)): ?>
-                        <?php if($es_etapa_cotizacion): ?>
-                            <!-- CASO A: AUTORIZACIÓN DE COTIZACIÓN PREVIA -->
-                            <div class="card shadow-sm border-light overflow-hidden mb-4">
-                                <div class="card-header bg-white border-bottom py-3">
-                                    <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                                        <i class="bi bi-card-checklist text-primary"></i>
-                                        Acción Requerida: Autorizar Inicio de Cotización
-                                    </h5>
-                                </div>
-                                <div class="card-body p-4">
+                                <!-- ACCIÓN PRINCIPAL (1 CLIC / FIRMAGOB) -->
+                                <?php if($es_etapa_cotizacion): ?>
                                     <div class="alert alert-primary-subtle text-primary-emphasis border border-primary-subtle p-3 rounded-3 mb-4">
                                         <div class="d-flex align-items-start gap-2">
                                             <i class="bi bi-info-circle-fill fs-5 shrink-0 text-primary"></i>
                                             <div>
                                                 <h6 class="fw-bold mb-1">Autorización Previa para Adquisiciones</h6>
-                                                <p class="mb-0 small">Este requerimiento cuenta con reserva presupuestaria inicial otorgada. Al autorizar la cotización, Adquisiciones procederá a la publicación y búsqueda de ofertas en el portal de Mercado Público / Compra Ágil.</p>
+                                                <p class="mb-0 small">Este requerimiento cuenta con reserva presupuestaria inicial. Al autorizar la cotización, Adquisiciones procederá a la publicación y búsqueda de ofertas en Mercado Público / Compra Ágil.</p>
                                             </div>
                                         </div>
                                     </div>
@@ -520,170 +522,88 @@ require_once __DIR__ . '/admin_controller.php';
                                             <input type="hidden" name="transicion_id" value="<?= $t_aprobar['id'] ?>">
                                             <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
                                             
-                                            <button type="submit" onclick="return confirm('¿Confirma autorizar el inicio de cotización para este expediente?')" class="btn btn-primary py-2.5 w-100 fw-semibold shadow-sm transition d-flex justify-content-center align-items-center gap-2">
+                                            <button type="submit" onclick="return confirm('¿Confirma autorizar el inicio de cotización para este expediente?')" class="btn btn-primary py-2.5 w-100 mb-4 fw-bold shadow d-flex justify-content-center align-items-center gap-2">
                                                 <i class="bi bi-check-circle-fill"></i>
                                                 <?= htmlspecialchars($t_aprobar['accion_label']) ?>
                                             </button>
                                         </form>
                                     <?php endif; ?>
-                                </div>
-                            </div>
 
-                        <?php else: ?>
-                            <!-- CASO B: FIRMA Y EMISIÓN DE OPI FINAL -->
-                            <div class="card shadow-sm border-light overflow-hidden mb-4">
-                                <div class="card-header bg-white border-bottom py-3">
-                                    <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                                        <i class="bi bi-pen-fill text-primary"></i>
-                                        Acción Requerida: Firma y Emisión de OPI Definitiva
-                                    </h5>
-                                </div>
-                                <div class="card-body p-4">
-
-                                    <!-- PASO 1: DESCARGAR O REVISAR OPI OFICIAL -->
-                                    <div class="d-flex align-items-center justify-content-between p-3 bg-light border rounded-3 mb-4">
-                                        <div class="d-flex align-items-center gap-2.5">
-                                            <i class="bi bi-file-earmark-pdf-fill fs-3 text-primary"></i>
-                                            <div>
-                                                <h6 class="fw-bold mb-0 text-dark">Documento OPI Oficial</h6>
-                                                <span class="text-muted small">Descargue o visualice el documento oficial con las visaciones previas (1/3 y 2/3)</span>
-                                            </div>
-                                        </div>
-                                        <a href="imprimir_opi.php?id=<?= $exp['id'] ?>&auto_download=1" target="_blank" class="btn btn-outline-primary btn-sm fw-semibold px-3 py-2 shadow-sm d-inline-flex align-items-center gap-1.5">
-                                            <i class="bi bi-download"></i> Descargar OPI (PDF)
-                                        </a>
-                                    </div>
-
-                                    <!-- PASO 2: FIRMA ELECTRÓNICA AVANZADA (FIRMAGOB) -->
+                                <?php else: ?>
+                                    <!-- EN_APROBACION_ADMINISTRADOR: FIRMA DIGITAL FIRMAGOB 3/3 -->
                                     <?php if ($t_aprobar): ?>
-                                        <div class="bg-white border rounded-3 p-3.5 mb-3">
-                                            <h6 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
-                                                <i class="bi bi-shield-lock-fill text-primary"></i>
-                                                Firma Electrónica Avanzada Oficial
-                                            </h6>
-                                            <p class="small text-secondary mb-3" style="font-size: 11.5px;">Estampe la firma digital final sobre la OPI. El documento ya cuenta con las visaciones de Jefatura y Presupuesto, y el CDP de Finanzas.</p>
-                                            
-                                            <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $exp['id'] ?>, transicion_id: <?= $t_aprobar['id'] ?>, etapa: 'ADMIN_MUNICIPAL', codigo_interno: '<?= htmlspecialchars($exp['codigo_interno']) ?>', monto: '<?= $exp['monto_definitivo'] ?: $exp['monto_estimado'] ?>', doc_titulo: 'OPI Oficial Definitiva (Firma 3/3)'})" class="btn btn-primary py-2.5 w-100 fw-bold shadow transition d-flex justify-content-center align-items-center gap-2">
-                                                <i class="bi bi-pen-fill"></i>
-                                                Firmar y Emitir OPI con FirmaGob (3/3)
-                                            </button>
-                                        </div>
+                                        <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $exp['id'] ?>, transicion_id: <?= $t_aprobar['id'] ?>, etapa: 'ADMIN_MUNICIPAL', codigo_interno: '<?= htmlspecialchars($exp['codigo_interno']) ?>', monto: '<?= $exp['monto_definitivo'] ?: $exp['monto_estimado'] ?>', doc_titulo: 'OPI Oficial Definitiva (Firma 3/3)', firmante_nombre: '<?= htmlspecialchars($firmante_activo['nombre'] ?? $_SESSION['user_nombre'] ?? '') ?>', firmante_rut: '<?= htmlspecialchars($firmante_activo['rut'] ?? $_SESSION['user_rut'] ?? '') ?>', firmante_cargo: '<?= htmlspecialchars($firmante_activo['cargo'] ?? 'ADMINISTRADOR MUNICIPAL') ?>'})" class="btn btn-primary py-2.5 w-100 mb-3 fw-bold shadow d-flex justify-content-center align-items-center gap-2" style="background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%);">
+                                            <i class="bi bi-pen-fill"></i>
+                                            Firmar y Emitir OPI con FirmaGob (3/3)
+                                        </button>
 
-                                        <!-- CONTINGENCIA: CARGA MANUAL DE OPI FIRMADA -->
-                                        <div class="accordion mb-3" id="accordionContingencia">
-                                            <div class="accordion-item border rounded-3">
-                                                <h2 class="accordion-header">
-                                                    <button class="accordion-button collapsed py-2 small fw-bold text-secondary bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseContingencia" aria-expanded="false">
-                                                        <i class="bi bi-upload me-2 text-warning"></i> Contingencia: Cargar OPI firmada externamente (DocDigital / Manual)
-                                                    </button>
-                                                </h2>
-                                                <div id="collapseContingencia" class="accordion-collapse collapse" data-bs-parent="#accordionContingencia">
-                                                    <div class="accordion-body p-3 bg-white">
-                                                        <form method="POST" enctype="multipart/form-data">
-                                                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                                            <input type="hidden" name="accion" value="cargar_opi_manual">
-                                                            <input type="hidden" name="transicion_id" value="<?= $t_aprobar['id'] ?>">
-                                                            <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
-                                                            
-                                                            <div class="mb-3">
-                                                                <label class="form-label small fw-bold text-secondary">Seleccionar PDF firmado</label>
-                                                                <input type="file" name="pdf_firmado_manual" accept="application/pdf" class="form-control form-control-sm" required>
-                                                                <div class="form-text" style="font-size: 10px;">Suba el PDF firmado digitalmente con DocDigital o certificado token.</div>
-                                                            </div>
-                                                            
-                                                            <button type="submit" onclick="return confirm('¿Confirma la emisión manual de esta OPI con el archivo subido?')" class="btn btn-warning btn-sm w-100 fw-bold">
-                                                                <i class="bi bi-cloud-arrow-up-fill me-1"></i> Confirmar y Emitir OPI Manual
-                                                            </button>
-                                                        </form>
-                                                    </div>
+                                        <!-- ACCESO RÁPIDO A VISUALIZAR OPI -->
+                                        <div class="d-flex justify-content-between align-items-center mb-4 bg-light p-2.5 rounded-3 border">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <i class="bi bi-file-earmark-pdf-fill text-primary fs-5"></i>
+                                                <div>
+                                                    <span class="small fw-bold text-dark d-block">OPI con visaciones previas (1/3 y 2/3)</span>
+                                                    <span class="text-muted" style="font-size: 10px;">Verifique las visaciones estampadas antes de emitir</span>
                                                 </div>
                                             </div>
+                                            <a href="imprimir_opi.php?id=<?= $exp['id'] ?>&auto_download=1" target="_blank" class="btn btn-outline-primary btn-sm py-1 px-2.5 fw-semibold" style="font-size: 11px;">
+                                                <i class="bi bi-eye me-1"></i> Visualizar OPI
+                                            </a>
                                         </div>
-
-                                    <?php else: ?>
-                                        <div class="alert alert-secondary text-center small py-2 mb-4">No hay transiciones de firma/aprobación disponibles en esta fase.</div>
                                     <?php endif; ?>
+                                <?php endif; ?>
 
-                                </div>
-                            </div>
-                        <?php endif; ?>
+                                <!-- ÁREA DE OBSERVACIONES UNIFICADA (PARA DEVOLVER O RECHAZAR) -->
+                                <div class="border-top pt-3.5">
+                                    <form method="POST">
+                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                        <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
 
-                        <!-- ACCIONES DE RECHAZO / DEVOLUCIÓN (COMUNES) -->
-                        <div class="card border-light shadow-sm p-3.5 mb-4">
-                            <div class="row g-3">
-                                
-                                <!-- DEVOLVER -->
-                                <div class="col-md-6">
-                                    <div class="card border-light-subtle bg-light h-100">
-                                        <div class="card-body p-3 d-flex flex-column justify-content-between">
-                                            <div>
-                                                <h6 class="fw-bold text-dark mb-1">Devolver a Corrección</h6>
-                                                <p class="text-muted small mb-3" style="font-size: 11px;">Envíe el expediente de regreso si detecta inconsistencias en los antecedentes.</p>
-                                            </div>
+                                        <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Comentario / Motivo de la Observación (Obligatorio para Devolver/Rechazar)</label>
+                                        <textarea name="motivo_rechazo" rows="3" class="form-control text-sm mb-3 bg-light" placeholder="Escriba aquí los detalles de la observación o causa de rechazo..."></textarea>
+                                        
+                                        <div class="row g-2">
                                             <?php if ($t_devolver): ?>
-                                                <form method="POST">
-                                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                                    <input type="hidden" name="transicion_id" value="<?= $t_devolver['id'] ?>">
-                                                    <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
-                                                    <textarea name="motivo_rechazo" required rows="2" class="form-control form-control-sm text-sm mb-2" placeholder="Motivo de la devolución..."></textarea>
-                                                    <button type="submit" formnovalidate onclick="return confirm('¿Confirma la acción de: <?= htmlspecialchars($t_devolver['accion_label']) ?>?')" class="btn btn-outline-secondary btn-sm w-100 fw-semibold">
+                                                <div class="col-sm-6">
+                                                    <button type="submit" name="transicion_id" value="<?= $t_devolver['id'] ?>" onclick="return confirm('¿Confirma la acción de: <?= htmlspecialchars($t_devolver['accion_label']) ?>?')" class="btn btn-outline-secondary w-100 py-2 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
+                                                        <i class="bi bi-arrow-counterclockwise"></i>
                                                         <?= htmlspecialchars($t_devolver['accion_label']) ?>
                                                     </button>
-                                                </form>
-                                            <?php else: ?>
-                                                <div class="text-center text-muted small py-2 italic bg-white border rounded">Sin retorno configurable</div>
+                                                </div>
                                             <?php endif; ?>
-                                        </div>
-                                    </div>
-                                </div>
 
-                                <!-- RECHAZAR -->
-                                <div class="col-md-6">
-                                    <div class="card border-light-subtle bg-light h-100">
-                                        <div class="card-body p-3 d-flex flex-column justify-content-between">
-                                            <div>
-                                                <h6 class="fw-bold text-dark mb-1">Rechazar Definitivamente</h6>
-                                                <p class="text-muted small mb-3" style="font-size: 11px;">Cancele permanentemente el expediente de compra.</p>
-                                            </div>
                                             <?php if ($t_rechazar): ?>
-                                                <form method="POST">
-                                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                                    <input type="hidden" name="transicion_id" value="<?= $t_rechazar['id'] ?>">
-                                                    <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
-                                                    <textarea name="motivo_rechazo" required rows="2" class="form-control form-control-sm text-sm mb-2" placeholder="Motivo del rechazo..."></textarea>
-                                                    <button type="submit" formnovalidate onclick="return confirm('¿Confirma la acción de: <?= htmlspecialchars($t_rechazar['accion_label']) ?>?')" class="btn btn-danger btn-sm w-100 fw-bold">
+                                                <div class="col-sm-6">
+                                                    <button type="submit" name="transicion_id" value="<?= $t_rechazar['id'] ?>" onclick="return confirm('¿Confirma la acción de: <?= htmlspecialchars($t_rechazar['accion_label']) ?>?')" class="btn btn-outline-danger w-100 py-2 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
+                                                        <i class="bi bi-x-circle"></i>
                                                         <?= htmlspecialchars($t_rechazar['accion_label']) ?>
                                                     </button>
-                                                </form>
-                                            <?php else: ?>
-                                                <div class="text-center text-muted small py-2 italic bg-white border rounded">Sin rechazo configurable</div>
+                                                </div>
                                             <?php endif; ?>
                                         </div>
-                                    </div>
+                                    </form>
                                 </div>
 
-                            </div>
-                        </div>
-                    <?php else: ?>
-                        <!-- BANNER DE VISACIÓN COMPLETADA -->
-                        <div class="card shadow-sm border-light">
-                            <div class="card-body p-4 text-center">
-                                <div class="p-3 bg-success-subtle text-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 56px; height: 56px;">
-                                    <i class="bi bi-check-lg fs-3"></i>
+                            <?php else: ?>
+                                <!-- BANNER DE VISACIÓN COMPLETADA -->
+                                <div class="text-center py-2">
+                                    <div class="p-3 bg-success-subtle text-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 56px; height: 56px;">
+                                        <i class="bi bi-check-lg fs-3"></i>
+                                    </div>
+                                    <h5 class="fw-bold text-dark mb-1">Visación y Firma Completada</h5>
+                                    <p class="text-secondary small mb-4">El requerimiento ha sido procesado por la Administración Municipal en esta etapa.</p>
+                                    
+                                    <div class="bg-light rounded-3 p-3 border d-inline-block text-start mx-auto" style="min-width: 280px;">
+                                        <span class="text-muted fw-bold d-block text-uppercase mb-1" style="font-size: 8px;">Estado Actual del Expediente</span>
+                                        <span class="fw-bold text-dark fs-6 d-block"><?= htmlspecialchars($exp['estado_nombre'] ?? $exp['estado_actual']) ?></span>
+                                        <span class="badge bg-primary-subtle text-primary-emphasis mt-2 px-2 py-1 fs-6" style="font-size: 9px; font-weight: bold;">
+                                            Cargo Responsable: <?= htmlspecialchars($exp['rol_responsable'] ?? 'Siguiente Etapa') ?>
+                                        </span>
+                                    </div>
                                 </div>
-                                <h5 class="fw-bold text-dark mb-1">Visación y Firma Completada</h5>
-                                <p class="text-secondary small mb-4">El requerimiento ha sido procesado por la Administración Municipal.</p>
-                                
-                                <div class="bg-light rounded-3 p-3 border d-inline-block text-start mx-auto" style="min-width: 280px;">
-                                    <span class="text-muted fw-bold d-block text-uppercase mb-1" style="font-size: 8px;">Estado Actual del Expediente</span>
-                                    <span class="fw-bold text-dark fs-6 d-block"><?= htmlspecialchars($exp['estado_nombre'] ?? $exp['estado_actual']) ?></span>
-                                    <span class="badge bg-primary-subtle text-primary-emphasis mt-2 px-2 py-1 fs-6" style="font-size: 9px; font-weight: bold;">
-                                        Cargo Responsable: <?= htmlspecialchars($exp['rol_responsable'] ?? 'Siguiente Etapa') ?>
-                                    </span>
-                                </div>
-                            </div>
+                            <?php endif; ?>
                         </div>
-                    <?php endif; ?>
+                    </div>
 
                 </div>
             </div>

@@ -390,6 +390,8 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
     $stmtD = $pdo->prepare("SELECT * FROM expedientes_documentos WHERE expediente_id = ? ORDER BY fecha_subida DESC");
     $stmtD->execute([$_GET['id']]);
     $docs = $stmtD->fetchAll();
+
+    $firmante_activo = firmagob_obtener_firmante_activo($pdo, 'ADMIN_MUNICIPAL', $_SESSION['user_id']);
 }
 
 if (!function_exists('color_estado')) {
