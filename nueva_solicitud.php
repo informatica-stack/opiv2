@@ -1,5 +1,5 @@
 <?php 
-// nueva_solicitud.php - Vista UI Renovada SaaS Clean Minimalist (Paridad Total V5.0)
+// nueva_solicitud.php - Vista UI Renovada SaaS Clean Minimalist (Optimizada V5.1)
 require_once __DIR__ . '/nueva_solicitud_controller.php'; 
 
 $listado_prov_json = [];
@@ -169,7 +169,7 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
 
         /* MAIN CONTAINER */
         .saas-container {
-            max-width: 1200px;
+            max-width: 1240px;
             margin: 0 auto;
             padding: 28px 24px 80px;
         }
@@ -220,7 +220,7 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 9px 16px;
+            padding: 8px 14px;
             font-size: 13px;
             font-weight: 600;
             border-radius: var(--radius-sm);
@@ -298,6 +298,8 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
         .step-pill {
@@ -358,6 +360,7 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
             letter-spacing: 0.05em;
             color: var(--text-muted);
             border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
         }
         table.saas-items-table td {
             padding: 10px 14px;
@@ -388,6 +391,21 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
             margin-bottom: 8px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.03);
             transition: all 0.15s;
+        }
+
+        /* MODAL CUENTAS */
+        .cuenta-item-card {
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: #ffffff;
+        }
+        .cuenta-item-card:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
         }
     </style>
 </head>
@@ -540,13 +558,13 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
                 <div class="saas-card-body">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label-saas">Título del Requerimiento <span class="text-danger">*</span></label>
+                            <label class="form-label-saas">Título de la compra <span class="text-danger">*</span></label>
                             <input type="text" name="titulo_compra" id="inpTituloCompra" required class="form-control-saas" placeholder="Ej: Adquisición de Insumos de Oficina y Tóner para Atención Vecinal" value="<?= htmlspecialchars($post_titulo_compra) ?>">
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label-saas">Justificación Técnica / Fundamentación <span class="text-danger">*</span></label>
-                            <textarea name="motivo" id="inpMotivo" required rows="3" class="form-control-saas" placeholder="Explique la necesidad y destino de los bienes o servicios solicitados..."><?= htmlspecialchars($post_motivo) ?></textarea>
+                            <label class="form-label-saas">Los presentes bienes serán destinados a: <span class="text-danger">*</span></label>
+                            <textarea name="motivo" id="inpMotivo" required rows="3" class="form-control-saas" placeholder="Indique el destino, uso y fundamentación técnica de los bienes o servicios solicitados..."><?= htmlspecialchars($post_motivo) ?></textarea>
                         </div>
 
                         <div class="col-md-6">
@@ -593,13 +611,9 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
                                     <label class="form-label-saas" style="color: var(--primary); margin: 0;">
                                         <i class="bi bi-cash-stack me-1"></i> Monto Máximo Estimado para Cotización <span class="text-danger">*</span>
                                     </label>
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <input type="radio" class="btn-check" name="disp_imp_tipo" id="disp_neto" value="NETO" <?= ($post_tipo_impuesto === 'NETO' || empty($post_tipo_impuesto)) ? 'checked' : '' ?> onchange="cambiarRegimenImpuesto('NETO')">
-                                        <label class="btn btn-outline-primary btn-sm py-0.5 px-2" for="disp_neto" style="font-size: 11px;">Neto</label>
-                                        
-                                        <input type="radio" class="btn-check" name="disp_imp_tipo" id="disp_bruto" value="IVA_INCLUIDO" <?= $post_tipo_impuesto === 'IVA_INCLUIDO' ? 'checked' : '' ?> onchange="cambiarRegimenImpuesto('IVA_INCLUIDO')">
-                                        <label class="btn btn-outline-primary btn-sm py-0.5 px-2" for="disp_bruto" style="font-size: 11px;">IVA Incluido</label>
-                                    </div>
+                                    <span class="badge bg-white text-primary border px-2.5 py-1" id="badgeRegimenPaso1" style="font-size: 11px; font-weight: 700;">
+                                        Régimen: Valores Netos
+                                    </span>
                                 </div>
 
                                 <div class="row g-3 align-items-center">
@@ -700,17 +714,22 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
                         <span class="step-pill">2</span>
                         <div>
                             <h3 style="font-size: 15px; font-weight: 700; margin: 0;">Desglose de Ítems Solicitados</h3>
-                            <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Indique los productos o servicios con su respectiva cuenta presupuestaria.</p>
+                            <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Indique los productos o servicios requeridos y asigne la cuenta presupuestaria.</p>
                         </div>
                     </div>
 
+                    <!-- SELECTOR MAESTRO ÚNICO DE RÉGIMEN TRIBUTARIO -->
                     <div class="d-flex align-items-center gap-2">
-                        <div class="btn-group btn-group-sm">
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Régimen Tributario">
                             <input type="radio" class="btn-check" name="tipo_impuesto" id="reg_neto" value="NETO" <?= ($post_tipo_impuesto === 'NETO' || empty($post_tipo_impuesto)) ? 'checked' : '' ?> onchange="cambiarRegimenImpuesto('NETO')">
-                            <label class="btn btn-outline-secondary btn-sm py-1 px-2.5" for="reg_neto" style="font-size: 11px;">Precios Netos</label>
+                            <label class="btn btn-outline-primary btn-sm py-1 px-2.5 fw-semibold" for="reg_neto" style="font-size: 11.5px;">
+                                <i class="bi bi-tag me-1"></i> Precios Sin IVA (Neto)
+                            </label>
 
                             <input type="radio" class="btn-check" name="tipo_impuesto" id="reg_iva" value="IVA_INCLUIDO" <?= $post_tipo_impuesto === 'IVA_INCLUIDO' ? 'checked' : '' ?> onchange="cambiarRegimenImpuesto('IVA_INCLUIDO')">
-                            <label class="btn btn-outline-secondary btn-sm py-1 px-2.5" for="reg_iva" style="font-size: 11px;">Con IVA Incluido</label>
+                            <label class="btn btn-outline-primary btn-sm py-1 px-2.5 fw-semibold" for="reg_iva" style="font-size: 11.5px;">
+                                <i class="bi bi-receipt me-1"></i> Precios Con IVA (Total)
+                            </label>
                         </div>
 
                         <button type="button" class="btn-saas btn-saas-primary btn-saas-sm" onclick="agregarItemFila()">
@@ -724,14 +743,14 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
                         <table class="saas-items-table" id="tablaItems">
                             <thead>
                                 <tr>
-                                    <th style="min-width: 260px;">Descripción del Producto / Servicio</th>
-                                    <th style="width: 140px;" class="th-cm d-none">ID Convenio Marco</th>
-                                    <th style="width: 110px;">Unidad</th>
-                                    <th style="width: 90px; text-align: center;">Cant.</th>
-                                    <th style="width: 130px; text-align: right;" class="col-precio" id="thColPrecio">Precio Unit. (Neto)</th>
-                                    <th style="min-width: 200px;">Cuenta Presupuestaria</th>
-                                    <th style="width: 130px; text-align: right;">Total Línea</th>
-                                    <th style="width: 50px; text-align: center;"></th>
+                                    <th>Descripción del Producto / Servicio</th>
+                                    <th style="width: 130px;" class="th-cm d-none">ID CM</th>
+                                    <th style="width: 105px;">Unidad</th>
+                                    <th style="width: 80px; text-align: center;">Cant.</th>
+                                    <th style="width: 125px; text-align: right;" class="col-precio" id="thColPrecio">Precio Unit. (Neto)</th>
+                                    <th style="width: 180px;">Imputación Presupuestaria</th>
+                                    <th style="width: 125px; text-align: right;">Total Línea</th>
+                                    <th style="width: 45px; text-align: center;"></th>
                                 </tr>
                             </thead>
                             <tbody id="tbodyItems"></tbody>
@@ -875,6 +894,36 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
         </div>
     </div>
 
+    <!-- MODAL SELECCIÓN DE CUENTA PRESUPUESTARIA -->
+    <div class="modal fade" id="modalSeleccionarCuenta" tabindex="-1" aria-labelledby="modalSeleccionarCuentaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-3 shadow border-0">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title fw-bold" id="modalSeleccionarCuentaLabel" style="font-size: 15px;">
+                        <i class="bi bi-wallet2 text-primary me-1.5"></i> Imputación Presupuestaria de Gasto
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label-saas">Filtrar Cuenta por Código o Nombre</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                            <input type="text" id="filtroCuentaInput" class="form-control" placeholder="Buscar por código (ej: 215-22) o descripción..." oninput="filtrarCuentas(this.value)">
+                        </div>
+                    </div>
+
+                    <div style="max-height: 320px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 8px;" id="listaCuentasContainer">
+                        <!-- Render dinámico de cuentas -->
+                    </div>
+                </div>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn-saas btn-saas-secondary btn-saas-sm" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- DATOS EN JAVASCRIPT -->
     <script>
         const proveedoresData = <?= json_encode($listado_prov_json) ?>;
@@ -886,6 +935,8 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
 
         let regimenActual = '<?= $post_tipo_impuesto ?>';
         let modalProvInstance = null;
+        let modalCuentaInstance = null;
+        let filaCuentaActiva = null; // Guarda el botón o elemento de fila que abrió el modal
         let selectedDuplicateId = null;
         let countCriterios = 0;
 
@@ -894,7 +945,10 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
 
         document.addEventListener('DOMContentLoaded', () => {
             modalProvInstance = new bootstrap.Modal(document.getElementById('modalProveedor'));
+            modalCuentaInstance = new bootstrap.Modal(document.getElementById('modalSeleccionarCuenta'));
+            
             renderProveedoresLista(proveedoresData);
+            renderCuentasLista(cuentasPresupuestarias);
 
             if (itemsPrevios && itemsPrevios.length > 0) {
                 itemsPrevios.forEach(it => agregarItemFila(it));
@@ -1079,6 +1133,74 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
             seleccionarProveedor({ id: 'NUEVO', rut: rut, razon_social: nom + ' (Nuevo Pre-registro)', direccion: dir });
         }
 
+        // ==========================================
+        // GESTIÓN DE CUENTAS PRESUPUESTARIAS (MODAL)
+        // ==========================================
+        function renderCuentasLista(cuentas) {
+            const cont = document.getElementById('listaCuentasContainer');
+            cont.innerHTML = '';
+            if (!cuentas || cuentas.length === 0) {
+                cont.innerHTML = '<div class="p-4 text-center text-muted small">No hay cuentas asignadas al Centro de Costo.</div>';
+                return;
+            }
+
+            cuentas.forEach(c => {
+                const card = document.createElement('div');
+                card.className = 'cuenta-item-card d-flex align-items-center justify-content-between';
+                const agBadge = c.ag_codigo ? `<span class="badge bg-secondary-subtle text-secondary me-1.5">${escapeHtml(c.ag_codigo)}</span>` : '';
+                card.innerHTML = `
+                    <div class="min-w-0 pe-2">
+                        <div class="d-flex align-items-center gap-1.5 mb-0.5">
+                            ${agBadge}
+                            <strong class="text-primary" style="font-size: 13px;">${escapeHtml(c.codigo)}</strong>
+                        </div>
+                        <div class="text-dark small text-truncate" style="font-weight: 500;">${escapeHtml(c.nombre)}</div>
+                    </div>
+                    <button type="button" class="btn-saas btn-saas-secondary btn-saas-sm shrink-0">Seleccionar</button>
+                `;
+                card.onclick = () => aplicarCuentaAFila(c);
+                cont.appendChild(card);
+            });
+        }
+
+        function filtrarCuentas(q) {
+            const needle = q.toLowerCase().trim();
+            const filtered = cuentasPresupuestarias.filter(c => 
+                c.codigo.toLowerCase().includes(needle) || 
+                c.nombre.toLowerCase().includes(needle) || 
+                (c.ag_codigo && c.ag_codigo.toLowerCase().includes(needle))
+            );
+            renderCuentasLista(filtered);
+        }
+
+        function abrirModalSeleccionarCuenta(btn) {
+            filaCuentaActiva = btn.closest('tr');
+            document.getElementById('filtroCuentaInput').value = '';
+            renderCuentasLista(cuentasPresupuestarias);
+            modalCuentaInstance.show();
+        }
+
+        function aplicarCuentaAFila(cuenta) {
+            if (!filaCuentaActiva) return;
+
+            const hiddenInput = filaCuentaActiva.querySelector('.input-cuenta-id');
+            const btn = filaCuentaActiva.querySelector('.btn-select-cuenta');
+            const labelSpan = filaCuentaActiva.querySelector('.cuenta-btn-label');
+
+            if (hiddenInput) hiddenInput.value = cuenta.id;
+            if (labelSpan) {
+                labelSpan.innerHTML = `<i class="bi bi-wallet2 me-1 text-primary"></i> <strong class="text-primary">${escapeHtml(cuenta.codigo)}</strong> <span class="text-muted small text-truncate d-none d-xl-inline" style="max-width: 90px;">· ${escapeHtml(cuenta.nombre)}</span>`;
+            }
+            if (btn) {
+                btn.title = `${cuenta.codigo} - ${cuenta.nombre}`;
+                btn.classList.remove('btn-saas-secondary');
+                btn.classList.add('btn-saas-secondary');
+            }
+
+            modalCuentaInstance.hide();
+            filaCuentaActiva = null;
+        }
+
         // EVALUACIÓN REACTIVA DE TIPO DE COMPRA
         function evaluarFormularioReactivo() {
             const tcId = document.getElementById('selTipoCompra').value;
@@ -1172,29 +1294,38 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
             return total;
         }
 
-        // TABLA DINÁMICA DE ÍTEMS
+        // TABLA DINÁMICA DE ÍTEMS CON DESCRIPCIÓN MAXIMIZADA Y MODAL DE CUENTAS
         function agregarItemFila(data = null) {
             const tbody = document.getElementById('tbodyItems');
             const tcId = document.getElementById('selTipoCompra').value;
             const isCm = (mapaTipos[tcId] || '') === 'CONVENIO_MARCO';
             const reqCot = mapaRequiereCot[tcId] == 1;
 
-            let opcionesCuentas = '<option value="">-- Imputación --</option>';
-            cuentasPresupuestarias.forEach(c => {
-                const sel = (data && data.cuenta_id == c.id) ? 'selected' : '';
-                opcionesCuentas += `<option value="${c.id}" ${sel}>${escapeHtml(c.codigo)} - ${escapeHtml(c.nombre)}</option>`;
-            });
+            let cuentaSeleccionada = null;
+            if (data && data.cuenta_id) {
+                cuentaSeleccionada = cuentasPresupuestarias.find(c => c.id == data.cuenta_id);
+            }
+
+            let btnLabelHtml = `<i class="bi bi-tag me-1"></i> Asignar Cuenta`;
+            let btnTitle = 'Haga clic para seleccionar cuenta presupuestaria';
+            let valCuentaId = '';
+
+            if (cuentaSeleccionada) {
+                valCuentaId = cuentaSeleccionada.id;
+                btnLabelHtml = `<i class="bi bi-wallet2 me-1 text-primary"></i> <strong class="text-primary">${escapeHtml(cuentaSeleccionada.codigo)}</strong> <span class="text-muted small text-truncate d-none d-xl-inline" style="max-width: 90px;">· ${escapeHtml(cuentaSeleccionada.nombre)}</span>`;
+                btnTitle = `${cuentaSeleccionada.codigo} - ${cuentaSeleccionada.nombre}`;
+            }
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
-                    <input type="text" name="desc[]" required class="form-control-saas item-desc" placeholder="Descripción clara del ítem" value="${escapeHtml(data ? data.desc : '')}">
+                    <textarea name="desc[]" required rows="1" class="form-control-saas item-desc" placeholder="Descripción detallada del producto o servicio..." style="min-height: 38px; resize: vertical;">${escapeHtml(data ? data.desc : '')}</textarea>
                 </td>
                 <td class="td-cm ${isCm ? '' : 'd-none'}">
                     <input type="number" name="id_producto_cm[]" class="form-control-saas input-cm" placeholder="ID CM" value="${escapeHtml(data ? data.id_cm : '')}">
                 </td>
                 <td>
-                    <select name="uni[]" class="form-select-saas">
+                    <select name="uni[]" class="form-select-saas" style="min-width: 95px;">
                         <option value="UNIDAD" ${data && data.uni === 'UNIDAD' ? 'selected' : ''}>UNIDAD</option>
                         <option value="GLOBAL" ${data && data.uni === 'GLOBAL' ? 'selected' : ''}>GLOBAL</option>
                         <option value="MESES" ${data && data.uni === 'MESES' ? 'selected' : ''}>MESES</option>
@@ -1210,7 +1341,11 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
                     <input type="number" name="prec[]" min="0" step="any" class="form-control-saas text-end item-prec" value="${data ? data.prec : '0'}" oninput="recalcularTotales()">
                 </td>
                 <td>
-                    <select name="cuenta_id[]" required class="form-select-saas select-cuenta">${opcionesCuentas}</select>
+                    <input type="hidden" name="cuenta_id[]" value="${valCuentaId}" class="input-cuenta-id" required>
+                    <button type="button" class="btn-saas btn-saas-secondary btn-saas-sm py-1 px-2.5 w-100 justify-content-between btn-select-cuenta" onclick="abrirModalSeleccionarCuenta(this)" title="${escapeHtml(btnTitle)}">
+                        <span class="text-truncate cuenta-btn-label">${btnLabelHtml}</span>
+                        <i class="bi bi-chevron-down text-muted" style="font-size: 10px;"></i>
+                    </button>
                 </td>
                 <td class="text-end fw-bold item-total-linea">$ 0</td>
                 <td class="text-center">
@@ -1231,21 +1366,21 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
             }
         }
 
+        // UNIFICACIÓN DEL SELECTOR DE RÉGIMEN NETO / IVA
         function cambiarRegimenImpuesto(reg) {
             regimenActual = reg;
             const rNeto = document.getElementById('reg_neto');
             const rIva = document.getElementById('reg_iva');
-            const dNeto = document.getElementById('disp_neto');
-            const dIva = document.getElementById('disp_bruto');
+            const badgePaso1 = document.getElementById('badgeRegimenPaso1');
             const thPrecio = document.getElementById('thColPrecio');
 
             if (reg === 'NETO') {
                 if (rNeto) rNeto.checked = true;
-                if (dNeto) dNeto.checked = true;
+                if (badgePaso1) badgePaso1.innerText = 'Régimen: Valores Netos';
                 if (thPrecio) thPrecio.innerText = 'Precio Unit. (Neto)';
             } else {
                 if (rIva) rIva.checked = true;
-                if (dIva) dIva.checked = true;
+                if (badgePaso1) badgePaso1.innerText = 'Régimen: Valores Con IVA';
                 if (thPrecio) thPrecio.innerText = 'Precio Unit. (Con IVA)';
             }
             recalcularTotales();
@@ -1269,6 +1404,14 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
                     granTotal = valMonto;
                     subtotalNeto = Math.round(granTotal / (1 + ivaRate));
                 }
+
+                const pNeto = document.getElementById('dispPreviewNeto');
+                const pIva = document.getElementById('dispPreviewIva');
+                const pTotal = document.getElementById('dispPreviewTotal');
+                if (pNeto) pNeto.innerText = formatCLP(subtotalNeto);
+                if (pIva) pIva.innerText = formatCLP(Math.max(0, granTotal - subtotalNeto));
+                if (pTotal) pTotal.innerText = formatCLP(granTotal);
+
                 document.querySelectorAll('#tbodyItems tr').forEach(row => {
                     row.querySelector('.item-total-linea').innerText = formatCLP(0);
                 });
@@ -1305,21 +1448,6 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
             if (val === '') val = '0';
             const num = parseInt(val, 10);
             inp.value = num.toLocaleString('es-CL');
-
-            let neto = 0, iva = 0, tot = 0;
-            if (regimenActual === 'NETO') {
-                neto = num;
-                iva = Math.round(num * 0.19);
-                tot = neto + iva;
-            } else {
-                tot = num;
-                neto = Math.round(num / 1.19);
-                iva = tot - neto;
-            }
-
-            document.getElementById('dispPreviewNeto').innerText = formatCLP(neto);
-            document.getElementById('dispPreviewIva').innerText = formatCLP(iva);
-            document.getElementById('dispPreviewTotal').innerText = formatCLP(tot);
 
             recalcularTotales();
         }
@@ -1569,17 +1697,25 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
             }
 
             let errorItem = false;
+            let errorCuenta = false;
             document.querySelectorAll('#tbodyItems tr').forEach(row => {
                 const desc = row.querySelector('.item-desc');
                 const cant = row.querySelector('.item-cant');
                 const prec = row.querySelector('.item-prec');
-                const cta = row.querySelector('.select-cuenta');
+                const cta = row.querySelector('.input-cuenta-id');
+                const btnCta = row.querySelector('.btn-select-cuenta');
                 const inpCm = row.querySelector('.input-cm');
 
                 if (!desc.value.trim()) errorItem = true;
                 if (parseFloat(cant.value) <= 0 || !cant.value) errorItem = true;
                 if (!reqCot && (parseFloat(prec.value) <= 0 || !prec.value)) errorItem = true;
-                if (!cta.value) errorItem = true;
+                
+                if (!cta.value) {
+                    errorCuenta = true;
+                    if (btnCta) btnCta.classList.add('border-danger');
+                } else {
+                    if (btnCta) btnCta.classList.remove('border-danger');
+                }
 
                 if (tcCodigo === 'CONVENIO_MARCO') {
                     const vCm = inpCm.value.trim();
@@ -1589,6 +1725,13 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
                     }
                 }
             });
+
+            if (errorCuenta) {
+                divError.innerText = 'Debe seleccionar una cuenta presupuestaria para cada ítem.';
+                divError.classList.remove('d-none');
+                e.preventDefault();
+                return false;
+            }
 
             if (errorItem) {
                 divError.innerText = 'Por favor complete todos los datos obligatorios de los ítems (en Convenio Marco el ID CM debe ser puramente numérico).';
