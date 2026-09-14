@@ -238,6 +238,8 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
     $stmtDocs = $pdo->prepare("SELECT * FROM expedientes_documentos WHERE expediente_id = ? ORDER BY fecha_subida DESC");
     $stmtDocs->execute([$_GET['id']]);
     $docs = $stmtDocs->fetchAll();
+
+    $firmante_activo = firmagob_obtener_firmante_activo($pdo, 'JEFE_UNIDAD', $user_id);
 } else {
     // VISTA TABLA: LISTADO CON TABS Y FILTROS
     $page = max(1, (int)($_GET['p'] ?? 1));
@@ -253,13 +255,13 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
     }
 
     if ($vista === 'procesadas') {
-        $where[] = "EXISTS (SELECT 1 FROM expedientes_historial eh WHERE eh.expediente_id = e.id AND eh.usuario_id = :hist_uid AND eh.accion IN ('APROBAR', 'RECHAZAR', 'DEVOLVER'))";
+        $where[] = "EXISTS (SELECT 1 FROM expedientes_historial eh WHERE eh.expediente_id = e.id AND eh.usuario_id = :hist_uid AND eh.accion IN ('APROBAR', 'RECHAZAR', 'DEVOLVER', 'FIRMAR_JEFATURA', 'FIRMA_ELECTRONICA'))";
         $params[':hist_uid'] = $user_id;
     } elseif ($vista === 'todas') {
         // Sin condición adicional de estado
     } else {
-        // 'pendientes' por defecto
-        $where[] = "e.estado_actual = 'EN_REVISION_JEFATURA'";
+        // 'pendientes' por defecto (incluye tanto revisión inicial como firma electrónica)
+        $where[] = "e.estado_actual IN ('EN_REVISION_JEFATURA', 'EN_FIRMA_JEFATURA')";
         $vista = 'pendientes';
     }
 
@@ -319,6 +321,7 @@ $tipos_compra_filtro = $pdo->query("SELECT id, nombre FROM tipos_compra WHERE ac
 $estados_filtro = $pdo->query("SELECT codigo, nombre FROM estados_tramite ORDER BY nombre")->fetchAll();
 
 function color_estado($estado_codigo) {
+    if ($estado_codigo === 'EN_FIRMA_JEFATURA') return 'text-white fw-bold shadow-sm" style="background-color: #4f46e5;';
     if (in_array($estado_codigo, ['BORRADOR', 'EN_REVISION_JEFATURA'])) return 'bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle';
     if (in_array($estado_codigo, ['RECHAZADO', 'ANULADO'])) return 'bg-danger-subtle text-danger-emphasis text-decoration-line-through border border-danger-subtle';
     if ($estado_codigo === 'FINALIZADO') return 'bg-success-subtle text-success-emphasis fw-bold border border-success-subtle';

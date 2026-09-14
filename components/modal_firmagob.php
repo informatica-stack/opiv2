@@ -42,16 +42,27 @@
                             <div class="p-3 bg-light rounded-3 border h-100">
                                 <span class="badge bg-primary text-uppercase mb-1.5" style="font-size: 8px;">Documento a Firmar</span>
                                 <h6 class="fw-bold text-dark mb-1" id="fgDocTitulo">Orden de Pedido Interno</h6>
-                                <p class="small text-muted mb-0 font-monospace" id="fgDocRef">Ref: -</p>
-                                <p class="small text-primary fw-semibold mb-0" id="fgDocMonto">$ 0</p>
+                                <p class="small text-muted mb-1 font-monospace" id="fgDocRef">Ref: -</p>
+                                <div id="fgDocDetalleCont" class="small text-secondary mb-1 fw-semibold d-none">
+                                    <i class="bi bi-tag me-1"></i><span id="fgDocDetalle"></span>
+                                </div>
+                                <div id="fgDocProveedorCont" class="small text-secondary mb-1 d-none">
+                                    <i class="bi bi-shop me-1"></i><span id="fgDocProveedor"></span>
+                                </div>
+                                <p class="small text-primary fw-bold mb-0" id="fgDocMonto">$ 0</p>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="p-3 bg-light rounded-3 border h-100">
-                                <span class="badge bg-indigo text-white text-uppercase mb-1.5" style="font-size: 8px; background-color: #4f46e5;">Titular del Certificado</span>
+                                <span class="badge bg-indigo text-white text-uppercase mb-1.5" style="font-size: 8px; background-color: #4f46e5;">Titular del Certificado Digital</span>
                                 <h6 class="fw-bold text-dark mb-1" id="fgFirmanteNombre"><?= htmlspecialchars($_SESSION['user_nombre'] ?? 'Funcionario') ?></h6>
-                                <p class="small text-muted font-monospace mb-0" id="fgFirmanteRut">RUN: <?= htmlspecialchars($_SESSION['user_rut'] ?? '-') ?></p>
-                                <p class="small text-secondary mb-0" id="fgFirmanteCargo"><?= htmlspecialchars($_SESSION['user_cargo'] ?? $_SESSION['user_rol'] ?? '') ?></p>
+                                <p class="small text-muted font-monospace mb-1" id="fgFirmanteRut">RUN: <?= htmlspecialchars($_SESSION['user_rut'] ?? '-') ?></p>
+                                <div class="small text-secondary mb-0.5" id="fgFirmanteCargoCont">
+                                    <i class="bi bi-person-badge me-1"></i><span id="fgFirmanteCargo"><?= htmlspecialchars($_SESSION['user_cargo'] ?? $_SESSION['user_rol'] ?? '') ?></span>
+                                </div>
+                                <div class="small text-secondary" id="fgFirmanteUnidadCont">
+                                    <i class="bi bi-building me-1"></i><span id="fgFirmanteUnidad"><?= htmlspecialchars($_SESSION['user_unidad_nombre'] ?? '') ?></span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -149,6 +160,24 @@ function abrirModalFirmaGob(data) {
     if (data.firmante_nombre) document.getElementById('fgFirmanteNombre').innerText = data.firmante_nombre;
     if (data.firmante_rut) document.getElementById('fgFirmanteRut').innerText = 'RUN: ' + data.firmante_rut;
     if (data.firmante_cargo) document.getElementById('fgFirmanteCargo').innerText = data.firmante_cargo;
+    if (data.firmante_unidad) {
+        document.getElementById('fgFirmanteUnidad').innerText = data.firmante_unidad;
+        document.getElementById('fgFirmanteUnidadCont').classList.remove('d-none');
+    }
+
+    if (data.titulo_compra) {
+        document.getElementById('fgDocDetalle').innerText = data.titulo_compra;
+        document.getElementById('fgDocDetalleCont').classList.remove('d-none');
+    } else {
+        document.getElementById('fgDocDetalleCont').classList.add('d-none');
+    }
+
+    if (data.proveedor) {
+        document.getElementById('fgDocProveedor').innerText = data.proveedor;
+        document.getElementById('fgDocProveedorCont').classList.remove('d-none');
+    } else {
+        document.getElementById('fgDocProveedorCont').classList.add('d-none');
+    }
 
     // Resetear formulario
     document.getElementById('inpOtpCode').value = '';

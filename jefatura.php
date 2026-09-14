@@ -202,10 +202,17 @@ require_once __DIR__ . '/jefatura_controller.php';
                                     </td>
 
                                     <td class="p-3 text-center text-nowrap">
-                                        <a href="jefatura.php?view=revisar&id=<?= $row['id'] ?>" class="btn btn-primary btn-sm fw-bold px-3 shadow-sm d-inline-flex align-items-center gap-1">
-                                            <i class="bi bi-search"></i>
-                                            <span>Revisar</span>
-                                        </a>
+                                        <?php if ($row['estado_actual'] === 'EN_FIRMA_JEFATURA'): ?>
+                                            <a href="jefatura.php?view=revisar&id=<?= $row['id'] ?>" class="btn btn-primary btn-sm fw-bold px-3 shadow-sm d-inline-flex align-items-center gap-1.5" style="background-color: #4f46e5; border-color: #4338ca;">
+                                                <i class="bi bi-pen-fill"></i>
+                                                <span>Firmar OPI (1/3)</span>
+                                            </a>
+                                        <?php else: ?>
+                                            <a href="jefatura.php?view=revisar&id=<?= $row['id'] ?>" class="btn btn-primary btn-sm fw-bold px-3 shadow-sm d-inline-flex align-items-center gap-1">
+                                                <i class="bi bi-search"></i>
+                                                <span>Revisar</span>
+                                            </a>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -255,7 +262,13 @@ require_once __DIR__ . '/jefatura_controller.php';
             
             <div class="row align-items-center mb-4 g-3">
                 <div class="col-12 col-md">
-                    <span class="badge bg-primary text-uppercase tracking-wider mb-1.5" style="font-size: 9px; letter-spacing: 0.5px;">Fase: Visación de Jefatura</span>
+                    <?php if ($exp['estado_actual'] === 'EN_FIRMA_JEFATURA'): ?>
+                        <span class="badge text-white text-uppercase tracking-wider mb-1.5" style="font-size: 10px; letter-spacing: 0.5px; background-color: #4f46e5;">
+                            <i class="bi bi-pen-fill me-1"></i> Etapa 2: Firma Electrónica OPI (1/3) - Adjudicación
+                        </span>
+                    <?php else: ?>
+                        <span class="badge bg-primary text-uppercase tracking-wider mb-1.5" style="font-size: 9px; letter-spacing: 0.5px;">Fase: Visación de Jefatura</span>
+                    <?php endif; ?>
                     <h1 class="h3 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
                         Expediente: <span class="font-monospace text-primary">#<?= htmlspecialchars($exp['codigo_interno']) ?></span>
                         <button type="button" onclick="verTrazabilidad(<?= (int)$exp['id'] ?>)" class="btn btn-outline-primary btn-sm px-2.5 py-1 fw-bold shadow-sm d-inline-flex align-items-center gap-1.5" style="font-size: 11px;">
@@ -269,6 +282,24 @@ require_once __DIR__ . '/jefatura_controller.php';
                     </a>
                 </div>
             </div>
+
+            <?php if ($exp['estado_actual'] === 'EN_FIRMA_JEFATURA'): ?>
+                <div class="alert alert-primary border-primary-subtle d-flex align-items-center justify-content-between p-3 rounded-3 shadow-sm mb-4" style="background-color: #eef2ff; border-color: #c7d2fe;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="p-2 text-white rounded-circle d-flex align-items-center justify-content-center shrink-0" style="width: 42px; height: 42px; background-color: #4f46e5;">
+                            <i class="bi bi-pen-fill fs-5"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0" style="color: #3730a3;">Expediente Adjudicado listo para Firma Digital de Jefatura (1/3)</h6>
+                            <p class="small text-secondary mb-0">Adquisiciones ha completado el cuadro comparativo y adjudicado la compra. Corresponde estampar la primera firma electrónica en la Orden de Pedido Interno (OPI) oficial.</p>
+                        </div>
+                    </div>
+                    <a href="imprimir_solicitud.php?id=<?= $exp['id'] ?>" target="_blank" class="btn btn-outline-primary btn-sm fw-bold text-nowrap d-flex align-items-center gap-1.5 shadow-sm bg-white">
+                        <i class="bi bi-file-earmark-pdf-fill text-danger"></i>
+                        Ver OPI Oficial a Firmar
+                    </a>
+                </div>
+            <?php endif; ?>
 
             <div class="row g-4">
                 
@@ -491,8 +522,27 @@ require_once __DIR__ . '/jefatura_controller.php';
                                          }
                                      }
                                      if ($exp['estado_actual'] === 'EN_FIRMA_JEFATURA'):
+                                         $monto_calc = $exp['monto_definitivo'] ?: $exp['monto_estimado'];
+                                         $firmante_nom = $firmante_activo['nombre_completo'] ?? $firmante_activo['nombre'] ?? $_SESSION['user_nombre'] ?? 'Jefe de Unidad';
+                                         $firmante_rut = $firmante_activo['rut'] ?? $_SESSION['user_rut'] ?? '';
+                                         $firmante_cargo = $firmante_activo['cargo'] ?? $_SESSION['user_cargo'] ?? 'Jefe de Unidad';
+                                         $firmante_unidad = $exp['unidad'] ?? $_SESSION['user_unidad_nombre'] ?? '';
+                                         $prov_str = ($exp['proveedor_rut'] ? $exp['proveedor_rut'].' - ' : '').($exp['proveedor_nombre'] ?? '');
                                      ?>
-                                         <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $exp['id'] ?>, transicion_id: <?= $t_aprobar ? $t_aprobar['id'] : 'null' ?>, etapa: 'JEFATURA', codigo_interno: '<?= htmlspecialchars($exp['codigo_interno']) ?>', monto: '<?= $exp['monto_definitivo'] ?: $exp['monto_estimado'] ?>', doc_titulo: 'OPI Adjudicada - V°B° Jefatura (1/3)'})" class="btn btn-primary py-2.5 w-100 mb-4 shadow d-flex align-items-center justify-content-center gap-2 fw-bold">
+                                         <button type="button" onclick="abrirModalFirmaGob({
+                                             expediente_id: <?= $exp['id'] ?>, 
+                                             transicion_id: <?= $t_aprobar ? $t_aprobar['id'] : 'null' ?>, 
+                                             etapa: 'JEFATURA', 
+                                             codigo_interno: '<?= htmlspecialchars($exp['codigo_interno']) ?>', 
+                                             monto: '<?= $monto_calc ?>', 
+                                             doc_titulo: 'OPI Adjudicada - V°B° Jefatura (1/3)',
+                                             titulo_compra: '<?= htmlspecialchars(addslashes($exp['titulo_compra'] ?? '')) ?>',
+                                             proveedor: '<?= htmlspecialchars(addslashes($prov_str)) ?>',
+                                             firmante_nombre: '<?= htmlspecialchars(addslashes($firmante_nom)) ?>',
+                                             firmante_rut: '<?= htmlspecialchars(addslashes($firmante_rut)) ?>',
+                                             firmante_cargo: '<?= htmlspecialchars(addslashes($firmante_cargo)) ?>',
+                                             firmante_unidad: '<?= htmlspecialchars(addslashes($firmante_unidad)) ?>'
+                                         })" class="btn btn-primary py-2.5 w-100 mb-4 shadow d-flex align-items-center justify-content-center gap-2 fw-bold" style="background-color: #4f46e5; border-color: #4338ca;">
                                              <i class="bi bi-pen-fill"></i>
                                              Firmar OPI con FirmaGob (1/3)
                                          </button>

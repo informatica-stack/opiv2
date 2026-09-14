@@ -523,24 +523,54 @@ require_once __DIR__ . '/adquisiciones_controller.php';
                                             <?php endif; ?>
 
                                             <div class="mb-3">
-                                             <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;"><?= ($exp['tipo_compra_cod'] === 'CONVENIO_MARCO') ? 'CONV. MARCO O°C:' : 'Número de Orden de Compra' ?> <span class="text-danger">*</span></label>
-                                             <input type="text" name="<?= ($exp['tipo_compra_cod'] === 'CONVENIO_MARCO') ? 'conv_marco_oc' : 'orden_compra_numero' ?>" required class="form-control" placeholder="<?= ($exp['tipo_compra_cod'] === 'CONVENIO_MARCO') ? 'Ej: 1234-56-CM24' : '' ?>" value="<?= htmlspecialchars($exp['conv_marco_oc'] ?? $exp['orden_compra_numero'] ?? '') ?>">
-                                         </div>
+                                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;"><?= ($exp['tipo_compra_cod'] === 'CONVENIO_MARCO') ? 'CONV. MARCO O°C:' : 'Número de Orden de Compra' ?> <span class="text-danger">*</span></label>
+                                                <input type="text" name="<?= ($exp['tipo_compra_cod'] === 'CONVENIO_MARCO') ? 'conv_marco_oc' : 'orden_compra_numero' ?>" required class="form-control" placeholder="<?= ($exp['tipo_compra_cod'] === 'CONVENIO_MARCO') ? 'Ej: 1234-56-CM24' : '' ?>" value="<?= htmlspecialchars($exp['conv_marco_oc'] ?? $exp['orden_compra_numero'] ?? '') ?>">
+                                            </div>
 
-                                         <div class="mb-3">
-                                             <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Número de Decreto Alcaldicio <span class="text-danger">*</span></label>
-                                             <input type="text" name="decreto_alcaldicio_numero" required class="form-control" placeholder="Ej: DA887" value="<?= htmlspecialchars($exp['decreto_alcaldicio_numero'] ?? '') ?>">
-                                         </div>
+                                            <div class="mb-4">
+                                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Subir Orden de Compra Firmada (PDF) <span class="text-danger">*</span></label>
+                                                <input type="file" name="archivo_oc" accept="application/pdf" required class="form-control form-control-sm">
+                                            </div>
 
-                                         <div class="mb-3">
-                                             <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Subir Decreto Alcaldicio (PDF) <span class="text-danger">*</span></label>
-                                             <input type="file" name="archivo_decreto" accept="application/pdf" required class="form-control form-control-sm">
-                                         </div>
+                                            <?php 
+                                            $tipo_cod = strtoupper($exp['tipo_compra_cod'] ?? '');
+                                            $is_licitacion = ($tipo_cod === 'LICITACION');
+                                            $is_compra_agil = in_array($tipo_cod, ['AGIL', 'COMPRA_AGIL']);
+                                            ?>
 
-                                         <div class="mb-4">
-                                             <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Subir Orden de Compra Firmada (PDF) <span class="text-danger">*</span></label>
-                                             <input type="file" name="archivo_oc" accept="application/pdf" required class="form-control form-control-sm">
-                                         </div>
+                                            <?php if (!$is_compra_agil): ?>
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">
+                                                        Número de Decreto Alcaldicio <?= $is_licitacion ? '<span class="text-danger">*</span>' : '<span class="text-muted small fw-normal">(Opcional)</span>' ?>
+                                                    </label>
+                                                    <input type="text" name="decreto_alcaldicio_numero" <?= $is_licitacion ? 'required' : '' ?> class="form-control" placeholder="Ej: DA887" value="<?= htmlspecialchars($exp['decreto_alcaldicio_numero'] ?? '') ?>">
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">
+                                                        Subir Decreto Alcaldicio (PDF) <?= $is_licitacion ? '<span class="text-danger">*</span>' : '<span class="text-muted small fw-normal">(Opcional)</span>' ?>
+                                                    </label>
+                                                    <input type="file" name="archivo_decreto" accept="application/pdf" <?= $is_licitacion ? 'required' : '' ?> class="form-control form-control-sm">
+                                                </div>
+                                            <?php endif; ?>
+
+                                            <!-- SECCIÓN DE ANTECEDENTES ADICIONALES OPCIONALES -->
+                                            <div class="mb-4 p-3 bg-light rounded-3 border">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <label class="form-label fw-bold text-secondary small text-uppercase mb-0" style="font-size: 10px;">
+                                                        <i class="bi bi-paperclip me-1"></i> Antecedentes Adicionales (Opcional)
+                                                    </label>
+                                                    <button type="button" class="btn btn-outline-primary btn-sm py-0.5 px-2 fw-semibold" style="font-size: 11px;" onclick="agregarFilaAntecedente()">
+                                                        <i class="bi bi-plus-circle me-1"></i> Agregar Antecedente
+                                                    </button>
+                                                </div>
+                                                <div id="contenedorAntecedentesAdicionales" class="d-flex flex-column gap-2">
+                                                    <!-- Inserciones dinámicas vía JS -->
+                                                </div>
+                                                <div class="form-text small" style="font-size: 10px;">
+                                                    Puede adjuntar archivos adicionales como bases, términos de referencia, cotizaciones complementarias o correos de respaldo.
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <button type="submit" class="btn btn-primary w-100 py-2.5 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-2">
@@ -557,40 +587,80 @@ require_once __DIR__ . '/adquisiciones_controller.php';
                                         <div class="d-flex align-items-start gap-2">
                                             <i class="bi bi-clock-history fs-5 shrink-0 text-warning"></i>
                                             <div>
-                                                <strong class="d-block text-dark small">Esperando Respuesta del Proveedor</strong>
-                                                <p class="mb-0 small text-secondary">La Orden de Compra N° <strong><?= htmlspecialchars($exp['conv_marco_oc'] ?? $exp['orden_compra_numero']) ?></strong> fue emitida en Mercado Público. Confirme si fue aceptada o rechazada.</p>
+                                                <strong class="d-block text-dark small">Esperando Respuesta del Proveedor en Mercado Público</strong>
+                                                <p class="mb-0 small text-secondary">La Orden de Compra N° <strong><?= htmlspecialchars($exp['conv_marco_oc'] ?? $exp['orden_compra_numero']) ?></strong> fue emitida en Mercado Público. Seleccione si fue aceptada o rechazada y adjunte el respaldo correspondiente.</p>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="row g-3">
+                                    <div class="row g-4">
+                                        <!-- OPCIÓN 1: OC ACEPTADA -->
                                         <div class="col-md-6">
-                                            <form method="POST">
-                                                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                                <input type="hidden" name="accion" value="oc_aceptada">
-                                                <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
-                                                <button type="submit" class="btn btn-primary py-2.5 w-100 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
-                                                    <i class="bi bi-check-circle-fill"></i>
-                                                    <span>OC Aceptada en Portal</span>
-                                                </button>
-                                            </form>
+                                            <div class="card h-100 border-success-subtle shadow-sm">
+                                                <div class="card-header bg-success-subtle border-success-subtle py-2.5">
+                                                    <h6 class="fw-bold text-success mb-0 d-flex align-items-center gap-1.5 small">
+                                                        <i class="bi bi-check-circle-fill"></i>
+                                                        Opción 1: OC Aceptada en Portal
+                                                    </h6>
+                                                </div>
+                                                <div class="card-body p-3">
+                                                    <form method="POST" enctype="multipart/form-data">
+                                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                                        <input type="hidden" name="accion" value="oc_aceptada">
+                                                        <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
+
+                                                        <div class="mb-3 text-start">
+                                                            <label class="form-label fw-bold text-secondary small" style="font-size: 10px;">Subir OC Aceptada Mercado Público (PDF) <span class="text-danger">*</span></label>
+                                                            <input type="file" name="archivo_oc_aceptada" accept="application/pdf" required class="form-control form-control-sm">
+                                                            <div class="form-text small" style="font-size: 10px;">Descargue la OC desde Mercado Público en estado "Aceptada".</div>
+                                                        </div>
+
+                                                        <div class="mb-3 text-start">
+                                                            <label class="form-label fw-bold text-secondary small" style="font-size: 10px;">Observaciones de Cierre (Opcional)</label>
+                                                            <input type="text" name="comentario_aceptacion" class="form-control form-control-sm" placeholder="Ej: Aceptada dentro de plazo en portal...">
+                                                        </div>
+
+                                                        <button type="submit" class="btn btn-success py-2 w-100 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
+                                                            <i class="bi bi-check2-circle"></i>
+                                                            <span>Subir OC Aceptada y Finalizar Trámite</span>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
                                         </div>
 
+                                        <!-- OPCIÓN 2: OC RECHAZADA -->
                                         <div class="col-md-6">
-                                            <form method="POST" enctype="multipart/form-data" onsubmit="return confirm('¿Confirma que la OC fue rechazada en portal?')">
-                                                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                                                <input type="hidden" name="accion" value="oc_rechazada">
-                                                <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
-                                                <div class="mb-2 text-start">
-                                                    <label class="form-label fw-bold text-secondary small" style="font-size: 10px;">Comprobante de Rechazo Portal (PDF) <span class="text-danger">*</span></label>
-                                                    <input type="file" name="comprobante_rechazo_oc" accept="application/pdf" required class="form-control form-control-sm">
+                                            <div class="card h-100 border-danger-subtle shadow-sm">
+                                                <div class="card-header bg-danger-subtle border-danger-subtle py-2.5">
+                                                    <h6 class="fw-bold text-danger mb-0 d-flex align-items-center gap-1.5 small">
+                                                        <i class="bi bi-x-circle-fill"></i>
+                                                        Opción 2: OC Rechazada en Portal
+                                                    </h6>
                                                 </div>
-                                                <input type="text" name="motivo_rechazo_proveedor" required class="form-control form-control-sm text-start mb-2" placeholder="Indique motivo del rechazo...">
-                                                <button type="submit" class="btn btn-outline-danger py-2 w-100 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
-                                                    <i class="bi bi-arrow-counterclockwise"></i>
-                                                    <span>Registrar Rechazo y Devolver para Readjudicar</span>
-                                                </button>
-                                            </form>
+                                                <div class="card-body p-3">
+                                                    <form method="POST" enctype="multipart/form-data" onsubmit="return confirm('¿Confirma que la OC fue rechazada en portal? El expediente regresará a evaluación para readjudicar.')">
+                                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                                        <input type="hidden" name="accion" value="oc_rechazada">
+                                                        <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
+
+                                                        <div class="mb-3 text-start">
+                                                            <label class="form-label fw-bold text-secondary small" style="font-size: 10px;">Comprobante de Rechazo Portal (PDF) <span class="text-danger">*</span></label>
+                                                            <input type="file" name="comprobante_rechazo_oc" accept="application/pdf" required class="form-control form-control-sm">
+                                                        </div>
+
+                                                        <div class="mb-3 text-start">
+                                                            <label class="form-label fw-bold text-secondary small" style="font-size: 10px;">Motivo del Rechazo <span class="text-danger">*</span></label>
+                                                            <input type="text" name="motivo_rechazo_proveedor" required class="form-control form-control-sm" placeholder="Indique motivo indicado por el proveedor...">
+                                                        </div>
+
+                                                        <button type="submit" class="btn btn-outline-danger py-2 w-100 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
+                                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                                            <span>Registrar Rechazo y Devolver para Readjudicar</span>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -887,6 +957,27 @@ require_once __DIR__ . '/adquisiciones_controller.php';
         }
         
         if (modalVerItemsInstance) modalVerItemsInstance.show();
+    }
+
+    function agregarFilaAntecedente() {
+        const container = document.getElementById('contenedorAntecedentesAdicionales');
+        if (!container) return;
+        const rowId = 'ant_row_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+        const div = document.createElement('div');
+        div.id = rowId;
+        div.className = 'p-2.5 bg-white rounded-3 border d-flex flex-column flex-sm-row gap-2 align-items-sm-center shadow-sm';
+        div.innerHTML = `
+            <div class="flex-grow-1">
+                <input type="text" name="adjuntos_adicionales_nombres[]" class="form-control form-control-sm" placeholder="Nombre/Descripción (Ej: Bases, Cotización extra, Correo)">
+            </div>
+            <div class="flex-grow-1">
+                <input type="file" name="adjuntos_adicionales_archivos[]" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.rar,.png,.jpg,.jpeg">
+            </div>
+            <button type="button" class="btn btn-outline-danger btn-sm px-2.5 shrink-0" onclick="document.getElementById('${rowId}').remove()" title="Eliminar fila">
+                <i class="bi bi-trash"></i>
+            </button>
+        `;
+        container.appendChild(div);
     }
     </script>
 <?php include __DIR__ . '/footer.php'; ?>

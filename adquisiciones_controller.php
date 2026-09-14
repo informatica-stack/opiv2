@@ -126,6 +126,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
+            // 1.5 Subida de Antecedentes Adicionales Opcionales
+            if (isset($_FILES['adjuntos_adicionales_archivos']) && is_array($_FILES['adjuntos_adicionales_archivos']['name'])) {
+                $nombres_custom = $_POST['adjuntos_adicionales_nombres'] ?? [];
+                foreach ($_FILES['adjuntos_adicionales_archivos']['name'] as $idx => $orig_name) {
+                    if (!empty($orig_name) && $_FILES['adjuntos_adicionales_archivos']['error'][$idx] === UPLOAD_ERR_OK) {
+                        $file_array = [
+                            'name'     => $_FILES['adjuntos_adicionales_archivos']['name'][$idx],
+                            'type'     => $_FILES['adjuntos_adicionales_archivos']['type'][$idx],
+                            'tmp_name' => $_FILES['adjuntos_adicionales_archivos']['tmp_name'][$idx],
+                            'error'    => $_FILES['adjuntos_adicionales_archivos']['error'][$idx],
+                            'size'     => $_FILES['adjuntos_adicionales_archivos']['size'][$idx],
+                        ];
+                        $ext = validar_subida_archivo($file_array);
+                        if ($ext) {
+                            $custom_label = trim($nombres_custom[$idx] ?? '');
+                            $final_name = "ADJUNTO_" . time() . "_{$idx}." . $ext;
+                            if (move_uploaded_file($file_array['tmp_name'], $dir . $final_name)) {
+                                $doc_name = $custom_label ?: $orig_name;
+                                $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'OTRO', ?, ?)")
+                                    ->execute([$exp_id, $user_id, "uploads/$anio/exp_$exp_id/$final_name", $doc_name]);
+                            }
+                        }
+                    }
+                }
+            }
+
             // 2. Guardar IDs de Mercado Público si se envían
             if (!empty($_POST['id_compra_agil'])) {
                 $pdo->prepare("UPDATE expedientes SET id_compra_agil = ? WHERE id = ?")->execute([trim($_POST['id_compra_agil']), $exp_id]);
@@ -164,8 +190,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
        // D. ORDEN ACEPTADA
         if ($accion === 'oc_aceptada') {
-            avanzar_flujo($pdo, $exp_id, $user_id, "El proveedor aceptó la Orden de Compra en el portal. Trámite finalizado.");
-            $mensaje = "¡Proceso cerrado correctamente!"; $tipo_mensaje = "success"; $vista = 'lista';
+            $comentario_acept = trim($_POST['comentario_aceptacion'] ?? '');
+            
+            if (isset($_FILES['archivo_oc_aceptada']) && $_FILES['archivo_oc_aceptada']['error'] !== UPLOAD_ERR_NO_FILE) {
+                $ext = validar_subida_archivo($_FILES['archivo_oc_aceptada'], null, ['pdf']);
+                if ($ext) {
+                    $anio_actual = date('Y');
+                    $dir = __DIR__ . "/uploads/$anio_actual/exp_$exp_id/";
+                    if (!file_exists($dir)) mkdir($dir, 0777, true);
+                    
+                    $name = "ORDEN_COMPRA_ACEPTADA_" . time() . ".pdf";
+                    if (move_uploaded_file($_FILES['archivo_oc_aceptada']['tmp_name'], $dir . $name)) {
+                        $ruta = "uploads/$anio_actual/exp_$exp_id/$name";
+                        $pdo->prepare("INSERT INTO expedientes_documentos (expediente_id, subido_por_id, tipo_doc, ruta_archivo, nombre_original) VALUES (?, ?, 'ORDEN_COMPRA', ?, ?)")
+                            ->execute([$exp_id, $user_id, $ruta, $_FILES['archivo_oc_aceptada']['name']]);
+                    }
+                }
+            } else {
+                throw new Exception("Debe adjuntar el archivo PDF de la Orden de Compra Aceptada desde Mercado Público.");
+            }
+
+            $comentario_historial = "El proveedor aceptó la Orden de Compra en el portal. Respaldo oficial de OC Aceptada adjunto. Trámite finalizado.";
+            if ($comentario_acept) {
+                $comentario_historial .= " Observación: " . $comentario_acept;
+            }
+
+            avanzar_flujo($pdo, $exp_id, $user_id, $comentario_historial);
+            $mensaje = "¡Proceso finalizado con éxito! Se registró la Orden de Compra Aceptada."; 
+            $tipo_mensaje = "success"; 
+            $vista = 'lista';
         }
 
         // E. ORDEN RECHAZADA (Devuelve a evaluación)
