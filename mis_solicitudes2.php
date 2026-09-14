@@ -35,7 +35,7 @@ $user_depto = $_SESSION['user_depto_nombre'] ?? 'Municipalidad';
     <!-- CDNs: Fonts, Bootstrap Icons & Bootstrap JS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
     <!-- Bootstrap 5 CSS para Modales y Utilidades -->
@@ -75,7 +75,8 @@ $user_depto = $_SESSION['user_depto_nombre'] ?? 'Municipalidad';
         }
 
         body {
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-variant-numeric: normal;
             background-color: var(--bg-body);
             color: var(--text-main);
             min-height: 100vh;
@@ -1018,7 +1019,7 @@ $user_depto = $_SESSION['user_depto_nombre'] ?? 'Municipalidad';
                     <div class="bg-light border p-3 rounded-3 mb-3 d-flex justify-content-between align-items-center">
                         <div>
                             <span class="text-uppercase text-muted fw-bold" style="font-size: 9px;">Expediente:</span>
-                            <div id="modalAdjuntosCodigo" class="font-monospace fw-bold text-primary"></div>
+                            <div id="modalAdjuntosCodigo" class="fw-bold text-primary"></div>
                         </div>
                         <a id="btnDescargarZip" href="#" class="btn-saas btn-saas-primary btn-saas-sm">
                             <i class="bi bi-download"></i> Bajar ZIP
@@ -1044,7 +1045,7 @@ $user_depto = $_SESSION['user_depto_nombre'] ?? 'Municipalidad';
                 <div class="modal-body p-4">
                     <div class="bg-light border p-3 rounded-3 mb-3">
                         <span class="text-uppercase text-muted fw-bold" style="font-size: 9px;">Expediente:</span>
-                        <div id="modalVerItemsCodigo" class="font-monospace fw-bold text-primary"></div>
+                        <div id="modalVerItemsCodigo" class="fw-bold text-primary"></div>
                     </div>
                     
                     <div class="table-responsive rounded-3 border">
@@ -1186,8 +1187,8 @@ $user_depto = $_SESSION['user_depto_nombre'] ?? 'Municipalidad';
                         <tr>
                             <td class="p-3 text-secondary fw-semibold">${escapeHTML(it.descripcion)}</td>
                             <td class="p-3 text-center fw-bold text-dark">${cant} <span class="text-muted d-block" style="font-size: 10px;">${escapeHTML(it.unidad_medida || '')}</span></td>
-                            <td class="p-3 text-end text-muted font-monospace">${formatCLP(prec)}</td>
-                            <td class="p-3 text-end fw-bold text-dark font-monospace">${formatCLP(cant * prec)}</td>
+                            <td class="p-3 text-end text-muted">${formatCLP(prec)}</td>
+                            <td class="p-3 text-end fw-bold text-dark">${formatCLP(cant * prec)}</td>
                         </tr>
                     `;
                 });

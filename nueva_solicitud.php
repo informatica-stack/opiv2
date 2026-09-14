@@ -1,5 +1,5 @@
 <?php 
-// nueva_solicitud.php - Vista UI (V5.0 - Plan de Compras Integrado)
+// nueva_solicitud.php - Vista UI Renovada (Estilo Clean SaaS Minimalist)
 require_once __DIR__ . '/nueva_solicitud_controller.php'; 
 
 $listado_prov_json = [];
@@ -8,6 +8,7 @@ foreach($mis_proveedores as $p) {
         'id' => (int)$p['id'],
         'rut' => $p['rut'],
         'razon_social' => $p['razon_social'],
+        'direccion' => $p['direccion'] ?? '',
         'frecuente' => true
     ];
 }
@@ -24,43 +25,481 @@ foreach($otros_proveedores as $p) {
             'id' => (int)$p['id'],
             'rut' => $p['rut'],
             'razon_social' => $p['razon_social'],
+            'direccion' => $p['direccion'] ?? '',
             'frecuente' => false
         ];
     }
 }
+
+$user_name = $_SESSION['user_name'] ?? 'Usuario';
+$user_rol = $_SESSION['user_rol'] ?? '';
+$es_jefe = $_SESSION['es_jefe'] ?? 0;
 ?>
 <!DOCTYPE html>
-<html lang="es" data-bs-theme="light">
+<html lang="es">
 <head>
-    <?php 
-    $titulo_pagina = "Nueva compra";
-    include __DIR__ . '/head.php'; 
-    ?>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva Solicitud OPI - Sistema OPI</title>
+
+    <!-- Tipografía Moderna Limpia con Números Estándar (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        :root {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --text-light: #94a3b8;
+            --border-color: #e2e8f0;
+            --border-focus: #3b82f6;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #eff6ff;
+            --success: #10b981;
+            --success-light: #ecfdf5;
+            --warning: #f59e0b;
+            --warning-light: #fffbeb;
+            --danger: #ef4444;
+            --danger-light: #fef2f2;
+            --info: #06b6d4;
+            --info-light: #ecfeff;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --shadow-subtle: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+            --shadow-elevated: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-variant-numeric: normal;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            font-size: 13.5px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* TOPBAR SAAS */
+        .saas-topbar {
+            background: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+
+        .brand-logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #ffffff;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 17px;
+        }
+
+        .brand-text h1 {
+            font-size: 15px;
+            font-weight: 700;
+            margin: 0;
+            color: var(--text-main);
+            letter-spacing: -0.3px;
+        }
+        .brand-text p {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .saas-nav-links {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .saas-nav-item {
+            padding: 7px 14px;
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .saas-nav-item:hover {
+            background: #f1f5f9;
+            color: var(--text-main);
+        }
+        .saas-nav-item.active {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        /* MAIN CONTAINER */
+        .saas-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 28px 24px 80px;
+        }
+
+        /* HEADER ROW */
+        .page-header-row {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .breadcrumbs {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .breadcrumbs a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+        .breadcrumbs a:hover { color: var(--text-main); }
+        .breadcrumbs span.current {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .page-title h2 {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin: 0;
+            color: var(--text-main);
+        }
+        .page-title p {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin: 2px 0 0;
+        }
+
+        /* BOTONES SAAS */
+        .btn-saas {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            border: 1px solid transparent;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+        .btn-saas-primary {
+            background-color: var(--primary);
+            color: #ffffff;
+            box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+        }
+        .btn-saas-primary:hover {
+            background-color: var(--primary-hover);
+            color: #ffffff;
+        }
+        .btn-saas-secondary {
+            background-color: #ffffff;
+            border-color: var(--border-color);
+            color: var(--text-main);
+        }
+        .btn-saas-secondary:hover {
+            background-color: #f8fafc;
+            border-color: #cbd5e1;
+            color: var(--text-main);
+        }
+
+        /* BANNER PRESUPUESTO */
+        .cc-info-card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .cc-meta-badge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .cc-icon-box {
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius-sm);
+            background: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        /* CARDS FORMULARIO (PASOS) */
+        .saas-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-subtle);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+
+        .saas-card-header {
+            padding: 16px 22px;
+            border-bottom: 1px solid var(--border-color);
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .step-pill {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 12px;
+            margin-right: 10px;
+        }
+
+        .saas-card-body {
+            padding: 24px;
+        }
+
+        /* FORM INPUTS */
+        .form-label-saas {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .form-control-saas, .form-select-saas {
+            width: 100%;
+            padding: 9px 13px;
+            font-size: 13.5px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background: #ffffff;
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.15s;
+        }
+        .form-control-saas:focus, .form-select-saas:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+
+        /* TABLA DE ÍTEMS */
+        table.saas-items-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table.saas-items-table th {
+            background: #f8fafc;
+            padding: 10px 14px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+        }
+        table.saas-items-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .summary-box {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 18px 24px;
+            margin-top: 16px;
+        }
+
+        /* DROPZONE SUBIDA */
+        .dropzone-saas {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 30px;
+            text-align: center;
+            background: #fafafa;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .dropzone-saas:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .file-pill {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            margin-top: 8px;
+            font-size: 12.5px;
+        }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans d-flex flex-column min-vh-100">
+<body>
 
-    <?php include __DIR__ . '/nav.php'; ?>
-
-    <div class="container mt-4 px-3 px-md-4">
-        
-        <!-- CABECERA PRINCIPAL -->
-        <div class="row align-items-center mb-4 g-3">
-            <div class="col-12 col-md">
-                <h1 class="h3 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
-                    <i class="bi bi-folder-plus text-primary fs-3"></i>
-                    Nueva Compra
-                </h1>
-                <p class="text-muted small mb-0">El formulario se adaptará dinámicamente según el tipo de compra elegido.</p>
+    <!-- TOPBAR SAAS UNIFICADA -->
+    <header class="saas-topbar">
+        <a href="index.php" class="brand-box">
+            <div class="brand-logo-icon">O</div>
+            <div class="brand-text">
+                <h1>Sistema OPI</h1>
+                <p>Órdenes de Pedido Interno</p>
             </div>
-            <div class="col-12 col-md-auto text-start text-md-end">
-                <a href="mis_solicitudes.php" class="btn btn-outline-secondary btn-sm px-3 shadow-sm">
-                    Cancelar
+        </a>
+
+        <nav class="saas-nav-links d-none d-lg-flex">
+            <a href="mis_solicitudes.php" class="saas-nav-item"><i class="bi bi-journal-text"></i> Mis Solicitudes</a>
+            <a href="nueva_solicitud.php" class="saas-nav-item active"><i class="bi bi-plus-circle"></i> Nueva Solicitud</a>
+            <?php if($es_jefe == 1 || $user_rol === 'JEFE_UNIDAD' || $user_rol === 'ADMIN_MUNICIPAL' || $user_rol === 'SYSADMIN'): ?>
+                <a href="jefatura.php" class="saas-nav-item"><i class="bi bi-shield-check"></i> V°B° Jefatura</a>
+            <?php endif; ?>
+            <?php if($user_rol === 'PRESUPUESTO' || $user_rol === 'ADMIN_MUNICIPAL' || $user_rol === 'SYSADMIN'): ?>
+                <a href="control_presupuestario.php" class="saas-nav-item"><i class="bi bi-calculator"></i> Presupuesto</a>
+                <a href="centros_de_costo.php" class="saas-nav-item"><i class="bi bi-wallet2"></i> Centros Costo</a>
+            <?php endif; ?>
+        </nav>
+
+        <div class="d-flex align-items-center gap-2">
+            <!-- Menú global modular -->
+            <div class="dropdown">
+                <button class="btn-saas btn-saas-secondary btn-saas-sm dropdown-toggle d-flex align-items-center gap-1.5" type="button" id="dropdownGlobalNav" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-grid-fill text-primary"></i>
+                    <span class="d-none d-sm-inline">Módulos</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-light mt-2 p-2" aria-labelledby="dropdownGlobalNav" style="min-width: 250px;">
+                    <li><span class="dropdown-header text-uppercase text-secondary fw-bold" style="font-size: 9px;">Panel Principal</span></li>
+                    <?php if($user_rol === 'PRESUPUESTO' || $user_rol === 'ADMIN_MUNICIPAL' || $user_rol === 'SYSADMIN'): ?>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard OPIs</a></li>
+                    <?php endif; ?>
+                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="mis_solicitudes.php"><i class="bi bi-journal-text"></i> Mis Solicitudes</a></li>
+                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2 active bg-primary text-white" href="nueva_solicitud.php"><i class="bi bi-plus-circle"></i> Nueva Solicitud</a></li>
+                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="subrogancia.php"><i class="bi bi-person-gear"></i> Configurar Suplente</a></li>
+                    
+                    <?php if($es_jefe == 1 || $user_rol === 'JEFE_UNIDAD' || $user_rol === 'ADMIN_MUNICIPAL' || $user_rol === 'SYSADMIN'): ?>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><span class="dropdown-header text-uppercase text-secondary fw-bold" style="font-size: 9px;">Visaciones</span></li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="jefatura.php"><i class="bi bi-shield-check"></i> V°B° Jefatura</a></li>
+                        <?php if($user_rol === 'ADMIN_MUNICIPAL' || $user_rol === 'SYSADMIN'): ?>
+                            <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="administrador.php"><i class="bi bi-pencil-square"></i> Firma de OPI</a></li>
+                        <?php endif; ?>
+                    <?php endif; ?>
+
+                    <?php if($user_rol === 'PRESUPUESTO' || $user_rol === 'FINANZAS' || $user_rol === 'SYSADMIN'): ?>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><span class="dropdown-header text-uppercase text-secondary fw-bold" style="font-size: 9px;">Presupuesto y Finanzas</span></li>
+                        <?php if($user_rol === 'PRESUPUESTO' || $user_rol === 'SYSADMIN'): ?>
+                            <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="control_presupuestario.php"><i class="bi bi-calculator"></i> VB Presupuestario</a></li>
+                            <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="centros_de_costo.php"><i class="bi bi-wallet2"></i> Centros de Costo</a></li>
+                            <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="mantenedor_cuentas.php"><i class="bi bi-list-columns-reverse"></i> Cuentas Presupuestarias</a></li>
+                        <?php endif; ?>
+                        <?php if($user_rol === 'FINANZAS' || $user_rol === 'SYSADMIN'): ?>
+                            <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="finanzas.php"><i class="bi bi-file-earmark-check"></i> Firma de CDP</a></li>
+                        <?php endif; ?>
+                    <?php endif; ?>
+
+                    <?php if($user_rol === 'ADQUISICIONES' || $user_rol === 'SYSADMIN'): ?>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><span class="dropdown-header text-uppercase text-secondary fw-bold" style="font-size: 9px;">Adquisiciones</span></li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="adquisiciones.php"><i class="bi bi-cart3"></i> Bandeja Adquisiciones</a></li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+
+            <a href="mis_solicitudes.php" class="btn-saas btn-saas-secondary btn-saas-sm">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </header>
+
+    <main class="saas-container">
+        
+        <!-- HEADER -->
+        <div class="page-header-row">
+            <div class="page-title">
+                <div class="breadcrumbs">
+                    <a href="mis_solicitudes.php">Mis Solicitudes</a>
+                    <i class="bi bi-chevron-right" style="font-size: 9px;"></i>
+                    <span class="current">Nueva Solicitud OPI</span>
+                </div>
+                <h2>Nueva Orden de Pedido Interno</h2>
+                <p>Ingrese los antecedentes, justificación técnica y desglose de ítems requeridos.</p>
+            </div>
+
+            <div>
+                <a href="mis_solicitudes.php" class="btn-saas btn-saas-secondary">
+                    <i class="bi bi-x-lg"></i> Cancelar
                 </a>
             </div>
         </div>
 
         <?php if ($mensaje): ?>
-            <div class="alert alert-danger d-flex align-items-center gap-2 mb-4" role="alert">
+            <div class="alert alert-danger d-flex align-items-center gap-2 mb-4 rounded-3 shadow-sm" role="alert">
                 <i class="bi bi-exclamation-triangle-fill"></i>
                 <div><?= htmlspecialchars($mensaje) ?></div>
             </div>
@@ -70,1568 +509,594 @@ foreach($otros_proveedores as $p) {
             <div class="alert alert-warning text-center p-5 rounded-4 shadow-sm mb-4" role="alert">
                 <i class="bi bi-exclamation-circle fs-1 text-warning mb-3 d-block"></i>
                 <h4 class="alert-heading fw-bold">Sin Presupuesto Asignado</h4>
-                <p class="mb-0">Contacte a Finanzas para configurar el Centro de Costo de su Unidad.</p>
+                <p class="mb-0">Contacte al área de Presupuesto para configurar el Centro de Costo de su Unidad.</p>
             </div>
         <?php else: ?>
 
-        <!-- WIDGET DE INFORMACIÓN PRESUPUESTARIA -->
-        <div class="card border-0 bg-primary-subtle shadow-sm mb-4">
-            <div class="card-body p-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="p-3 bg-primary text-white rounded-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                        <i class="bi bi-bank fs-4"></i>
-                    </div>
-                    <div>
-                        <p class="text-uppercase text-secondary fw-bold small mb-1" style="font-size: 10px; letter-spacing: 0.5px;">Imputación Presupuestaria de Unidad</p>
-                        <h6 class="fw-bold text-dark mb-0"><?= htmlspecialchars($centro_costo['nombre']) ?></h6>
-                    </div>
+        <!-- BANNER DE CENTRO DE COSTO ASIGNADO -->
+        <div class="cc-info-card">
+            <div class="cc-meta-badge">
+                <div class="cc-icon-box"><i class="bi bi-bank"></i></div>
+                <div>
+                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Imputación Presupuestaria de Unidad</div>
+                    <div style="font-size: 15px; font-weight: 800; color: var(--text-main);"><?= htmlspecialchars($centro_costo['nombre']) ?></div>
                 </div>
-                <div class="bg-white border px-3 py-2 rounded-3 shadow-sm d-flex align-items-center gap-2 shrink-0">
-                    <span class="text-uppercase text-muted fw-bold" style="font-size: 10px;">CENTTRO DE COSTOS</span>
-                    <span class="font-monospace fw-bold text-primary">#<?= htmlspecialchars($centro_costo['codigo_cuenta']) ?></span>
-                </div>
+            </div>
+
+            <div style="background: var(--bg-body); border: 1px solid var(--border-color); padding: 8px 14px; border-radius: var(--radius-sm); font-size: 12.5px;">
+                <span style="color: var(--text-muted);">Centro de Costos:</span>
+                <strong style="color: var(--primary); font-weight: 700;">#<?= htmlspecialchars($centro_costo['codigo_cuenta']) ?></strong>
             </div>
         </div>
 
+        <!-- FORMULARIO PRINCIPAL -->
         <form method="POST" action="nueva_solicitud.php" enctype="multipart/form-data" id="formCompra" onsubmit="return procesarEnvio(event)">
-    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
             <input type="hidden" name="accion" value="crear">
+            <input type="hidden" name="prioridad_id" value="1">
 
-            <!-- PASO 1: DATOS GENERALES -->
-            <div class="card shadow-sm border-light mb-4">
-                <div class="card-header bg-white py-3">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-primary rounded-pill px-2.5 py-2 fs-6">1</span>
+            <!-- PASO 1: ANTECEDENTES GENERALES -->
+            <div class="saas-card">
+                <div class="saas-card-header">
+                    <div class="d-flex align-items-center">
+                        <span class="step-pill">1</span>
                         <div>
-                            <h5 class="fw-bold mb-0">Datos del Trámite</h5>
-                            <p class="text-muted small mb-0">Defina la justificación, tipo de compra y rango de monto de la solicitud.</p>
+                            <h3 style="font-size: 15px; font-weight: 700; margin: 0;">Antecedentes del Trámite</h3>
+                            <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Defina el título, justificación, tipo de compra y proyecto asociado.</p>
                         </div>
                     </div>
                 </div>
-                <div class="card-body p-4">
+
+                <div class="saas-card-body">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label fw-bold text-secondary small">Título de la Compra <span class="text-danger">*</span></label>
-                            <input type="text" name="titulo_compra" required class="form-control fw-semibold" value="<?= htmlspecialchars($post_titulo_compra) ?>">
+                            <label class="form-label-saas">Título del Requerimiento <span class="text-danger">*</span></label>
+                            <input type="text" name="titulo_compra" required class="form-control-saas" placeholder="Ej: Adquisición de Insumos de Oficina y Tóner para Atención Vecinal" value="<?= htmlspecialchars($post_titulo_compra) ?>">
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label fw-bold text-secondary small">Justificación Técnica / Observaciones <span class="text-danger">*</span></label>
-                            <textarea name="motivo" required rows="3" class="form-control"><?= htmlspecialchars($post_motivo) ?></textarea>
+                            <label class="form-label-saas">Justificación Técnica / Fundamentación <span class="text-danger">*</span></label>
+                            <textarea name="motivo" required rows="3" class="form-control-saas" placeholder="Explique la necesidad y destino de los bienes o servicios solicitados..."><?= htmlspecialchars($post_motivo) ?></textarea>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label fw-bold text-secondary small">Tipo de Compra</label>
-                            <select name="tipo_compra_id" id="selTipoCompra" required class="form-select fw-bold text-primary" onchange="evaluarFormularioReactivo()">
-                                <option value="">-- Seleccione --</option>
+                            <label class="form-label-saas">Modalidad / Tipo de Compra <span class="text-danger">*</span></label>
+                            <select name="tipo_compra_id" id="selTipoCompra" required class="form-select-saas" onchange="evaluarFormularioReactivo()">
+                                <option value="">-- Seleccione Tipo de Compra --</option>
                                 <?php foreach($tipos_compra as $t): ?>
-                                    <option value="<?= $t['id'] ?>" <?= $post_tipo_compra == $t['id'] ? 'selected' : '' ?>><?= $t['nombre'] ?></option>
+                                    <option value="<?= $t['id'] ?>" <?= $post_tipo_compra == $t['id'] ? 'selected' : '' ?>><?= htmlspecialchars($t['nombre']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label fw-bold text-secondary small">Rango de Monto (Art. 10)</label>
-                            <select name="rango_utm_id" required class="form-select">
+                            <label class="form-label-saas">Rango de Monto Estimado (Art. 10) <span class="text-danger">*</span></label>
+                            <select name="rango_utm_id" required class="form-select-saas">
                                 <option value="">-- Seleccione el Rango UTM --</option>
                                 <?php foreach($rangos_utm as $r): ?>
                                     <option value="<?= $r['id'] ?>" <?= $post_rango_utm == $r['id'] ? 'selected' : '' ?>>
-                                        <?= $r['nombre'] ?> (<?= $r['min_utm'] ?> - <?= $r['max_utm'] ? $r['max_utm'].' UTM' : 'y más' ?>)
+                                        <?= htmlspecialchars($r['nombre']) ?> (<?= $r['min_utm'] ?> - <?= $r['max_utm'] ? $r['max_utm'].' UTM' : 'y más' ?>)
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        
+
                         <div class="col-12">
-                            <div class="row g-3 bg-light p-3 border rounded-3 m-0">
-                                <div class="col-md-6 mt-0">
-                                    <label class="form-label fw-bold text-secondary small">Proyecto (Plan de Compras) <span class="text-danger">*</span></label>
-                                    <input type="text" name="plan_compras_proyecto" required class="form-control bg-white" value="<?= htmlspecialchars($post_plan_proyecto) ?>">
-                                </div>
-                                <div class="col-md-6 mt-0">
-                                    <label class="form-label fw-bold text-secondary small">Ítem N° (Plan de Compras) <span class="text-danger">*</span></label>
-                                    <input type="number" name="plan_compras_item" required min="1" step="1" class="form-control bg-white" value="<?= htmlspecialchars($post_plan_item) ?>">
+                            <div class="p-3 bg-light border rounded-3">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label-saas">Proyecto (Plan Anual de Compras) <span class="text-danger">*</span></label>
+                                        <input type="text" name="plan_compras_proyecto" required class="form-control-saas" placeholder="Nombre del programa o proyecto" value="<?= htmlspecialchars($post_plan_proyecto) ?>">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label-saas">Ítem N° (Plan Anual de Compras) <span class="text-danger">*</span></label>
+                                        <input type="number" name="plan_compras_item" required min="1" step="1" class="form-control-saas" placeholder="Ej: 1" value="<?= htmlspecialchars($post_plan_item) ?>">
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <input type="hidden" name="prioridad_id" value="1">
-
+                        <!-- PANEL MONTO DISPONIBLE PARA COTIZACIÓN / LICITACIÓN -->
                         <div class="col-12 d-none" id="divMontoDisponible">
-                            <div class="p-3.5 bg-blue-50 border border-blue-200 rounded-3 shadow-sm">
-                                <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-2 mb-2.5">
-                                    <label class="form-label fw-bold text-primary small mb-0 d-flex align-items-center gap-1.5">
-                                        <i class="bi bi-cash-stack"></i>
-                                        Monto Estimado / Disponible para Cotización <span class="text-danger">*</span>
+                            <div style="background: var(--primary-light); border: 1px solid #bfdbfe; border-radius: var(--radius-sm); padding: 18px;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label-saas" style="color: var(--primary); margin: 0;">
+                                        <i class="bi bi-cash-stack me-1"></i> Monto Máximo Estimado para Cotización <span class="text-danger">*</span>
                                     </label>
-                                    <div class="btn-group btn-group-sm" role="group" aria-label="Régimen Monto Disponible">
+                                    <div class="btn-group btn-group-sm" role="group">
                                         <input type="radio" class="btn-check" name="disp_imp_tipo" id="disp_neto" value="NETO" <?= ($post_tipo_impuesto === 'NETO' || empty($post_tipo_impuesto)) ? 'checked' : '' ?> onchange="cambiarRegimenImpuesto('NETO')">
-                                        <label class="btn btn-outline-primary fw-bold btn-sm py-1 px-2.5" for="disp_neto" style="font-size: 11px;">
-                                            <i class="bi bi-tag me-1"></i> Neto (Sin IVA)
-                                        </label>
+                                        <label class="btn btn-outline-primary btn-sm py-0.5 px-2" for="disp_neto" style="font-size: 11px;">Neto</label>
                                         
                                         <input type="radio" class="btn-check" name="disp_imp_tipo" id="disp_bruto" value="IVA_INCLUIDO" <?= $post_tipo_impuesto === 'IVA_INCLUIDO' ? 'checked' : '' ?> onchange="cambiarRegimenImpuesto('IVA_INCLUIDO')">
-                                        <label class="btn btn-outline-primary fw-bold btn-sm py-1 px-2.5" for="disp_bruto" style="font-size: 11px;">
-                                            <i class="bi bi-receipt me-1"></i> Con IVA (Total)
-                                        </label>
+                                        <label class="btn btn-outline-primary btn-sm py-0.5 px-2" for="disp_bruto" style="font-size: 11px;">IVA Incluido</label>
                                     </div>
                                 </div>
+
                                 <div class="row g-3 align-items-center">
                                     <div class="col-12 col-md-5">
                                         <div class="input-group">
-                                            <span class="input-group-text bg-primary text-white fw-bold">$</span>
-                                            <input type="text" name="monto_disponible_neto" id="inpMontoDisponible" class="form-control fw-bold text-primary bg-white fs-6 shadow-sm" placeholder="0" oninput="handleMontoInput(this)" value="<?= htmlspecialchars($post_monto_disponible_neto ?? '') ?>">
+                                            <span class="input-group-text bg-white fw-bold">$</span>
+                                            <input type="text" name="monto_disponible_neto" id="inpMontoDisponible" class="form-control fw-bold text-primary fs-6" placeholder="0" oninput="handleMontoInput(this)" value="<?= htmlspecialchars($post_monto_disponible_neto ?? '') ?>">
                                         </div>
                                     </div>
                                     <div class="col-12 col-md-7">
-                                        <div class="d-flex flex-wrap align-items-center justify-content-between p-2 bg-white rounded-2 border small font-monospace">
-                                            <span class="text-muted">Neto: <strong class="text-dark" id="dispPreviewNeto">$ 0</strong></span>
-                                            <span class="text-muted">IVA (19%): <strong class="text-dark" id="dispPreviewIva">$ 0</strong></span>
-                                            <span class="text-primary fw-bold">Total: <strong class="text-primary fs-6" id="dispPreviewTotal">$ 0</strong></span>
+                                        <div class="d-flex justify-content-between p-2 bg-white rounded border small">
+                                            <span>Neto: <strong id="dispPreviewNeto">$ 0</strong></span>
+                                            <span>IVA (19%): <strong id="dispPreviewIva">$ 0</strong></span>
+                                            <span class="text-primary fw-bold">Total: <strong id="dispPreviewTotal">$ 0</strong></span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- PANELES DINÁMICOS REACTIVOS CON TRANSICIÓN -->
-                    <div id="panel-proveedor" class="panel-slide bg-light border rounded-3 p-4 mt-3">
-                        <h6 class="text-primary-emphasis fw-bold mb-3 d-flex align-items-center gap-2">
-                            <i class="bi bi-person-fill-check fs-5"></i>
-                            Asignación Directa de Proveedor
-                        </h6>
-                        
-                        <!-- Tarjeta de Resumen del Proveedor Seleccionado -->
-                        <div class="card border border-light-subtle shadow-sm bg-white rounded-3 p-3">
-                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-                                <div id="provResumenVacio" class="d-flex align-items-center gap-2 text-secondary">
-                                    <i class="bi bi-exclamation-triangle fs-4 text-warning"></i>
-                                    <div>
-                                        <div class="fw-bold text-dark small">Sin Proveedor Asignado</div>
-                                        <div class="text-muted" style="font-size: 11px;">Por favor, seleccione o pre-registre el proveedor para esta compra.</div>
-                                    </div>
-                                </div>
-                                <div id="provResumenDetalle" class="d-none d-flex align-items-center gap-3">
-                                    <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
-                                        <i class="bi bi-building fs-5"></i>
-                                    </div>
-                                    <div>
-                                        <div class="fw-bold text-primary small" id="provResumenRazonSocial"></div>
-                                        <div class="text-secondary font-monospace" style="font-size: 11px;">RUT: <span id="provResumenRut"></span></div>
-                                        <div class="text-muted" style="font-size: 11px;" id="provResumenDireccion"></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <button type="button" class="btn btn-primary btn-sm fw-bold px-3 py-1.5 shadow-sm d-flex align-items-center gap-1.5" onclick="abrirModalProveedor()">
-                                        <i class="bi bi-search"></i>
-                                        <span id="btnSelectProvText">Seleccionar Proveedor</span>
+                        <!-- PANEL PROVEEDOR REACTIVO -->
+                        <div class="col-12" id="panel-proveedor" style="display: none;">
+                            <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 16px;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label-saas mb-0"><i class="bi bi-person-check me-1"></i> Proveedor Asignado / Cotizado</label>
+                                    <button type="button" class="btn-saas btn-saas-secondary btn-saas-sm" onclick="abrirModalProveedor()">
+                                        <i class="bi bi-search"></i> <span id="btnSelectProvText">Buscar Proveedor</span>
                                     </button>
                                 </div>
-                            </div>
-                        </div>
 
-                        <!-- Modal Selección de Proveedor -->
-                        <div class="modal fade" id="modalSeleccionarProveedor" tabindex="-1" aria-labelledby="modalSeleccionarProveedorLabel" aria-hidden="true" data-bs-backdrop="static">
-                            <div class="modal-dialog modal-dialog-centered modal-lg">
-                                <div class="modal-content rounded-3 shadow">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="modalSeleccionarProveedorLabel">
-                                            <i class="bi bi-search text-primary"></i>
-                                            Búsqueda y Registro de Proveedor
-                                        </h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body p-4 overflow-visible">
-                                        
-                                        <!-- Buscador Autocomplete -->
-                                        <div class="mb-4">
-                                            <label class="form-label fw-bold text-secondary small uppercase" style="font-size: 10px; letter-spacing: 0.5px;">🔎 Buscar Proveedor (RUT o Razón Social)</label>
-                                            <div class="custom-select-container" id="containerProveedor">
-                                                <input type="text" id="buscadorProv" class="form-control bg-white custom-select-input fw-bold" placeholder="🔎 Escriba RUT o Razón Social para buscar..." autocomplete="off" onfocus="showProvDropdown()" oninput="filterProvDropdown()">
-                                                <input type="hidden" name="proveedor_id" id="selProveedor" value="">
-                                                <div class="custom-select-dropdown" id="dropdownProv">
-                                                    <!-- Opciones dinámicas renderizadas por JS -->
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Panel Nuevo Proveedor (Inline en el Modal) -->
-                                        <div id="panelNuevoProv" class="panel-slide bg-light border border-info rounded-3 p-3 mt-3 shadow-sm d-none">
-                                            <h6 class="text-info-emphasis fw-bold mb-1">Registro de Nuevo Proveedor en Adquisiciones</h6>
-                                            <p class="text-muted mb-3" style="font-size: 11px;">Ingrese los datos para pre-registro. <b>Es obligatorio</b> subir la Ficha o Cotización formal en PDF.</p>
-                                            
-                                            <div class="row g-3">
-                                                <div class="col-md-6">
-                                                    <label class="form-label fw-bold text-secondary small">RUT Sugerido <span class="text-danger">*</span></label>
-                                                    <div class="input-group input-group-sm">
-                                                        <input type="text" name="nuevo_prov_rut" id="inpNuevoProvRut" class="form-control inp-nuevo-prov bg-white font-monospace" oninput="handleRutInput(this)">
-                                                        <span class="input-group-text bg-white text-secondary py-0" id="rutStatusIcon" style="font-size: 11px; min-width: 32px; text-align: center; justify-content: center;">➖</span>
-                                                    </div>
-                                                    <div id="rutValidationMsg" class="small text-danger d-none mt-1" style="font-size: 10px;">⚠️ El formato o dígito verificador del RUT es inválido.</div>
-                                                    <div id="rutDuplicateAlert" class="alert alert-warning p-2 mt-2 mb-0 small d-none" style="font-size: 11px; border-left: 4px solid #ffc107;">
-                                                        <strong>⚠️ Ya registrado:</strong> <span id="duplicateProvName" class="fw-bold"></span>. 
-                                                        <button type="button" class="btn btn-xs btn-warning py-0 px-2 fw-bold text-dark border-0 ms-2" onclick="selectDuplicateProvider()" style="font-size: 10px; background: #e0a800;">Seleccionar</button>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label fw-bold text-secondary small">Razón Social / Nombre Sugerido <span class="text-danger">*</span></label>
-                                                    <input type="text" name="nuevo_prov_nombre" id="inpNuevoProvNombre" class="form-control form-control-sm inp-nuevo-prov bg-white">
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label fw-bold text-secondary small">Dirección y Comuna Sugerida</label>
-                                                    <input type="text" name="nuevo_prov_direccion" id="inpNuevoProvDireccion" class="form-control form-control-sm bg-white">
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label fw-bold text-secondary small">Ficha del Proveedor (PDF) <span class="text-danger">*</span></label>
-                                                    <input type="file" name="ficha_proveedor" id="inpFichaProveedor" accept="application/pdf" class="form-control form-control-sm bg-white">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                    </div>
-                                    <div class="modal-footer bg-light">
-                                        <button type="button" class="btn btn-outline-secondary btn-sm px-4 fw-semibold" data-bs-dismiss="modal">Cancelar</button>
-                                        <button type="button" class="btn btn-primary btn-sm px-4 fw-bold shadow" onclick="confirmarSeleccionProveedor()">Confirmar Selección</button>
-                                    </div>
+                                <div id="provResumenVacio" class="text-muted small">
+                                    <em>No ha seleccionado un proveedor específico aún.</em>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div id="panel-suministro" class="panel-slide bg-light border rounded-3 p-4 mt-3">
-                        <h6 class="text-teal-emphasis fw-bold mb-2 d-flex align-items-center gap-2">
-                            <i class="bi bi-file-earmark-check fs-5"></i>
-                            Datos de Contrato de Suministro
-                        </h6>
-                        <p class="text-muted small mb-3">Indique el identificador o número del contrato vigente.</p>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold text-secondary small">ID / N° de Contrato <span class="text-danger">*</span></label>
-                                <input type="text" name="id_contrato_suministro" id="inp_id_contrato_suministro" class="form-control bg-white" value="<?= htmlspecialchars($post_id_contrato_suministro) ?>">
-                            </div>
-                        </div>
-                    </div>
+                                <div id="provResumenDetalle" class="d-none bg-white p-3 border rounded-3 d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-bold text-primary" id="provResumenRazonSocial"></div>
+                                        <div class="text-muted small">RUT: <span id="provResumenRut" style="font-weight: 600;"></span></div>
+                                        <div class="text-muted small" id="provResumenDireccion"></div>
+                                    </div>
+                                    <button type="button" class="btn btn-link text-danger p-0" onclick="deseleccionarProveedor()" title="Quitar"><i class="bi bi-trash"></i></button>
+                                </div>
 
-                    <div id="panel-criterios" class="panel-slide bg-light border rounded-3 p-4 mt-3">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div>
-                                <h6 class="text-purple-emphasis fw-bold mb-1 d-flex align-items-center gap-2">
-                                    <i class="bi bi-calculator fs-5"></i>
-                                    Criterios de Evaluación
-                                </h6>
-                                <p class="text-muted small mb-0">Defina cómo se evaluarán las ofertas en la Licitación (La suma debe ser 100%).</p>
+                                <input type="hidden" name="proveedor_id" id="hiddenProveedorId" value="<?= htmlspecialchars($post_proveedor_id ?? '') ?>">
                             </div>
-                            <button type="button" onclick="agregarCriterio()" class="btn btn-secondary btn-sm fw-bold shadow-sm">+ Añadir</button>
                         </div>
-                        
-                        <div class="bg-white rounded-3 border overflow-hidden">
-                            <table class="table table-sm table-striped align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="p-2 text-center" style="width: 60px;">N°</th>
-                                        <th class="p-2">Descripción del Criterio (Ej: Precio, Plazo...)</th>
-                                        <th class="p-2 text-center" style="width: 120px;">Pond. %</th>
-                                        <th class="p-2" style="width: 40px;"></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tbodyCriterios" class="divide-y divide-purple-50">
-                                </tbody>
-                                <tfoot>
-                                    <tr class="table-light">
-                                        <td colspan="2" class="p-2 text-end fw-bold">SUMA TOTAL:</td>
-                                        <td class="p-2 text-center fw-bold" id="tdTotalCriterio">0%</td>
-                                        <td></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
+
+                        <!-- PANEL CONTRATO SUMINISTRO -->
+                        <div class="col-12" id="panel-suministro" style="display: none;">
+                            <label class="form-label-saas">ID o N° Decreto Contrato de Suministro <span class="text-danger">*</span></label>
+                            <input type="text" name="id_contrato_suministro" id="inpSuministro" class="form-control-saas" placeholder="Ej: Decreto Alcaldicio N° 1234/2026" value="<?= htmlspecialchars($post_id_contrato_suministro ?? '') ?>">
                         </div>
-                        <div id="errorCriterios" class="text-danger small fw-bold mt-2 d-none">⚠️ La suma de los criterios debe ser exactamente 100%.</div>
                     </div>
                 </div>
             </div>
 
-            <!-- PASO 2: DETALLE DE PRODUCTOS/SERVICIOS -->
-            <div class="card shadow-sm border-light mb-4">
-                <div class="card-header bg-white py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-primary rounded-pill px-2.5 py-2 fs-6">2</span>
+            <!-- PASO 2: DESGLOSE DE ÍTEMS -->
+            <div class="saas-card" id="cardItems">
+                <div class="saas-card-header">
+                    <div class="d-flex align-items-center">
+                        <span class="step-pill">2</span>
                         <div>
-                            <h5 class="fw-bold mb-0">Detalle de Productos/Servicios</h5>
-                            <p class="text-muted small mb-0">Ingrese los ítems de la compra y elija el régimen tributario de los precios.</p>
+                            <h3 style="font-size: 15px; font-weight: 700; margin: 0;">Desglose de Ítems Solicitados</h3>
+                            <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Indique los productos o servicios con su respectiva cuenta presupuestaria.</p>
                         </div>
                     </div>
-                    
-                    <!-- SELECTOR DE RÉGIMEN DE PRECIOS CON IVA / SIN IVA -->
-                    <div class="d-flex align-items-center gap-2 bg-light p-1.5 rounded-3 border">
-                        <span class="small fw-bold text-secondary text-uppercase tracking-wider px-1" style="font-size: 10px;">Régimen de Precios:</span>
-                        <div class="btn-group btn-group-sm" role="group" aria-label="Régimen de Precios">
-                            <input type="radio" class="btn-check" name="tipo_impuesto" id="imp_neto" value="NETO" <?= ($post_tipo_impuesto === 'NETO' || empty($post_tipo_impuesto)) ? 'checked' : '' ?> onchange="cambiarRegimenImpuesto('NETO')">
-                            <label class="btn btn-outline-primary fw-bold btn-sm py-1 px-2.5" for="imp_neto">
-                                <i class="bi bi-tag me-1"></i> Precios Sin IVA (Neto)
-                            </label>
-                            
-                            <input type="radio" class="btn-check" name="tipo_impuesto" id="imp_bruto" value="IVA_INCLUIDO" <?= $post_tipo_impuesto === 'IVA_INCLUIDO' ? 'checked' : '' ?> onchange="cambiarRegimenImpuesto('IVA_INCLUIDO')">
-                            <label class="btn btn-outline-primary fw-bold btn-sm py-1 px-2.5" for="imp_bruto">
-                                <i class="bi bi-receipt me-1"></i> Precios Con IVA (Total)
-                            </label>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="btn-group btn-group-sm">
+                            <input type="radio" class="btn-check" name="tipo_impuesto" id="reg_neto" value="NETO" <?= ($post_tipo_impuesto === 'NETO' || empty($post_tipo_impuesto)) ? 'checked' : '' ?> onchange="cambiarRegimenImpuesto('NETO')">
+                            <label class="btn btn-outline-secondary btn-sm py-1 px-2.5" for="reg_neto" style="font-size: 11px;">Precios Netos</label>
+
+                            <input type="radio" class="btn-check" name="tipo_impuesto" id="reg_iva" value="IVA_INCLUIDO" <?= $post_tipo_impuesto === 'IVA_INCLUIDO' ? 'checked' : '' ?> onchange="cambiarRegimenImpuesto('IVA_INCLUIDO')">
+                            <label class="btn btn-outline-secondary btn-sm py-1 px-2.5" for="reg_iva" style="font-size: 11px;">Con IVA Incluido</label>
                         </div>
+
+                        <button type="button" class="btn-saas btn-saas-primary btn-saas-sm" onclick="agregarItemFila()">
+                            <i class="bi bi-plus-lg"></i> Agregar Ítem
+                        </button>
                     </div>
                 </div>
 
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="text-muted small fw-semibold"><i class="bi bi-list-check me-1"></i> Lista de Ítems / Insumos:</span>
-                        <button type="button" onclick="agregarFila()" class="btn btn-primary btn-sm fw-bold shadow-sm d-flex align-items-center gap-1.5 transition">
-                            <i class="bi bi-plus-lg"></i>
-                            Agregar Ítem
-                        </button>
-                    </div>
-
-                    <div class="table-responsive rounded-3 border">
-                        <table class="table table-hover align-middle mb-0" style="min-width: 900px;">
-                            <thead class="table-light text-uppercase small text-secondary">
+                <div class="saas-card-body p-0">
+                    <div class="table-responsive">
+                        <table class="saas-items-table" id="tablaItems">
+                            <thead>
                                 <tr>
-                                    <th class="p-3 w-25">Cuenta de Gasto</th>
-                                    <th class="p-3">Descripción del Producto / Servicio</th>
-                                    <th class="p-3 col-cm d-none text-primary" style="width: 140px;">ID Convenio Marco</th>
-                                    <th class="p-3" style="width: 120px;">Unidad</th>
-                                    <th class="p-3 text-center" style="width: 90px;">Cant.</th>
-                                    <th class="p-3 text-end col-precio" id="thPrecioUnit" style="width: 150px;">Precio Unit. (Neto)</th>
-                                    <th class="p-3 text-end" id="thTotalLinea" style="width: 140px;">Total Línea</th>
-                                    <th class="p-3" style="width: 50px;"></th>
+                                    <th style="min-width: 260px;">Descripción del Producto / Servicio</th>
+                                    <th style="width: 140px;" class="th-cm d-none">ID Convenio Marco</th>
+                                    <th style="width: 110px;">Unidad</th>
+                                    <th style="width: 90px; text-align: center;">Cant.</th>
+                                    <th style="width: 130px; text-align: right;">Precio Unit.</th>
+                                    <th style="min-width: 200px;">Cuenta Presupuestaria</th>
+                                    <th style="width: 130px; text-align: right;">Total Línea</th>
+                                    <th style="width: 50px; text-align: center;"></th>
                                 </tr>
                             </thead>
                             <tbody id="tbodyItems"></tbody>
-                            
-                            <tfoot class="table-light text-secondary">
-                                <tr>
-                                    <td colspan="5" class="p-3 text-end fw-semibold foot-colspan">Monto Subtotal Neto:</td>
-                                    <td class="p-3 text-end fw-bold font-monospace" id="tdNeto">$ 0</td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <td colspan="5" class="p-3 text-end fw-semibold foot-colspan">Impuesto (IVA 19%):</td>
-                                    <td class="p-3 text-end fw-bold font-monospace" id="tdIva">$ 0</td>
-                                    <td></td>
-                                </tr>
-                                <tr class="table-active">
-                                    <td colspan="5" class="p-3 text-end fw-bold text-dark foot-colspan">TOTAL ESTIMADO / A IMPUTAR:</td>
-                                    <td class="p-3 text-end fw-black text-primary fs-5 font-monospace" id="tdTotal">$ 0</td>
-                                    <td></td>
-                                </tr>
-                            </tfoot>
                         </table>
                     </div>
-                    <div id="errorTabla" class="alert alert-danger mt-3 d-none"></div>
-                </div>
-            </div>
 
-            <!-- PASO 3: DOCUMENTACIÓN ADJUNTA Y ENVÍO -->
-            <div class="card shadow-sm border-light mb-4">
-                <div class="card-header bg-white py-3">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-primary rounded-pill px-2.5 py-2 fs-6">3</span>
-                        <div>
-                            <h5 class="fw-bold mb-0">Documentación Adjunta</h5>
-                            <p class="text-muted small mb-0">Debe subir cotizaciones, TDR, bases de licitación o toda documentación requerida.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card-body p-4">
-                    <div class="mb-2">
-                        <label class="form-label fw-bold text-secondary small" id="lblAdjunto">Documentos adjuntos (TDR/Cotizaciones/Patente. Etc...)</label>
-                        
-                        <!-- Drag and Drop Dropzone -->
-                        <div id="dropzone" tabindex="0" role="button" class="border border-2 border-dashed border-primary bg-light rounded-3 p-4 text-center d-flex flex-column align-items-center justify-content-center gap-2" style="cursor: pointer;">
-                            <div class="p-3 bg-white text-primary rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                <i class="bi bi-cloud-upload fs-4"></i>
+                    <!-- TOTALES RESUMEN -->
+                    <div class="p-4 bg-light border-top">
+                        <div class="row justify-content-end">
+                            <div class="col-12 col-md-5">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Subtotal Neto:</span>
+                                    <strong id="lblSubtotalNeto" style="font-weight: 700;">$ 0</strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">IVA Estimado (19%):</span>
+                                    <strong id="lblIvaTotal" style="font-weight: 700;">$ 0</strong>
+                                </div>
+                                <div class="d-flex justify-content-between pt-2 border-top">
+                                    <span class="fw-bold fs-6">Total Solicitud:</span>
+                                    <strong class="fs-5 text-primary" id="lblGranTotal" style="font-weight: 800;">$ 0</strong>
+                                </div>
                             </div>
-                            <h6 class="fw-bold text-dark mb-0">Arrastre archivos aquí o haga clic para seleccionar</h6>
-                            <p class="text-muted small mb-0">Formatos permitidos: PDF, Word, Excel, JPG, PNG (Máx. <?= LIMITE_ADJUNTO_MB ?>MB por archivo)</p>
-                            <input type="file" name="archivos_adjuntos[]" id="inpAdjunto" multiple class="d-none" onchange="manejarSeleccionArchivos()"/>
                         </div>
-                        
-                        <!-- Lista de archivos seleccionados -->
-                        <div class="mt-3 d-flex flex-column gap-2" id="listaAdjuntos"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- BOTONERA DE ENVÍO -->
-            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3 pb-5">
-                <a href="mis_solicitudes.php" class="btn btn-outline-secondary px-4 py-2.5 rounded-3 w-100 w-sm-auto text-center fw-semibold">
-                    Volver a Mis compras
-                </a>
-                <button type="submit" id="btnSubmit" class="btn btn-dark px-4 py-2.5 rounded-3 fw-bold shadow d-flex align-items-center justify-content-center gap-2 w-100 w-sm-auto">
-                    <span id="btnText">Generar e ingresar trámite</span>
-                    <div id="btnSpinner" class="spinner-border spinner-border-sm text-light d-none" role="status">
-                        <span class="visually-hidden">Loading...</span>
+            <!-- PASO 3: DOCUMENTOS Y ADJUNTOS -->
+            <div class="saas-card">
+                <div class="saas-card-header">
+                    <div class="d-flex align-items-center">
+                        <span class="step-pill">3</span>
+                        <div>
+                            <h3 style="font-size: 15px; font-weight: 700; margin: 0;">Documentos & Antecedentes Adjuntos</h3>
+                            <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Adjunte cotizaciones previas, términos de referencia o especificaciones técnicas.</p>
+                        </div>
                     </div>
-                    <i id="btnIcon" class="bi bi-arrow-right-short fs-5"></i>
+                </div>
+
+                <div class="saas-card-body">
+                    <div class="dropzone-saas" onclick="document.getElementById('inputArchivos').click()">
+                        <i class="bi bi-cloud-arrow-up text-primary fs-1 mb-2 d-block"></i>
+                        <div class="fw-bold">Haga clic aquí para seleccionar archivos</div>
+                        <div class="text-muted small">Formatos permitidos: PDF, Word, Excel, JPG, PNG (Máx 25MB c/u)</div>
+                    </div>
+                    <input type="file" name="archivos_adjuntos[]" id="inputArchivos" multiple class="d-none" onchange="mostrarArchivosSeleccionados(this)">
+
+                    <div id="listaArchivos" class="mt-3"></div>
+                </div>
+            </div>
+
+            <!-- BOTONES DE ACCIÓN FINAL -->
+            <div class="d-flex justify-content-end gap-3 pt-2">
+                <a href="mis_solicitudes.php" class="btn-saas btn-saas-secondary">Cancelar</a>
+                <button type="submit" class="btn-saas btn-saas-primary" style="padding: 10px 24px; font-size: 14px;">
+                    <i class="bi bi-send-check"></i> Emitir Requerimiento OPI
                 </button>
             </div>
         </form>
+
         <?php endif; ?>
-    </div>
+    </main>
 
-    <script>
-        const listadoProveedores = <?= json_encode($listado_prov_json) ?>;
-        const mapaTiposCompra = <?= json_encode($mapa_tipos) ?>;
-        const mapaRequiereCotizacion = <?= json_encode($mapa_requiere_cotizacion) ?>;
-        let requiereArchivos = false;
-        
-        // --- DRAG AND DROP & ARCHIVOS CON PROGRESO AJAX ---
-        let archivosSubidos = []; // [{ id, file, progress, status, tempPath, nombreOriginal, xhr, errorMessage }]
-        const dropzone = document.getElementById('dropzone');
-        const inpAdjunto = document.getElementById('inpAdjunto');
-        const listaAdjuntos = document.getElementById('listaAdjuntos');
-
-        if (dropzone) {
-            dropzone.addEventListener('click', (e) => {
-                if (e.target !== inpAdjunto) {
-                    inpAdjunto.click();
-                }
-            });
-
-            dropzone.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    inpAdjunto.click();
-                }
-            });
-
-            ['dragenter', 'dragover'].forEach(eventName => {
-                dropzone.addEventListener(eventName, (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    dropzone.classList.add('bg-primary-subtle');
-                }, false);
-            });
-
-            ['dragleave', 'drop'].forEach(eventName => {
-                dropzone.addEventListener(eventName, (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    dropzone.classList.remove('bg-primary-subtle');
-                }, false);
-            });
-
-            dropzone.addEventListener('drop', (e) => {
-                let dt = e.dataTransfer;
-                let files = dt.files;
-                procesarNuevosArchivos(files);
-            });
-        }
-
-        function manejarSeleccionArchivos() {
-            if (inpAdjunto.files && inpAdjunto.files.length > 0) {
-                procesarNuevosArchivos(inpAdjunto.files);
-                inpAdjunto.value = '';
-            }
-        }
-
-        function agregarArchivosAlInput(files) {
-            procesarNuevosArchivos(files);
-        }
-
-        function procesarNuevosArchivos(files) {
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                const fileId = 'adj_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-                
-                const item = {
-                    id: fileId,
-                    file: file,
-                    progress: 0,
-                    status: 'uploading',
-                    tempPath: '',
-                    nombreOriginal: file.name,
-                    errorMessage: '',
-                    xhr: null
-                };
-                
-                archivosSubidos.push(item);
-                renderizarItemArchivo(item);
-                subirArchivoAJAX(item);
-            }
-            actualizarEstadoBotonSubmit();
-        }
-
-        function renderizarItemArchivo(item) {
-            const file = item.file;
-            const sizeKB = (file.size / 1024).toFixed(1);
-            const sizeStr = sizeKB > 1024 ? (sizeKB / 1024).toFixed(1) + ' MB' : sizeKB + ' KB';
-            
-            const div = document.createElement('div');
-            div.id = `item-adj-${item.id}`;
-            div.className = 'p-3 bg-white border rounded-3 mb-2 shadow-sm transition';
-            div.innerHTML = `
-                <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
-                    <div class="d-flex align-items-center gap-2 min-w-0 flex-1">
-                        <i class="bi bi-file-earmark-text text-primary fs-5 shrink-0"></i>
-                        <span class="text-truncate fw-semibold small" title="${escapeHTML(file.name)}">${escapeHTML(file.name)}</span>
-                        <span class="text-muted small shrink-0">(${sizeStr})</span>
+    <!-- MODAL SELECCIÓN / CREACIÓN DE PROVEEDOR -->
+    <div class="modal fade" id="modalProveedor" tabindex="-1" aria-labelledby="modalProveedorLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-3 shadow border-0">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title fw-bold" id="modalProveedorLabel">Búsqueda & Registro de Proveedor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label-saas">Buscar por RUT o Razón Social</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                            <input type="text" id="filtroProvInput" class="form-control" placeholder="Escriba RUT o nombre..." oninput="filtrarProveedores(this.value)">
+                        </div>
                     </div>
-                    <div class="d-flex align-items-center gap-2 shrink-0">
-                        <span id="status-${item.id}" class="small text-muted font-monospace fw-bold">0%</span>
-                        <span id="icon-${item.id}">
-                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                        </span>
-                        <button type="button" class="btn btn-link text-secondary p-1" onclick="removerAdjuntoAJAX('${item.id}')" title="Eliminar archivo">
-                            <i class="bi bi-x-lg"></i>
+
+                    <div style="max-height: 240px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); margin-bottom: 20px;" id="listaProveedoresContainer">
+                        <!-- Render dinámico -->
+                    </div>
+
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small text-muted">¿El proveedor no está registrado en el sistema?</span>
+                        <button type="button" class="btn-saas btn-saas-secondary btn-saas-sm" onclick="toggleFormNuevoProv()">
+                            <i class="bi bi-plus-lg"></i> Pre-registrar Nuevo Proveedor
                         </button>
                     </div>
+
+                    <div id="formNuevoProv" class="d-none mt-3 p-3 bg-light border rounded-3">
+                        <h6 class="fw-bold small mb-2">Datos del Nuevo Proveedor</h6>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <input type="text" id="nProvRut" placeholder="RUT (Ej: 76.123.456-7)" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-md-8">
+                                <input type="text" id="nProvNombre" placeholder="Razón Social / Nombre" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-12">
+                                <input type="text" id="nProvDir" placeholder="Dirección / Contacto" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-12 text-end mt-2">
+                                <button type="button" class="btn-saas btn-saas-primary btn-saas-sm" onclick="confirmarNuevoProveedor()">Usar Este Nuevo Proveedor</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="progress mt-1" style="height: 6px;">
-                    <div id="bar-${item.id}" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%"></div>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn-saas btn-saas-secondary btn-saas-sm" data-bs-dismiss="modal">Cerrar</button>
                 </div>
-                <div id="err-${item.id}" class="small text-danger fw-bold d-none mt-1" style="font-size: 11px;"></div>
-                <input type="hidden" name="archivos_temp_rutas[]" id="input-ruta-${item.id}" value="" disabled>
-                <input type="hidden" name="archivos_temp_nombres[]" id="input-nom-${item.id}" value="" disabled>
-            `;
-            listaAdjuntos.appendChild(div);
-        }
+            </div>
+        </div>
+    </div>
 
-        function subirArchivoAJAX(item) {
-            const formData = new FormData();
-            formData.append('archivo', item.file);
-            formData.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
+    <!-- DATOS EN JAVASCRIPT -->
+    <script>
+        const proveedoresData = <?= json_encode($listado_prov_json) ?>;
+        const mapaTipos = <?= json_encode($mapa_tipos) ?>;
+        const mapaRequiereCot = <?= json_encode($mapa_requiere_cotizacion) ?>;
+        const cuentasPresupuestarias = <?= json_encode($cuentas_disponibles) ?>;
+        const itemsPrevios = <?= json_encode($items_old) ?>;
 
-            const xhr = new XMLHttpRequest();
-            item.xhr = xhr;
+        let regimenActual = '<?= $post_tipo_impuesto ?>';
+        let modalProvInstance = null;
 
-            xhr.upload.onprogress = function(e) {
-                if (e.lengthComputable) {
-                    const percent = Math.round((e.loaded / e.total) * 100);
-                    item.progress = percent;
-                    const bar = document.getElementById(`bar-${item.id}`);
-                    const statusTxt = document.getElementById(`status-${item.id}`);
-                    if (bar) bar.style.width = percent + '%';
-                    if (statusTxt) statusTxt.innerText = percent + '%';
-                    actualizarEstadoBotonSubmit();
-                }
-            };
+        document.addEventListener('DOMContentLoaded', () => {
+            modalProvInstance = new bootstrap.Modal(document.getElementById('modalProveedor'));
+            renderProveedoresLista(proveedoresData);
 
-            xhr.onload = function() {
-                if (xhr.status === 200) {
-                    try {
-                        const res = JSON.parse(xhr.responseText);
-                        if (res.success) {
-                            item.progress = 100;
-                            item.status = 'completed';
-                            item.tempPath = res.ruta_temp;
-                            item.nombreOriginal = res.nombre_original;
-
-                            const bar = document.getElementById(`bar-${item.id}`);
-                            if (bar) {
-                                bar.style.width = '100%';
-                                bar.classList.remove('progress-bar-striped', 'progress-bar-animated');
-                                bar.classList.add('bg-success');
-                            }
-
-                            const statusTxt = document.getElementById(`status-${item.id}`);
-                            if (statusTxt) {
-                                statusTxt.className = 'small text-success fw-bold ms-2';
-                                statusTxt.innerText = '100% Completado';
-                            }
-
-                            const iconSpan = document.getElementById(`icon-${item.id}`);
-                            if (iconSpan) {
-                                iconSpan.innerHTML = '<i class="bi bi-check-circle-fill text-success fs-5"></i>';
-                            }
-
-                            const inputRuta = document.getElementById(`input-ruta-${item.id}`);
-                            const inputNom = document.getElementById(`input-nom-${item.id}`);
-                            if (inputRuta && inputNom) {
-                                inputRuta.value = res.ruta_temp;
-                                inputRuta.disabled = false;
-                                inputNom.value = res.nombre_original;
-                                inputNom.disabled = false;
-                            }
-                        } else {
-                            marcarErrorArchivo(item, res.error || 'Error al procesar el archivo.');
-                        }
-                    } catch(err) {
-                        marcarErrorArchivo(item, 'Respuesta inválida del servidor.');
-                    }
-                } else {
-                    try {
-                        const res = JSON.parse(xhr.responseText);
-                        marcarErrorArchivo(item, res.error || `Error del servidor (${xhr.status}).`);
-                    } catch(e) {
-                        marcarErrorArchivo(item, `Error del servidor (${xhr.status}).`);
-                    }
-                }
-                actualizarEstadoBotonSubmit();
-            };
-
-            xhr.onerror = function() {
-                marcarErrorArchivo(item, 'Error de conexión de red al subir archivo.');
-                actualizarEstadoBotonSubmit();
-            };
-
-            xhr.open('POST', 'subir_adjunto_ajax.php', true);
-            xhr.setRequestHeader('X-CSRF-TOKEN', '<?= $_SESSION['csrf_token'] ?>');
-            xhr.send(formData);
-        }
-
-        function marcarErrorArchivo(item, errorMsg) {
-            item.status = 'error';
-            item.errorMessage = errorMsg;
-
-            const bar = document.getElementById(`bar-${item.id}`);
-            if (bar) {
-                bar.style.width = '100%';
-                bar.classList.remove('progress-bar-striped', 'progress-bar-animated', 'bg-primary');
-                bar.classList.add('bg-danger');
-            }
-
-            const statusTxt = document.getElementById(`status-${item.id}`);
-            if (statusTxt) {
-                statusTxt.className = 'small text-danger fw-bold ms-2';
-                statusTxt.innerText = 'Error';
-            }
-
-            const iconSpan = document.getElementById(`icon-${item.id}`);
-            if (iconSpan) {
-                iconSpan.innerHTML = '<i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>';
-            }
-
-            const errDiv = document.getElementById(`err-${item.id}`);
-            if (errDiv) {
-                errDiv.innerText = '⚠️ ' + errorMsg;
-                errDiv.classList.remove('d-none');
-            }
-        }
-
-        function removerAdjuntoAJAX(fileId) {
-            const index = archivosSubidos.findIndex(a => a.id === fileId);
-            if (index !== -1) {
-                const item = archivosSubidos[index];
-                if (item.xhr && item.status === 'uploading') {
-                    item.xhr.abort();
-                }
-                archivosSubidos.splice(index, 1);
-            }
-            const el = document.getElementById(`item-adj-${fileId}`);
-            if (el) el.remove();
-            actualizarEstadoBotonSubmit();
-            evaluarProveedorNuevo();
-        }
-
-        function actualizarEstadoBotonSubmit() {
-            const btnSubmit = document.getElementById('btnSubmit');
-            const btnText = document.getElementById('btnText');
-            const btnSpinner = document.getElementById('btnSpinner');
-            const btnIcon = document.getElementById('btnIcon');
-
-            if (!btnSubmit) return;
-
-            const cargando = archivosSubidos.filter(a => a.status === 'uploading');
-            const conError = archivosSubidos.filter(a => a.status === 'error');
-            const completados = archivosSubidos.filter(a => a.status === 'completed');
-
-            if (cargando.length > 0) {
-                btnSubmit.disabled = true;
-                btnSubmit.classList.add('opacity-75', 'pe-none');
-                btnSpinner.classList.remove('d-none');
-                btnIcon.classList.add('d-none');
-                btnText.innerText = `Subiendo adjuntos (${completados.length}/${archivosSubidos.length})...`;
-            } else if (conError.length > 0) {
-                btnSubmit.disabled = true;
-                btnSubmit.classList.add('opacity-75', 'pe-none');
-                btnSpinner.classList.add('d-none');
-                btnIcon.classList.remove('d-none');
-                btnText.innerText = '⚠️ Elimine o reintente los archivos con error';
+            if (itemsPrevios && itemsPrevios.length > 0) {
+                itemsPrevios.forEach(it => agregarItemFila(it));
             } else {
-                btnSubmit.disabled = false;
-                btnSubmit.classList.remove('opacity-75', 'pe-none');
-                btnSpinner.classList.add('d-none');
-                btnIcon.classList.remove('d-none');
-                btnText.innerText = 'Generar e ingresar trámite';
+                agregarItemFila();
             }
-        }
 
-        // --- TRANSICIÓN DE PANELES ANIMADOS ---
-        function toggleSlidePanel(id, visible) {
-            const panel = document.getElementById(id);
-            if (!panel) return;
-            if (visible) {
-                panel.classList.remove('d-none');
-                panel.offsetHeight; 
-                panel.classList.add('show');
-            } else {
-                panel.classList.remove('show');
-                setTimeout(() => {
-                    if (!panel.classList.contains('show')) {
-                        panel.classList.add('d-none');
-                    }
-                }, 400);
-            }
+            evaluarFormularioReactivo();
+        });
+
+        const clpFormatter = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 });
+        function formatCLP(v) { return clpFormatter.format(v); }
+
+        function toggleFormNuevoProv() {
+            document.getElementById('formNuevoProv').classList.toggle('d-none');
         }
-        
-        // --- LÓGICA DE PROVEEDORES AUTOCOMPLETE & RUT EN MODAL ---
-        let currentFocusedIndex = -1;
-        let filteredItems = [];
-        let selectedDuplicateId = null;
-        let modalProveedorInstance = null;
 
         function abrirModalProveedor() {
-            const currentVal = document.getElementById('selProveedor').value;
-            if (currentVal && currentVal !== 'NUEVO') {
-                const p = listadoProveedores.find(x => x.id == currentVal);
-                if (p) {
-                    document.getElementById('buscadorProv').value = `${p.rut} - ${p.razon_social}`;
-                }
-            } else if (currentVal === 'NUEVO') {
-                document.getElementById('buscadorProv').value = 'SOLICITAR NUEVO PROVEEDOR';
-            } else {
-                document.getElementById('buscadorProv').value = '';
-            }
-            
-            evaluarProveedorNuevo();
-            
-            if (!modalProveedorInstance) {
-                modalProveedorInstance = new bootstrap.Modal(document.getElementById('modalSeleccionarProveedor'));
-            }
-            modalProveedorInstance.show();
+            modalProvInstance.show();
         }
 
-        function confirmarSeleccionProveedor() {
-            const val = document.getElementById('selProveedor').value;
-            
-            if (!val) {
-                alert("⚠️ Por favor, busque y seleccione un proveedor, o elija pre-registrar uno nuevo.");
+        function renderProveedoresLista(data) {
+            const cont = document.getElementById('listaProveedoresContainer');
+            cont.innerHTML = '';
+            if (data.length === 0) {
+                cont.innerHTML = '<div class="p-3 text-center text-muted small">No se encontraron proveedores.</div>';
                 return;
             }
-            
-            if (val === 'NUEVO') {
-                const inpRut = document.getElementById('inpNuevoProvRut');
-                const inpNombre = document.getElementById('inpNuevoProvNombre');
-                const inpFicha = document.getElementById('inpFichaProveedor');
-                
-                inpRut.classList.remove('is-invalid');
-                inpNombre.classList.remove('is-invalid');
-                inpFicha.classList.remove('is-invalid');
-                
-                let errProv = false;
-                if (!inpRut.value.trim() || !validateRut(inpRut.value)) {
-                    inpRut.classList.add('is-invalid');
-                    errProv = true;
-                }
-                if (!inpNombre.value.trim()) {
-                    inpNombre.classList.add('is-invalid');
-                    errProv = true;
-                }
-                if (inpFicha.files.length === 0) {
-                    inpFicha.classList.add('is-invalid');
-                    errProv = true;
-                }
-                
-                if (errProv) {
-                    alert("⚠️ Faltan datos del nuevo proveedor o el RUT es inválido. Por favor, corríjalos antes de confirmar.");
-                    return;
-                }
-            }
-            
-            // Actualizar tarjeta de resumen
-            const resumenVacio = document.getElementById('provResumenVacio');
-            const resumenDetalle = document.getElementById('provResumenDetalle');
-            const btnSelectProvText = document.getElementById('btnSelectProvText');
-            
-            if (val === 'NUEVO') {
-                const rutVal = document.getElementById('inpNuevoProvRut').value;
-                const nombreVal = document.getElementById('inpNuevoProvNombre').value;
-                const direccionVal = document.getElementById('inpNuevoProvDireccion').value;
-                
-                document.getElementById('provResumenRazonSocial').innerText = nombreVal + ' (Sugerido)';
-                document.getElementById('provResumenRut').innerText = rutVal;
-                document.getElementById('provResumenDireccion').innerText = direccionVal ? direccionVal : 'Sin dirección provista';
-                
-                resumenVacio.classList.add('d-none');
-                resumenDetalle.classList.remove('d-none');
-                btnSelectProvText.innerText = 'Cambiar Proveedor';
-            } else {
-                const p = listadoProveedores.find(x => x.id == val);
-                if (p) {
-                    document.getElementById('provResumenRazonSocial').innerText = p.razon_social;
-                    document.getElementById('provResumenRut').innerText = p.rut;
-                    document.getElementById('provResumenDireccion').innerText = 'Proveedor registrado en el directorio municipal';
-                    
-                    resumenVacio.classList.add('d-none');
-                    resumenDetalle.classList.remove('d-none');
-                    btnSelectProvText.innerText = 'Cambiar Proveedor';
-                }
-            }
-            
-            if (modalProveedorInstance) {
-                modalProveedorInstance.hide();
-            }
-        }
-
-        function getFilteredList(query) {
-            const q = query.toLowerCase().trim();
-            if (!q) return listadoProveedores;
-            return listadoProveedores.filter(p => 
-                p.rut.toLowerCase().includes(q) || 
-                p.razon_social.toLowerCase().includes(q)
-            );
-        }
-
-        function renderProvDropdown(items) {
-            const dropdown = document.getElementById('dropdownProv');
-            dropdown.innerHTML = '';
-            
-            // Opción nuevo
-            const optNew = document.createElement('div');
-            optNew.className = 'custom-select-option text-primary-emphasis fw-bold border-bottom';
-            optNew.innerHTML = '➕ SOLICITAR NUEVO PROVEEDOR (Requiere Ficha)';
-            optNew.onclick = () => selectProvider('NUEVO', 'SOLICITAR NUEVO PROVEEDOR', '');
-            dropdown.appendChild(optNew);
-            
-            // Frecuentes
-            const frecuentes = items.filter(p => p.frecuente);
-            if (frecuentes.length > 0) {
-                const header = document.createElement('div');
-                header.className = 'custom-select-group-header';
-                header.innerText = '⭐ Proveedores Frecuentes';
-                dropdown.appendChild(header);
-                
-                frecuentes.forEach(p => {
-                    const opt = document.createElement('div');
-                    opt.className = 'custom-select-option';
-                    opt.innerHTML = `<strong>${escapeHTML(p.rut)}</strong> - ${escapeHTML(p.razon_social)}`;
-                    opt.onclick = () => selectProvider(p.id, p.razon_social, p.rut);
-                    dropdown.appendChild(opt);
-                });
-            }
-            
-            // Directorio Municipal
-            const otros = items.filter(p => !p.frecuente);
-            if (otros.length > 0) {
-                const header = document.createElement('div');
-                header.className = 'custom-select-group-header';
-                header.innerText = '🏢 Directorio Municipal Completo';
-                dropdown.appendChild(header);
-                
-                otros.forEach(p => {
-                    const opt = document.createElement('div');
-                    opt.className = 'custom-select-option';
-                    opt.innerHTML = `<strong>${escapeHTML(p.rut)}</strong> - ${escapeHTML(p.razon_social)}`;
-                    opt.onclick = () => selectProvider(p.id, p.razon_social, p.rut);
-                    dropdown.appendChild(opt);
-                });
-            }
-            
-            if (items.length === 0) {
-                const noRes = document.createElement('div');
-                noRes.className = 'custom-select-option text-muted text-center';
-                noRes.innerText = 'No se encontraron proveedores';
-                dropdown.appendChild(noRes);
-            }
-        }
-
-        function showProvDropdown() {
-            const dropdown = document.getElementById('dropdownProv');
-            dropdown.classList.add('show');
-            currentFocusedIndex = -1;
-            
-            const selectVal = document.getElementById('selProveedor').value;
-            const buscador = document.getElementById('buscadorProv');
-            if (selectVal === 'NUEVO') {
-                buscador.value = '';
-            }
-            
-            if (selectVal && selectVal !== 'NUEVO') {
-                renderProvDropdown(listadoProveedores);
-            } else {
-                filterProvDropdown();
-            }
-        }
-
-        function filterProvDropdown() {
-            const query = document.getElementById('buscadorProv').value;
-            const selectVal = document.getElementById('selProveedor').value;
-            
-            if (query.trim() === '') {
-                document.getElementById('selProveedor').value = '';
-                evaluarProveedorNuevo();
-            }
-            
-            if (selectVal && selectVal !== 'NUEVO') {
-                const p = listadoProveedores.find(x => x.id == selectVal);
-                if (p && `${p.rut} - ${p.razon_social}` === query) {
-                    renderProvDropdown(listadoProveedores);
-                    return;
-                }
-            }
-            filteredItems = getFilteredList(query);
-            renderProvDropdown(filteredItems);
-        }
-
-        function selectProvider(id, name, rut) {
-            document.getElementById('selProveedor').value = id;
-            document.getElementById('buscadorProv').value = id ? (id === 'NUEVO' ? name : `${rut} - ${name}`) : '';
-            document.getElementById('dropdownProv').classList.remove('show');
-            evaluarProveedorNuevo();
-        }
-
-        function evaluarProveedorNuevo() {
-            const val = document.getElementById('selProveedor').value;
-            const panel = document.getElementById('panelNuevoProv');
-            const reqInputs = panel.querySelectorAll('.inp-nuevo-prov, #inpFichaProveedor');
-            
-            if (val === 'NUEVO') {
-                toggleSlidePanel('panelNuevoProv', true);
-                reqInputs.forEach(i => i.setAttribute('required', 'required'));
-            } else {
-                toggleSlidePanel('panelNuevoProv', false);
-                reqInputs.forEach(i => {
-                    i.removeAttribute('required');
-                    i.value = '';
-                });
-                const icon = document.getElementById('rutStatusIcon');
-                if (icon) {
-                    icon.innerText = '➖';
-                    icon.className = 'input-group-text bg-light text-secondary py-0';
-                }
-                const msg = document.getElementById('rutValidationMsg');
-                if (msg) msg.classList.add('d-none');
-                const dupAlert = document.getElementById('rutDuplicateAlert');
-                if (dupAlert) dupAlert.classList.add('d-none');
-                selectedDuplicateId = null;
-            }
-        }
-
-        // Formateador y validador de RUT
-        function formatRut(rut) {
-            let value = rut.replace(/[^0-9kK]/g, '');
-            if (value.length <= 1) return value;
-            let body = value.slice(0, -1);
-            let dv = value.slice(-1).toUpperCase();
-            
-            let formatted = '';
-            while (body.length > 3) {
-                formatted = '.' + body.slice(-3) + formatted;
-                body = body.slice(0, -3);
-            }
-            formatted = body + formatted + '-' + dv;
-            return formatted;
-        }
-
-        function validateRut(rut) {
-            let clean = rut.replace(/[^0-9kK]/g, '');
-            if (clean.length < 8) return false;
-            let body = clean.slice(0, -1);
-            let dv = clean.slice(-1).toUpperCase();
-            
-            let sum = 0;
-            let mul = 2;
-            for (let i = body.length - 1; i >= 0; i--) {
-                sum += mul * parseInt(body.charAt(i));
-                mul = mul === 7 ? 2 : mul + 1;
-            }
-            let res = 11 - (sum % 11);
-            let expectedDv = res === 11 ? '0' : (res === 10 ? 'K' : res.toString());
-            return dv === expectedDv;
-        }
-
-        function handleRutInput(input) {
-            let raw = input.value;
-            let formatted = formatRut(raw);
-            input.value = formatted;
-            
-            const icon = document.getElementById('rutStatusIcon');
-            const msg = document.getElementById('rutValidationMsg');
-            const dupAlert = document.getElementById('rutDuplicateAlert');
-            
-            if (!formatted) {
-                icon.innerText = '➖';
-                icon.className = 'input-group-text bg-light text-secondary py-0';
-                msg.classList.add('d-none');
-                dupAlert.classList.add('d-none');
-                selectedDuplicateId = null;
-                return;
-            }
-            
-            const isValid = validateRut(formatted);
-            if (isValid) {
-                icon.innerText = '✅';
-                icon.className = 'input-group-text bg-success-subtle text-success py-0';
-                msg.classList.add('d-none');
-                
-                // Comprobar duplicado
-                const cleanRut = formatted.replace(/[^0-9kK]/g, '').toLowerCase();
-                const dup = listadoProveedores.find(p => p.rut.replace(/[^0-9kK]/g, '').toLowerCase() === cleanRut);
-                if (dup) {
-                    document.getElementById('duplicateProvName').innerText = dup.razon_social;
-                    dupAlert.classList.remove('d-none');
-                    selectedDuplicateId = dup.id;
-                } else {
-                    dupAlert.classList.add('d-none');
-                    selectedDuplicateId = null;
-                }
-            } else {
-                icon.innerText = '❌';
-                icon.className = 'input-group-text bg-danger-subtle text-danger py-0';
-                msg.classList.remove('d-none');
-                dupAlert.classList.add('d-none');
-                selectedDuplicateId = null;
-            }
-        }
-
-        function selectDuplicateProvider() {
-            if (selectedDuplicateId) {
-                const p = listadoProveedores.find(x => x.id == selectedDuplicateId);
-                if (p) {
-                    selectProvider(p.id, p.razon_social, p.rut);
-                    // Reset campos
-                    document.getElementById('inpNuevoProvRut').value = '';
-                    document.getElementById('inpNuevoProvNombre').value = '';
-                    document.getElementById('inpNuevoProvDireccion').value = '';
-                    document.getElementById('inpFichaProveedor').value = '';
-                    document.getElementById('rutStatusIcon').innerText = '➖';
-                    document.getElementById('rutStatusIcon').className = 'input-group-text bg-light text-secondary py-0';
-                    document.getElementById('rutDuplicateAlert').classList.add('d-none');
-                }
-            }
-        }
-
-        // Cerrar dropdown al hacer click afuera
-        document.addEventListener('click', function(e) {
-            const container = document.getElementById('containerProveedor');
-            if (container && !container.contains(e.target)) {
-                document.getElementById('dropdownProv').classList.remove('show');
-                
-                const val = document.getElementById('selProveedor').value;
-                const text = document.getElementById('buscadorProv').value;
-                if (!val) {
-                    document.getElementById('buscadorProv').value = '';
-                } else if (val === 'NUEVO') {
-                    document.getElementById('buscadorProv').value = 'SOLICITAR NUEVO PROVEEDOR';
-                } else {
-                    const p = listadoProveedores.find(x => x.id == val);
-                    if (p && `${p.rut} - ${p.razon_social}` !== text) {
-                        document.getElementById('buscadorProv').value = `${p.rut} - ${p.razon_social}`;
-                    }
-                }
-            }
-        });
-
-        // Navegación por teclado en el dropdown
-        document.addEventListener('DOMContentLoaded', () => {
-            const buscador = document.getElementById('buscadorProv');
-            if (buscador) {
-                buscador.addEventListener('keydown', function(e) {
-                    const dropdown = document.getElementById('dropdownProv');
-                    if (!dropdown.classList.contains('show')) {
-                        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                            dropdown.classList.add('show');
-                        }
-                        return;
-                    }
-                    
-                    const options = dropdown.querySelectorAll('.custom-select-option:not(.custom-select-group-header)');
-                    if (options.length === 0) return;
-                    
-                    if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        currentFocusedIndex = (currentFocusedIndex + 1) % options.length;
-                        updateOptionFocus(options);
-                    } else if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        currentFocusedIndex = (currentFocusedIndex - 1 + options.length) % options.length;
-                        updateOptionFocus(options);
-                    } else if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (currentFocusedIndex >= 0 && currentFocusedIndex < options.length) {
-                            options[currentFocusedIndex].click();
-                        }
-                    } else if (e.key === 'Escape') {
-                        dropdown.classList.remove('show');
-                    }
-                });
-            }
-        });
-
-        function updateOptionFocus(options) {
-            options.forEach((opt, idx) => {
-                if (idx === currentFocusedIndex) {
-                    opt.classList.add('active');
-                    opt.scrollIntoView({ block: 'nearest' });
-                } else {
-                    opt.classList.remove('active');
-                }
+            data.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'd-flex justify-content-between align-items-center p-2.5 border-bottom bg-white';
+                div.style.cursor = 'pointer';
+                div.innerHTML = `
+                    <div>
+                        <div class="fw-bold text-dark small">${escapeHtml(p.razon_social)}</div>
+                        <div class="text-muted" style="font-size: 11px;">RUT: <strong>${escapeHtml(p.rut)}</strong></div>
+                    </div>
+                    <button type="button" class="btn-saas btn-saas-secondary btn-saas-sm">Seleccionar</button>
+                `;
+                div.onclick = () => seleccionarProveedor(p);
+                cont.appendChild(div);
             });
         }
 
+        function filtrarProveedores(q) {
+            const needle = q.toLowerCase();
+            const filtered = proveedoresData.filter(p => p.razon_social.toLowerCase().includes(needle) || p.rut.toLowerCase().includes(needle));
+            renderProveedoresLista(filtered);
+        }
+
+        function seleccionarProveedor(p) {
+            document.getElementById('hiddenProveedorId').value = p.id;
+            document.getElementById('provResumenRazonSocial').innerText = p.razon_social;
+            document.getElementById('provResumenRut').innerText = p.rut;
+            document.getElementById('provResumenDireccion').innerText = p.direccion || '';
+            document.getElementById('provResumenVacio').classList.add('d-none');
+            document.getElementById('provResumenDetalle').classList.remove('d-none');
+            document.getElementById('btnSelectProvText').innerText = 'Cambiar';
+            modalProvInstance.hide();
+        }
+
+        function deseleccionarProveedor() {
+            document.getElementById('hiddenProveedorId').value = '';
+            document.getElementById('provResumenVacio').classList.remove('d-none');
+            document.getElementById('provResumenDetalle').classList.add('d-none');
+            document.getElementById('btnSelectProvText').innerText = 'Buscar Proveedor';
+        }
+
+        function confirmarNuevoProveedor() {
+            const rut = document.getElementById('nProvRut').value.trim();
+            const nom = document.getElementById('nProvNombre').value.trim();
+            const dir = document.getElementById('nProvDir').value.trim();
+            if (!rut || !nom) {
+                alert('Debe ingresar RUT y Razón Social del nuevo proveedor.');
+                return;
+            }
+            seleccionarProveedor({ id: 'NUEVO', rut: rut, razon_social: nom + ' (Nuevo Pre-registro)', direccion: dir });
+        }
+
+        // EVALUACIÓN REACTIVA DE TIPO DE COMPRA
         function evaluarFormularioReactivo() {
-            const select = document.getElementById('selTipoCompra');
-            
+            const tcId = document.getElementById('selTipoCompra').value;
+            const tcCodigo = mapaTipos[tcId] || '';
+            const reqCot = mapaRequiereCot[tcId] == 1;
+
             const panelProv = document.getElementById('panel-proveedor');
-            const panelCrit = document.getElementById('panel-criterios');
-            const panelSuministro = document.getElementById('panel-suministro');
-            
-            const inpSum = document.getElementById('inp_id_contrato_suministro');
-            const colsCm = document.querySelectorAll('.col-cm');
-            const inputsCm = document.querySelectorAll('.input-cm');
-            const footColspans = document.querySelectorAll('.foot-colspan');
+            const panelSum = document.getElementById('panel-suministro');
+            const divMontoDisp = document.getElementById('divMontoDisponible');
+            const thCm = document.querySelectorAll('.th-cm');
+            const tdCm = document.querySelectorAll('.td-cm');
 
-            const divMonto = document.getElementById('divMontoDisponible');
-            const inpMonto = document.getElementById('inpMontoDisponible');
-            const requiereCot = select.value ? (mapaRequiereCotizacion[select.value] || false) : false;
-            const colsPrecio = document.querySelectorAll('.col-precio');
-
-            if(!select.value) {
-                toggleSlidePanel('panel-proveedor', false);
-                toggleSlidePanel('panel-criterios', false);
-                toggleSlidePanel('panel-suministro', false);
-                inpSum.required = false;
-                divMonto.classList.add('d-none');
-                inpMonto.required = false;
-                inpMonto.value = '';
-                return;
-            }
-            const codigoTC = mapaTiposCompra[select.value];
-
-            if (requiereCot) {
-                divMonto.classList.remove('d-none');
-                inpMonto.required = true;
-                colsPrecio.forEach(el => el.classList.add('d-none'));
+            if (reqCot) {
+                divMontoDisp.classList.remove('d-none');
             } else {
-                divMonto.classList.add('d-none');
-                inpMonto.required = false;
-                inpMonto.value = '';
-                colsPrecio.forEach(el => el.classList.remove('d-none'));
-            }
-            
-            // Lógica Panel Proveedor
-            const tiposDirectos = ['TRATO_DIRECTO', 'CONVENIO_MARCO', 'CONTRATO_SUMINISTRO', 'SISTEMA_DIRECTO', 'MENOR_3UTM'];
-            const esDirecto = tiposDirectos.includes(codigoTC);
-            toggleSlidePanel('panel-proveedor', esDirecto);
-            if (!esDirecto) {
-                document.getElementById('selProveedor').value = '';
-                evaluarProveedorNuevo();
-                document.getElementById('provResumenVacio').classList.remove('d-none');
-                document.getElementById('provResumenDetalle').classList.add('d-none');
-                document.getElementById('btnSelectProvText').innerText = 'Seleccionar Proveedor';
+                divMontoDisp.classList.add('d-none');
             }
 
-            // Lógica Criterios
-            const esLicitacion = (codigoTC === 'LICITACION');
-            toggleSlidePanel('panel-criterios', esLicitacion);
-            if (esLicitacion) {
-                if(document.getElementById('tbodyCriterios').children.length === 0) agregarCriterio();
-            }
-
-            // Lógica Suministro
-            const esSuministro = (codigoTC === 'CONTRATO_SUMINISTRO');
-            toggleSlidePanel('panel-suministro', esSuministro);
-            inpSum.required = esSuministro;
-
-            // Lógica Columnas Convenio Marco en la Tabla
-            if (codigoTC === 'CONVENIO_MARCO') {
-                colsCm.forEach(el => el.classList.remove('d-none'));
-                inputsCm.forEach(inp => inp.required = true);
-                footColspans.forEach(td => td.colSpan = 6);
+            if (tcCodigo === 'CONTRATO_SUMINISTRO') {
+                panelSum.style.display = 'block';
+                panelProv.style.display = 'block';
             } else {
-                colsCm.forEach(el => el.classList.add('d-none'));
-                inputsCm.forEach(inp => { inp.required = false; inp.value = ''; });
-                footColspans.forEach(td => td.colSpan = 5);
+                panelSum.style.display = 'none';
             }
+
+            if (['TRATO_DIRECTO', 'CONVENIO_MARCO'].includes(tcCodigo)) {
+                panelProv.style.display = 'block';
+            } else if (tcCodigo !== 'CONTRATO_SUMINISTRO') {
+                panelProv.style.display = 'none';
+            }
+
+            if (tcCodigo === 'CONVENIO_MARCO') {
+                thCm.forEach(el => el.classList.remove('d-none'));
+                tdCm.forEach(el => el.classList.remove('d-none'));
+            } else {
+                thCm.forEach(el => el.classList.add('d-none'));
+                tdCm.forEach(el => el.classList.add('d-none'));
+            }
+
+            recalcularTotales();
         }
 
-        // --- LÓGICA DE CRITERIOS (LICITACIÓN) ---
-        let countCriterios = 0;
-        const criteriosAnteriores = <?= json_encode($criterios_old) ?>;
+        // TABLA DINÁMICA DE ÍTEMS
+        function agregarItemFila(data = null) {
+            const tbody = document.getElementById('tbodyItems');
+            const tcId = document.getElementById('selTipoCompra').value;
+            const isCm = (mapaTipos[tcId] || '') === 'CONVENIO_MARCO';
 
-        function agregarCriterio(data = null) {
-            countCriterios++;
-            let valDesc = data ? escapeHTML(data.desc) : '';
-            let valPorc = data ? data.porc : '';
+            let opcionesCuentas = '<option value="">-- Imputación --</option>';
+            cuentasPresupuestarias.forEach(c => {
+                const sel = (data && data.cuenta_id == c.id) ? 'selected' : '';
+                opcionesCuentas += `<option value="${c.id}" ${sel}>${escapeHtml(c.codigo)} - ${escapeHtml(c.nombre)}</option>`;
+            });
 
-            const tr = `
-                <tr class="align-middle">
-                    <td class="p-2 text-center"><input type="number" name="crit_num[]" value="${countCriterios}" class="form-control form-control-sm text-center bg-light fw-semibold" style="width: 50px;" readonly></td>
-                    <td class="p-2"><input type="text" name="crit_desc[]" class="form-control form-control-sm bg-white" value="${valDesc}" required></td>
-                    <td class="p-2"><input type="number" name="crit_porc[]" min="1" max="100" class="form-control form-control-sm text-center input-porc fw-bold text-purple" value="${valPorc}" required oninput="calcCriterios()" style="width: 80px; margin: 0 auto;"></td>
-                    <td class="p-2 text-center"><button type="button" onclick="this.closest('tr').remove(); calcCriterios();" class="btn btn-outline-danger btn-sm border-0"><i class="bi bi-trash"></i></button></td>
-                </tr>
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <input type="text" name="desc[]" required class="form-control-saas" placeholder="Descripción clara del ítem" value="${escapeHtml(data ? data.desc : '')}">
+                </td>
+                <td class="td-cm ${isCm ? '' : 'd-none'}">
+                    <input type="number" name="id_producto_cm[]" class="form-control-saas" placeholder="ID CM" value="${escapeHtml(data ? data.id_cm : '')}">
+                </td>
+                <td>
+                    <select name="uni[]" class="form-select-saas">
+                        <option value="UNIDAD">UNIDAD</option>
+                        <option value="GLOBAL">GLOBAL</option>
+                        <option value="MES">MES</option>
+                        <option value="HORA">HORA</option>
+                        <option value="METRO">METRO</option>
+                        <option value="KILO">KILO</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="number" name="cant[]" min="0.01" step="any" required class="form-control-saas text-center item-cant" value="${data ? data.cant : '1'}" oninput="recalcularTotales()">
+                </td>
+                <td>
+                    <input type="number" name="prec[]" min="0" step="any" required class="form-control-saas text-end item-prec" value="${data ? data.prec : '0'}" oninput="recalcularTotales()">
+                </td>
+                <td>
+                    <select name="cuenta_id[]" required class="form-select-saas">${opcionesCuentas}</select>
+                </td>
+                <td class="text-end fw-bold item-total-linea">$ 0</td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-link text-danger p-0" onclick="eliminarFila(this)"><i class="bi bi-trash"></i></button>
+                </td>
             `;
-            document.getElementById('tbodyCriterios').insertAdjacentHTML('beforeend', tr);
-            calcCriterios();
+            tbody.appendChild(tr);
+            recalcularTotales();
         }
 
-        function calcCriterios() {
-            let total = 0;
-            document.querySelectorAll('.input-porc').forEach(inp => {
-                total += parseFloat(inp.value) || 0;
-            });
-            const td = document.getElementById('tdTotalCriterio');
-            td.innerText = total + "%";
-            td.className = (total === 100) ? 'p-2 text-center fw-bold text-success' : 'p-2 text-center fw-bold text-danger';
-            return total;
-        }
-
-        // --- LÓGICA DE ÍTEMS Y CÁLCULOS ---
-        const cuentasDisponibles = <?= json_encode($cuentas_disponibles) ?>;
-        const itemsAnteriores = <?= json_encode($items_old) ?>;
-        const formatter = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 });
-
-        function escapeHTML(str) { 
-            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])); 
-        }
-
-        function formatCLP(value) {
-            let clean = value.toString().replace(/\D/g, '');
-            if (clean === '') return '';
-            return clean.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        }
-
-        let currentRegimenImpuesto = '<?= $post_tipo_impuesto ?? "NETO" ?>';
-
-        function cambiarRegimenImpuesto(tipo) {
-            currentRegimenImpuesto = tipo;
-            
-            // Sincronizar los radio buttons de Paso 1 y Paso 2
-            const r1 = document.getElementById('disp_neto');
-            const r2 = document.getElementById('disp_bruto');
-            const r3 = document.getElementById('imp_neto');
-            const r4 = document.getElementById('imp_bruto');
-            
-            if (tipo === 'NETO') {
-                if (r1) r1.checked = true;
-                if (r3) r3.checked = true;
-                const thP = document.getElementById('thPrecioUnit');
-                if (thP) thP.innerText = 'Precio Unit. (Neto)';
+        function eliminarFila(btn) {
+            const tbody = document.getElementById('tbodyItems');
+            if (tbody.children.length > 1) {
+                btn.closest('tr').remove();
+                recalcularTotales();
             } else {
-                if (r2) r2.checked = true;
-                if (r4) r4.checked = true;
-                const thP = document.getElementById('thPrecioUnit');
-                if (thP) thP.innerText = 'Precio Unit. (Con IVA)';
-            }
-            
-            calc();
-        }
-
-        function handleMontoInput(input) {
-            input.value = formatCLP(input.value);
-            calc();
-        }
-
-        function crearFilaHTML(data = null) {
-            let valDesc = data ? escapeHTML(data.desc) : '';
-            let valIdCm = data ? escapeHTML(data.id_cm) : '';
-            let valCant = data ? data.cant : 1;
-            let valPrec = data ? data.prec : 0;
-            let valCuenta = data ? data.cuenta_id : '';
-            let valUni = data ? data.uni : 'UNIDAD';
-
-            let options = '<option value="">Cuenta</option>';
-            cuentasDisponibles.forEach(c => {
-                let ag = c.ag_codigo ? `[${c.ag_codigo}] ` : '';
-                let sel = (c.id == valCuenta) ? 'selected' : '';
-                options += `<option value="${c.id}" ${sel}>${c.codigo} ${ag}- ${c.nombre}</option>`;
-            });
-
-            const arrUnidades = ['UNIDAD', 'GLOBAL', 'CAJA', 'LITROS', 'MESES'];
-            let uniOptions = '';
-            arrUnidades.forEach(u => {
-                let sel = (u === valUni) ? 'selected' : '';
-                uniOptions += `<option value="${u}" ${sel}>${u}</option>`;
-            });
-
-            return `
-                <tr class="align-middle">
-                    <td class="p-2"><select name="cuenta_id[]" class="form-select form-select-sm font-monospace select-cuenta" style="max-width: 250px;">${options}</select></td>
-                    <td class="p-2"><textarea name="desc[]" rows="1" class="form-control form-control-sm bg-transparent" style="min-height: 38px; resize: none;">${valDesc}</textarea></td>
-                    
-                    <td class="p-2 col-cm d-none"><input type="number" inputmode="numeric" pattern="[0-9]*" min="1" step="1" name="id_producto_cm[]" value="${valIdCm}" placeholder="Numérico" class="form-control form-control-sm font-monospace text-center input-cm text-primary bg-primary-subtle"></td>
-                    
-                    <td class="p-2"><select name="uni[]" class="form-select form-select-sm">${uniOptions}</select></td>
-                    <td class="p-2"><input type="number" name="cant[]" value="${valCant}" min="1" step="1" class="form-control form-control-sm text-center fw-bold input-cant bg-transparent" oninput="calc()" style="width: 80px; margin: 0 auto;"></td>
-                    <td class="p-2 col-precio"><input type="number" name="prec[]" value="${valPrec}" min="0" class="form-control form-control-sm text-end input-prec bg-transparent font-monospace" oninput="calc()" style="width: 130px; margin-left: auto;"></td>
-                    <td class="p-2 text-end fw-bold text-secondary span-total text-nowrap font-monospace">$ 0</td>
-                    <td class="p-2 text-center"><button type="button" onclick="del(this)" class="btn btn-outline-danger btn-sm border-0"><i class="bi bi-trash"></i></button></td>
-                </tr>
-            `;
-        }
-
-        function agregarFila(data = null) {
-            document.getElementById('tbodyItems').insertAdjacentHTML('beforeend', crearFilaHTML(data));
-            document.getElementById('errorTabla').classList.add('d-none');
-            evaluarFormularioReactivo(); 
-            calc();
-        }
-
-        function del(btn) {
-            if (document.getElementById('tbodyItems').rows.length > 1) {
-                btn.closest('tr').remove(); 
-                calc();
-            } else {
-                alert("La solicitud debe tener al menos un ítem.");
+                alert('Debe conservar al menos un ítem.');
             }
         }
 
-        function calc() {
-            let totalNeto = 0, totalIva = 0, totalBruto = 0;
-            const ivaRate = 0.19;
+        function cambiarRegimenImpuesto(reg) {
+            regimenActual = reg;
+            recalcularTotales();
+        }
 
-            const select = document.getElementById('selTipoCompra');
-            const requiereCot = select && select.value ? (mapaRequiereCotizacion[select.value] || false) : false;
+        function recalcularTotales() {
+            let subtotalNeto = 0;
+            let granTotal = 0;
 
-            if (requiereCot) {
-                const inpMonto = document.getElementById('inpMontoDisponible');
-                const valMonto = parseFloat(inpMonto.value.replace(/\./g, '')) || 0;
-                
-                if (currentRegimenImpuesto === 'NETO') {
-                    totalNeto = valMonto;
-                    totalBruto = Math.round(totalNeto * (1 + ivaRate));
-                    totalIva = totalBruto - totalNeto;
+            const rows = document.querySelectorAll('#tbodyItems tr');
+            rows.forEach(tr => {
+                const cant = parseFloat(tr.querySelector('.item-cant').value) || 0;
+                const prec = parseFloat(tr.querySelector('.item-prec').value) || 0;
+                const lineaRaw = cant * prec;
+
+                let lineaTotalBruta = 0;
+                if (regimenActual === 'NETO') {
+                    lineaTotalBruta = Math.round(lineaRaw * 1.19);
+                    subtotalNeto += lineaRaw;
                 } else {
-                    totalBruto = valMonto;
-                    totalNeto = Math.round(totalBruto / (1 + ivaRate));
-                    totalIva = totalBruto - totalNeto;
+                    lineaTotalBruta = Math.round(lineaRaw);
+                    subtotalNeto += Math.round(lineaRaw / 1.19);
                 }
-                
-                // Actualizar preview en widget de monto disponible
-                const pNeto = document.getElementById('dispPreviewNeto');
-                const pIva = document.getElementById('dispPreviewIva');
-                const pTotal = document.getElementById('dispPreviewTotal');
-                if (pNeto) pNeto.innerText = formatter.format(totalNeto);
-                if (pIva) pIva.innerText = formatter.format(totalIva);
-                if (pTotal) pTotal.innerText = formatter.format(totalBruto);
-                
-                document.querySelectorAll('#tbodyItems tr').forEach(row => {
-                    row.querySelector('.span-total').innerText = formatter.format(0);
-                });
-            } else {
-                document.querySelectorAll('#tbodyItems tr').forEach(row => {
-                    let cant = parseFloat(row.querySelector('.input-cant').value) || 0;
-                    let prec = parseFloat(row.querySelector('.input-prec').value) || 0;
-                    let lineaTotal = 0;
-                    let lineaNeto = 0;
-                    let lineaBruto = 0;
 
-                    if (currentRegimenImpuesto === 'NETO') {
-                        lineaNeto = cant * prec;
-                        lineaBruto = Math.round(lineaNeto * (1 + ivaRate));
-                        lineaTotal = lineaBruto;
-                        totalNeto += lineaNeto;
-                        totalBruto += lineaBruto;
-                    } else {
-                        lineaBruto = cant * prec;
-                        lineaNeto = Math.round(lineaBruto / (1 + ivaRate));
-                        lineaTotal = lineaBruto;
-                        totalBruto += lineaBruto;
-                        totalNeto += lineaNeto;
-                    }
-
-                    row.querySelector('.span-total').innerText = formatter.format(lineaTotal);
-                });
-                totalIva = totalBruto - totalNeto;
-            }
-
-            document.getElementById('tdNeto').innerText = formatter.format(totalNeto);
-            document.getElementById('tdIva').innerText = formatter.format(totalIva);
-            document.getElementById('tdTotal').innerText = formatter.format(totalBruto);
-        }
-
-        // --- VALIDACIONES DE FORMULARIO ---
-        function validarFormulario() {
-            let errorItems = false;
-            const select = document.getElementById('selTipoCompra');
-            const codigoTC = select.value ? mapaTiposCompra[select.value] : '';
-            const requiereCot = select.value ? (mapaRequiereCotizacion[select.value] || false) : false;
-            const divError = document.getElementById('errorTabla');
-            
-            divError.classList.add('d-none');
-
-            // Si requiere cotización, validar que el monto disponible neto esté ingresado
-            if (requiereCot) {
-                const inpMonto = document.getElementById('inpMontoDisponible');
-                inpMonto.classList.remove('is-invalid');
-                const valMonto = parseFloat(inpMonto.value.replace(/\./g, '')) || 0;
-                if (valMonto <= 0 || !inpMonto.value) {
-                    inpMonto.classList.add('is-invalid');
-                    divError.innerHTML = "<strong>⚠️ Faltan datos requeridos:</strong> Debe ingresar un Monto Disponible Neto válido para la cotización.";
-                    divError.classList.remove('d-none');
-                    inpMonto.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    return false;
-                }
-            }
-
-            document.querySelectorAll('#tbodyItems tr').forEach(row => {
-                const cant = row.querySelector('.input-cant');
-                const prec = row.querySelector('.input-prec');
-                const cuenta = row.querySelector('.select-cuenta');
-                const inpCm = row.querySelector('.input-cm');
-                
-                row.querySelectorAll('.is-invalid').forEach(e => e.classList.remove('is-invalid'));
-                
-                if (parseFloat(cant.value) <= 0 || !cant.value) { cant.classList.add('is-invalid'); errorItems = true; }
-                if (!requiereCot) {
-                    if (parseFloat(prec.value) <= 0 || !prec.value) { prec.classList.add('is-invalid'); errorItems = true; }
-                }
-                if (cuenta.value === "") { cuenta.classList.add('is-invalid'); errorItems = true; }
-                if (codigoTC === 'CONVENIO_MARCO') {
-                    const valCm = inpCm.value.trim();
-                    if (valCm === "" || !/^\d+$/.test(valCm)) {
-                        inpCm.classList.add('is-invalid'); errorItems = true;
-                    }
-                }
+                tr.querySelector('.item-total-linea').innerText = formatCLP(lineaTotalBruta);
+                granTotal += lineaTotalBruta;
             });
 
-            if (errorItems) {
-                divError.innerHTML = "<strong>⚠️ Faltan datos requeridos:</strong> Por favor complete todos los campos obligatorios del detalle de productos (en Convenio Marco, el ID Convenio Marco debe ser únicamente numérico).";
-                divError.classList.remove('d-none');
-                divError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                return false;
-            }
-            
-            if (codigoTC === 'LICITACION') {
-                const sumaCriterios = calcCriterios();
-                if (sumaCriterios !== 100) {
-                    document.getElementById('errorCriterios').classList.remove('d-none');
-                    document.getElementById('panel-criterios').scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    return false;
-                }
-            }
+            const ivaTotal = Math.max(0, granTotal - subtotalNeto);
 
-            // Validar proveedor nuevo
-            const selProvVal = document.getElementById('selProveedor').value;
-            if (selProvVal === 'NUEVO') {
-                const inpRut = document.getElementById('inpNuevoProvRut');
-                const inpNombre = document.getElementById('inpNuevoProvNombre');
-                const inpFicha = document.getElementById('inpFichaProveedor');
-                
-                inpRut.classList.remove('is-invalid');
-                inpNombre.classList.remove('is-invalid');
-                inpFicha.classList.remove('is-invalid');
-                
-                let errProv = false;
-                if (!inpRut.value.trim() || !validateRut(inpRut.value)) {
-                    inpRut.classList.add('is-invalid');
-                    errProv = true;
-                }
-                if (!inpNombre.value.trim()) {
-                    inpNombre.classList.add('is-invalid');
-                    errProv = true;
-                }
-                if (inpFicha.files.length === 0) {
-                    inpFicha.classList.add('is-invalid');
-                    errProv = true;
-                }
-                
-                if (errProv) {
-                    divError.innerHTML = "<strong>⚠️ Faltan datos del Proveedor Nuevo:</strong> Por favor ingrese un RUT válido, Razón Social y suba el archivo PDF de la Ficha del Proveedor.";
-                    divError.classList.remove('d-none');
-                    divError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    document.getElementById('panelNuevoProv').scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    return false;
-                }
-            }
-
-            // Validar que no haya adjuntos subiendo o con error
-            if (typeof archivosSubidos !== 'undefined') {
-                if (archivosSubidos.some(a => a.status === 'uploading')) {
-                    divError.innerHTML = "<strong>⚠️ Archivos en proceso de carga:</strong> Por favor espere a que todos los documentos adjuntos se suban al 100% antes de iniciar el trámite.";
-                    divError.classList.remove('d-none');
-                    divError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    return false;
-                }
-                if (archivosSubidos.some(a => a.status === 'error')) {
-                    divError.innerHTML = "<strong>⚠️ Archivos con error de carga:</strong> Elimine o corrija los archivos adjuntos con error antes de enviar la solicitud.";
-                    divError.classList.remove('d-none');
-                    divError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    return false;
-                }
-            }
-
-            return true;
+            document.getElementById('lblSubtotalNeto').innerText = formatCLP(subtotalNeto);
+            document.getElementById('lblIvaTotal').innerText = formatCLP(ivaTotal);
+            document.getElementById('lblGranTotal').innerText = formatCLP(granTotal);
         }
 
-        // --- PREVENCIÓN DOBLE ENVÍO & ANIMACIÓN CARGA ---
-        let guardandoFormulario = false;
-        function procesarEnvio(event) {
-            if (guardandoFormulario) {
-                event.preventDefault();
-                return false;
-            }
-            
-            const esValido = validarFormulario();
-            if (!esValido) {
-                event.preventDefault();
-                return false;
-            }
-            
-            guardandoFormulario = true;
-            const btn = document.getElementById('btnSubmit');
-            const text = document.getElementById('btnText');
-            const spinner = document.getElementById('btnSpinner');
-            const icon = document.getElementById('btnIcon');
-            
-            setTimeout(() => {
-                btn.disabled = true;
-                btn.classList.add('disabled');
-                text.innerText = 'Ingresando trámite...';
-                spinner.classList.remove('d-none');
-                icon.classList.add('d-none');
-            }, 5);
-            
-            return true;
-        }
+        function handleMontoInput(inp) {
+            let val = inp.value.replace(/\D/g, '');
+            if (val === '') val = '0';
+            const num = parseInt(val, 10);
+            inp.value = num.toLocaleString('es-CL');
 
-        document.addEventListener('DOMContentLoaded', () => {
-            if (itemsAnteriores.length > 0) {
-                itemsAnteriores.forEach(item => agregarFila(item));
+            let neto = 0, iva = 0, tot = 0;
+            if (regimenActual === 'NETO') {
+                neto = num;
+                iva = Math.round(num * 0.19);
+                tot = neto + iva;
             } else {
-                agregarFila(); 
+                tot = num;
+                neto = Math.round(num / 1.19);
+                iva = tot - neto;
             }
 
-            if (criteriosAnteriores.length > 0) {
-                criteriosAnteriores.forEach(crit => agregarCriterio(crit));
-            }
+            document.getElementById('dispPreviewNeto').innerText = formatCLP(neto);
+            document.getElementById('dispPreviewIva').innerText = formatCLP(iva);
+            document.getElementById('dispPreviewTotal').innerText = formatCLP(tot);
+        }
 
-            // Inicializar tarjeta de resumen de proveedor
-            const preSelVal = document.getElementById('selProveedor').value;
-            if (preSelVal && preSelVal !== 'NUEVO') {
-                const p = listadoProveedores.find(x => x.id == preSelVal);
-                if (p) {
-                    document.getElementById('provResumenRazonSocial').innerText = p.razon_social;
-                    document.getElementById('provResumenRut').innerText = p.rut;
-                    document.getElementById('provResumenDireccion').innerText = 'Proveedor registrado en el Directorio Municipal';
-                    
-                    document.getElementById('provResumenVacio').classList.add('d-none');
-                    document.getElementById('provResumenDetalle').classList.remove('d-none');
-                    document.getElementById('btnSelectProvText').innerText = 'Cambiar Proveedor';
-                }
-            } else if (preSelVal === 'NUEVO') {
-                const rutVal = document.getElementById('inpNuevoProvRut').value;
-                const nombreVal = document.getElementById('inpNuevoProvNombre').value;
-                const direccionVal = document.getElementById('inpNuevoProvDireccion').value;
-                
-                document.getElementById('provResumenRazonSocial').innerText = nombreVal + ' (Sugerido)';
-                document.getElementById('provResumenRut').innerText = rutVal;
-                document.getElementById('provResumenDireccion').innerText = direccionVal ? direccionVal : 'Sin dirección provista';
-                
-                document.getElementById('provResumenVacio').classList.add('d-none');
-                document.getElementById('provResumenDetalle').classList.remove('d-none');
-                document.getElementById('btnSelectProvText').innerText = 'Cambiar Proveedor';
+        function mostrarArchivosSeleccionados(input) {
+            const cont = document.getElementById('listaArchivos');
+            cont.innerHTML = '';
+            if (input.files.length > 0) {
+                Array.from(input.files).forEach(f => {
+                    const pill = document.createElement('div');
+                    pill.className = 'file-pill';
+                    pill.innerHTML = `
+                        <div><i class="bi bi-file-earmark-check text-primary me-2"></i><strong>${escapeHtml(f.name)}</strong> <span class="text-muted">(${(f.size/1024/1024).toFixed(2)} MB)</span></div>
+                        <i class="bi bi-check-circle-fill text-success"></i>
+                    `;
+                    cont.appendChild(pill);
+                });
             }
+        }
 
-            const inpMonto = document.getElementById('inpMontoDisponible');
-            if (inpMonto && inpMonto.value) {
-                inpMonto.value = formatCLP(inpMonto.value);
-            }
+        function procesarEnvio(e) {
+            return true;
+        }
 
-            cambiarRegimenImpuesto(currentRegimenImpuesto);
-            evaluarFormularioReactivo();
-            evaluarProveedorNuevo();
-        });
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[m]);
+        }
     </script>
-<?php include __DIR__ . '/footer.php'; ?>
 </body>
 </html>
