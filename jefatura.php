@@ -389,22 +389,22 @@ $es_subrogante = isset($_SESSION['es_subrogante']) && $_SESSION['es_subrogante']
                 </div>
 
                 <!-- PAGINACIÓN SAAS -->
-                <?php if($total_pages > 1): ?>
+                <?php if (!empty($total_pages) && $total_pages > 1): ?>
                     <div class="panel-footer">
                         <div>
-                            Mostrando página <b><?= $page ?></b> de <b><?= $total_pages ?></b> (Total: <b><?= $total_records ?></b> solicitudes)
+                            Mostrando página <b><?= $page ?? 1 ?></b> de <b><?= $total_pages ?></b> (Total: <b><?= $total_records ?? count($solicitudes ?? []) ?></b> solicitudes)
                         </div>
                         <ul class="saas-pagination">
-                            <?php if($page > 1): ?>
-                                <li><a class="saas-page-link" href="<?= $base_url . ($page - 1) ?>"><i class="bi bi-chevron-left"></i></a></li>
+                            <?php if(($page ?? 1) > 1): ?>
+                                <li><a class="saas-page-link" href="<?= ($base_url ?? '?page=') . (($page ?? 1) - 1) ?>"><i class="bi bi-chevron-left"></i></a></li>
                             <?php endif; ?>
                             
                             <?php for($i = 1; $i <= $total_pages; $i++): ?>
-                                <li><a class="saas-page-link <?= $i == $page ? 'active' : '' ?>" href="<?= $base_url . $i ?>"><?= $i ?></a></li>
+                                <li><a class="saas-page-link <?= $i == ($page ?? 1) ? 'active' : '' ?>" href="<?= ($base_url ?? '?page=') . $i ?>"><?= $i ?></a></li>
                             <?php endfor; ?>
                             
-                            <?php if($page < $total_pages): ?>
-                                <li><a class="saas-page-link" href="<?= $base_url . ($page + 1) ?>"><i class="bi bi-chevron-right"></i></a></li>
+                            <?php if(($page ?? 1) < $total_pages): ?>
+                                <li><a class="saas-page-link" href="<?= ($base_url ?? '?page=') . (($page ?? 1) + 1) ?>"><i class="bi bi-chevron-right"></i></a></li>
                             <?php endif; ?>
                         </ul>
                     </div>

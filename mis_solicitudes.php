@@ -433,22 +433,22 @@ $pagina_actual = basename($_SERVER['PHP_SELF']);
             <!-- PAGINACIÓN -->
             <div class="panel-footer">
                 <div>
-                    Mostrando página <strong><?= $page ?></strong> de <strong><?= max(1, $total_pages) ?></strong> (Total: <?= $total_records ?> solicitudes)
+                    Mostrando página <strong><?= $page ?? 1 ?></strong> de <strong><?= max(1, $total_pages ?? 1) ?></strong> (Total: <?= $total_records ?? count($solicitudes ?? []) ?> solicitudes)
                 </div>
 
-                <?php if ($total_pages > 1): ?>
+                <?php if (!empty($total_pages) && $total_pages > 1): ?>
                 <nav>
                     <ul class="saas-pagination">
-                        <?php if ($page > 1): ?>
-                            <li><a class="saas-page-link" href="<?= $base_url . ($page - 1) ?>" title="Anterior">&laquo;</a></li>
+                        <?php if (($page ?? 1) > 1): ?>
+                            <li><a class="saas-page-link" href="<?= ($base_url ?? '?page=') . (($page ?? 1) - 1) ?>" title="Anterior">&laquo;</a></li>
                         <?php endif; ?>
 
-                        <?php for ($i = max(1, $page - 2); $i <= min($total_pages, $page + 2); $i++): ?>
-                            <li><a class="saas-page-link <?= $i == $page ? 'active' : '' ?>" href="<?= $base_url . $i ?>"><?= $i ?></a></li>
+                        <?php for ($i = max(1, ($page ?? 1) - 2); $i <= min($total_pages, ($page ?? 1) + 2); $i++): ?>
+                            <li><a class="saas-page-link <?= $i == ($page ?? 1) ? 'active' : '' ?>" href="<?= ($base_url ?? '?page=') . $i ?>"><?= $i ?></a></li>
                         <?php endfor; ?>
 
-                        <?php if ($page < $total_pages): ?>
-                            <li><a class="saas-page-link" href="<?= $base_url . ($page + 1) ?>" title="Siguiente">&raquo;</a></li>
+                        <?php if (($page ?? 1) < $total_pages): ?>
+                            <li><a class="saas-page-link" href="<?= ($base_url ?? '?page=') . (($page ?? 1) + 1) ?>" title="Siguiente">&raquo;</a></li>
                         <?php endif; ?>
                     </ul>
                 </nav>
