@@ -167,13 +167,41 @@ foreach($otros_proveedores as $p) {
 
                         <input type="hidden" name="prioridad_id" value="1">
 
-                        <div class="col-md-6 d-none" id="divMontoDisponible">
-                            <label class="form-label fw-bold text-primary small">Monto Neto de la Cotización <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-primary text-white fw-bold">$</span>
-                                <input type="text" name="monto_disponible_neto" id="inpMontoDisponible" class="form-control fw-bold text-primary bg-white" oninput="handleMontoInput(this)" value="<?= htmlspecialchars($post_monto_disponible_neto ?? '') ?>">
+                        <div class="col-12 d-none" id="divMontoDisponible">
+                            <div class="p-3.5 bg-blue-50 border border-blue-200 rounded-3 shadow-sm">
+                                <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-2 mb-2.5">
+                                    <label class="form-label fw-bold text-primary small mb-0 d-flex align-items-center gap-1.5">
+                                        <i class="bi bi-cash-stack"></i>
+                                        Monto Estimado / Disponible para Cotización <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="btn-group btn-group-sm" role="group" aria-label="Régimen Monto Disponible">
+                                        <input type="radio" class="btn-check" name="disp_imp_tipo" id="disp_neto" value="NETO" <?= ($post_tipo_impuesto === 'NETO' || empty($post_tipo_impuesto)) ? 'checked' : '' ?> onchange="cambiarRegimenImpuesto('NETO')">
+                                        <label class="btn btn-outline-primary fw-bold btn-sm py-1 px-2.5" for="disp_neto" style="font-size: 11px;">
+                                            <i class="bi bi-tag me-1"></i> Neto (Sin IVA)
+                                        </label>
+                                        
+                                        <input type="radio" class="btn-check" name="disp_imp_tipo" id="disp_bruto" value="IVA_INCLUIDO" <?= $post_tipo_impuesto === 'IVA_INCLUIDO' ? 'checked' : '' ?> onchange="cambiarRegimenImpuesto('IVA_INCLUIDO')">
+                                        <label class="btn btn-outline-primary fw-bold btn-sm py-1 px-2.5" for="disp_bruto" style="font-size: 11px;">
+                                            <i class="bi bi-receipt me-1"></i> Con IVA (Total)
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="row g-3 align-items-center">
+                                    <div class="col-12 col-md-5">
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-primary text-white fw-bold">$</span>
+                                            <input type="text" name="monto_disponible_neto" id="inpMontoDisponible" class="form-control fw-bold text-primary bg-white fs-6 shadow-sm" placeholder="0" oninput="handleMontoInput(this)" value="<?= htmlspecialchars($post_monto_disponible_neto ?? '') ?>">
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-7">
+                                        <div class="d-flex flex-wrap align-items-center justify-content-between p-2 bg-white rounded-2 border small font-monospace">
+                                            <span class="text-muted">Neto: <strong class="text-dark" id="dispPreviewNeto">$ 0</strong></span>
+                                            <span class="text-muted">IVA (19%): <strong class="text-dark" id="dispPreviewIva">$ 0</strong></span>
+                                            <span class="text-primary fw-bold">Total: <strong class="text-primary fs-6" id="dispPreviewTotal">$ 0</strong></span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="form-text text-muted small" style="font-size: 9px;">El total sumará el 19% de IVA de forma automática.</div>
                         </div>
 
                         <div class="col-md-6">
@@ -358,22 +386,36 @@ foreach($otros_proveedores as $p) {
 
             <!-- PASO 2: PRODUCTOS/SERVICIOS -->
             <div class="card shadow-sm border-light mb-4">
-                <div class="card-header bg-white py-3 d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+                <div class="card-header bg-white py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
                     <div class="d-flex align-items-center gap-2">
                         <span class="badge bg-primary rounded-pill px-2.5 py-2 fs-6">2</span>
                         <div>
                             <h5 class="fw-bold mb-0">Detalle de Productos/Servicios</h5>
-                            <p class="text-muted small mb-0">Ingrese los ítems de la solicitud de compra.</p>
+                            <p class="text-muted small mb-0">Ingrese los ítems de la compra y elija el régimen tributario de los precios.</p>
                         </div>
                     </div>
                     
-                    <input type="hidden" name="tipo_impuesto" value="NETO">
+                    <!-- SELECTOR DE RÉGIMEN DE PRECIOS CON IVA / SIN IVA -->
+                    <div class="d-flex align-items-center gap-2 bg-light p-1.5 rounded-3 border">
+                        <span class="small fw-bold text-secondary text-uppercase tracking-wider px-1" style="font-size: 10px;">Régimen de Precios:</span>
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Régimen de Precios">
+                            <input type="radio" class="btn-check" name="tipo_impuesto" id="imp_neto" value="NETO" <?= ($post_tipo_impuesto === 'NETO' || empty($post_tipo_impuesto)) ? 'checked' : '' ?> onchange="cambiarRegimenImpuesto('NETO')">
+                            <label class="btn btn-outline-primary fw-bold btn-sm py-1 px-2.5" for="imp_neto">
+                                <i class="bi bi-tag me-1"></i> Precios Sin IVA (Neto)
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="tipo_impuesto" id="imp_bruto" value="IVA_INCLUIDO" <?= $post_tipo_impuesto === 'IVA_INCLUIDO' ? 'checked' : '' ?> onchange="cambiarRegimenImpuesto('IVA_INCLUIDO')">
+                            <label class="btn btn-outline-primary fw-bold btn-sm py-1 px-2.5" for="imp_bruto">
+                                <i class="bi bi-receipt me-1"></i> Precios Con IVA (Total)
+                            </label>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="text-muted small fw-semibold">Detalle de Solicitud:</span>
-                        <button type="button" onclick="agregarFila()" class="btn btn-primary btn-sm fw-bold shadow-sm d-flex align-items-center gap-1.5">
+                        <span class="text-muted small fw-semibold"><i class="bi bi-list-check me-1"></i> Lista de Ítems / Insumos:</span>
+                        <button type="button" onclick="agregarFila()" class="btn btn-primary btn-sm fw-bold shadow-sm d-flex align-items-center gap-1.5 transition">
                             <i class="bi bi-plus-lg"></i>
                             Agregar Ítem
                         </button>
@@ -381,15 +423,15 @@ foreach($otros_proveedores as $p) {
 
                     <div class="table-responsive rounded-3 border">
                         <table class="table table-hover align-middle mb-0" style="min-width: 900px;">
-                            <thead class="table-light text-uppercase small">
+                            <thead class="table-light text-uppercase small text-secondary">
                                 <tr>
                                     <th class="p-3 w-25">Cuenta de Gasto</th>
                                     <th class="p-3">Descripción del Producto / Servicio</th>
                                     <th class="p-3 col-cm d-none text-primary" style="width: 140px;">ID Convenio Marco</th>
                                     <th class="p-3" style="width: 120px;">Unidad</th>
                                     <th class="p-3 text-center" style="width: 90px;">Cant.</th>
-                                    <th class="p-3 text-end col-precio" style="width: 135px;">Precio Unit.</th>
-                                    <th class="p-3 text-end" style="width: 140px;">Total</th>
+                                    <th class="p-3 text-end col-precio" id="thPrecioUnit" style="width: 150px;">Precio Unit. (Neto)</th>
+                                    <th class="p-3 text-end" id="thTotalLinea" style="width: 140px;">Total Línea</th>
                                     <th class="p-3" style="width: 50px;"></th>
                                 </tr>
                             </thead>
@@ -397,18 +439,18 @@ foreach($otros_proveedores as $p) {
                             
                             <tfoot class="table-light text-secondary">
                                 <tr>
-                                    <td colspan="5" class="p-3 text-end fw-semibold foot-colspan">Monto Subtotal:</td>
-                                    <td class="p-3 text-end fw-bold" id="tdNeto">$ 0</td>
+                                    <td colspan="5" class="p-3 text-end fw-semibold foot-colspan">Monto Subtotal Neto:</td>
+                                    <td class="p-3 text-end fw-bold font-monospace" id="tdNeto">$ 0</td>
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="5" class="p-3 text-end fw-semibold foot-colspan">Impuestos (IVA 19%):</td>
-                                    <td class="p-3 text-end fw-bold" id="tdIva">$ 0</td>
+                                    <td colspan="5" class="p-3 text-end fw-semibold foot-colspan">Impuesto (IVA 19%):</td>
+                                    <td class="p-3 text-end fw-bold font-monospace" id="tdIva">$ 0</td>
                                     <td></td>
                                 </tr>
                                 <tr class="table-active">
-                                    <td colspan="5" class="p-3 text-end fw-bold text-dark foot-colspan">TOTAL A PAGAR:</td>
-                                    <td class="p-3 text-end fw-black text-primary fs-5" id="tdTotal">$ 0</td>
+                                    <td colspan="5" class="p-3 text-end fw-bold text-dark foot-colspan">TOTAL ESTIMADO / A IMPUTAR:</td>
+                                    <td class="p-3 text-end fw-black text-primary fs-5 font-monospace" id="tdTotal">$ 0</td>
                                     <td></td>
                                 </tr>
                             </tfoot>
@@ -965,6 +1007,32 @@ foreach($otros_proveedores as $p) {
             return clean.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
+        let currentRegimenImpuesto = '<?= $post_tipo_impuesto ?? "NETO" ?>';
+
+        function cambiarRegimenImpuesto(tipo) {
+            currentRegimenImpuesto = tipo;
+            
+            // Sincronizar los radio buttons de Paso 1 y Paso 2
+            const r1 = document.getElementById('disp_neto');
+            const r2 = document.getElementById('disp_bruto');
+            const r3 = document.getElementById('imp_neto');
+            const r4 = document.getElementById('imp_bruto');
+            
+            if (tipo === 'NETO') {
+                if (r1) r1.checked = true;
+                if (r3) r3.checked = true;
+                const thP = document.getElementById('thPrecioUnit');
+                if (thP) thP.innerText = 'Precio Unit. (Neto)';
+            } else {
+                if (r2) r2.checked = true;
+                if (r4) r4.checked = true;
+                const thP = document.getElementById('thPrecioUnit');
+                if (thP) thP.innerText = 'Precio Unit. (Con IVA)';
+            }
+            
+            calc();
+        }
+
         function handleMontoInput(input) {
             input.value = formatCLP(input.value);
             calc();
@@ -1001,8 +1069,8 @@ foreach($otros_proveedores as $p) {
 
                     <td class="p-2"><select name="uni[]" class="form-select form-select-sm">${uniOptions}</select></td>
                     <td class="p-2"><input type="number" name="cant[]" value="${valCant}" min="0.01" step="0.01" class="form-control form-control-sm text-center fw-bold input-cant bg-transparent" oninput="calc()" style="width: 80px; margin: 0 auto;"></td>
-                    <td class="p-2 col-precio"><input type="number" name="prec[]" value="${valPrec}" min="0" class="form-control form-control-sm text-end input-prec bg-transparent" oninput="calc()" style="width: 120px; margin-left: auto;"></td>
-                    <td class="p-2 text-end fw-bold text-secondary span-total text-nowrap">$ 0</td>
+                    <td class="p-2 col-precio"><input type="number" name="prec[]" value="${valPrec}" min="0" class="form-control form-control-sm text-end input-prec bg-transparent font-monospace" oninput="calc()" style="width: 130px; margin-left: auto;"></td>
+                    <td class="p-2 text-end fw-bold text-secondary span-total text-nowrap font-monospace">$ 0</td>
                     <td class="p-2 text-center"><button type="button" onclick="del(this)" class="btn btn-outline-danger btn-sm border-0"><i class="bi bi-trash"></i></button></td>
                 </tr>
             `;
@@ -1032,8 +1100,25 @@ foreach($otros_proveedores as $p) {
 
             if (requiereCot) {
                 const inpMonto = document.getElementById('inpMontoDisponible');
-                totalNeto = parseFloat(inpMonto.value.replace(/\./g, '')) || 0;
-                totalBruto = totalNeto * (1 + ivaRate);
+                const valMonto = parseFloat(inpMonto.value.replace(/\./g, '')) || 0;
+                
+                if (currentRegimenImpuesto === 'NETO') {
+                    totalNeto = valMonto;
+                    totalBruto = Math.round(totalNeto * (1 + ivaRate));
+                    totalIva = totalBruto - totalNeto;
+                } else {
+                    totalBruto = valMonto;
+                    totalNeto = Math.round(totalBruto / (1 + ivaRate));
+                    totalIva = totalBruto - totalNeto;
+                }
+                
+                // Actualizar preview en widget de monto disponible
+                const pNeto = document.getElementById('dispPreviewNeto');
+                const pIva = document.getElementById('dispPreviewIva');
+                const pTotal = document.getElementById('dispPreviewTotal');
+                if (pNeto) pNeto.innerText = formatter.format(totalNeto);
+                if (pIva) pIva.innerText = formatter.format(totalIva);
+                if (pTotal) pTotal.innerText = formatter.format(totalBruto);
                 
                 document.querySelectorAll('#tbodyItems tr').forEach(row => {
                     row.querySelector('.span-total').innerText = formatter.format(0);
@@ -1042,16 +1127,29 @@ foreach($otros_proveedores as $p) {
                 document.querySelectorAll('#tbodyItems tr').forEach(row => {
                     let cant = parseFloat(row.querySelector('.input-cant').value) || 0;
                     let prec = parseFloat(row.querySelector('.input-prec').value) || 0;
-                    let lineaNeto = cant * prec; 
-                    let lineaBruto = lineaNeto * (1 + ivaRate);
+                    let lineaTotal = 0;
+                    let lineaNeto = 0;
+                    let lineaBruto = 0;
 
-                    row.querySelector('.span-total').innerText = formatter.format(lineaBruto);
-                    totalNeto += lineaNeto;
-                    totalBruto += lineaBruto;
+                    if (currentRegimenImpuesto === 'NETO') {
+                        lineaNeto = cant * prec;
+                        lineaBruto = Math.round(lineaNeto * (1 + ivaRate));
+                        lineaTotal = lineaBruto;
+                        totalNeto += lineaNeto;
+                        totalBruto += lineaBruto;
+                    } else {
+                        lineaBruto = cant * prec;
+                        lineaNeto = Math.round(lineaBruto / (1 + ivaRate));
+                        lineaTotal = lineaBruto;
+                        totalBruto += lineaBruto;
+                        totalNeto += lineaNeto;
+                    }
+
+                    row.querySelector('.span-total').innerText = formatter.format(lineaTotal);
                 });
+                totalIva = totalBruto - totalNeto;
             }
 
-            totalIva = totalBruto - totalNeto;
             document.getElementById('tdNeto').innerText = formatter.format(totalNeto);
             document.getElementById('tdIva').innerText = formatter.format(totalIva);
             document.getElementById('tdTotal').innerText = formatter.format(totalBruto);
@@ -1210,6 +1308,7 @@ foreach($otros_proveedores as $p) {
                 inpMonto.value = formatCLP(inpMonto.value);
             }
 
+            cambiarRegimenImpuesto(currentRegimenImpuesto);
             evaluarFormularioReactivo();
             evaluarProveedorNuevo();
         });

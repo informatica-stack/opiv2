@@ -153,17 +153,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
         $stmtTC->execute([$tipo_compra_id]);
         $requiere_cot = (int) $stmtTC->fetchColumn();
 
+        $post_tipo_impuesto = in_array($_POST['tipo_impuesto'] ?? 'NETO', ['NETO', 'IVA_INCLUIDO', 'EXENTO']) ? $_POST['tipo_impuesto'] : 'NETO';
         $iva_pct = 1.19;
         $total_est_bruto = 0;
 
         if ($requiere_cot) {
             $monto_raw = str_replace('.', '', $_POST['monto_disponible_neto'] ?? '0');
-            $monto_disp_neto = floatval($monto_raw);
-            $total_est_bruto = $monto_disp_neto * $iva_pct;
+            $monto_disp = floatval($monto_raw);
+            if ($post_tipo_impuesto === 'NETO') {
+                $total_est_bruto = round($monto_disp * $iva_pct);
+            } else {
+                $total_est_bruto = round($monto_disp);
+            }
         } else {
             foreach ($cant as $i => $c) {
-                $p_unit = floatval($prec[$i]);
-                $p_unit *= $iva_pct; // Forzar cálculo en neto
+                $p_ingresado = floatval($prec[$i]);
+                if ($post_tipo_impuesto === 'NETO') {
+                    $p_unit = round($p_ingresado * $iva_pct, 2);
+                } else {
+                    $p_unit = round($p_ingresado, 2);
+                }
                 $total_est_bruto += (floatval($c) * $p_unit);
             }
         }
@@ -198,8 +207,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
         }
 
         // INSERTAR EXPEDIENTE
-        $stmt = $pdo->prepare("INSERT INTO expedientes (codigo_interno, titulo_compra, usuario_creador_id, unidad_origen_id, centro_costo_id, tipo_compra_id, prioridad_id, rango_utm_id, proveedor_adjudicado_id, id_contrato_suministro, plan_compras_proyecto, plan_compras_item, estado_actual, monto_estimado, motivo_compra) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$codigo, $post_titulo_compra, $user_id, $unidad_id, $centro_costo['id'], $tipo_compra_id, $post_prioridad, $post_rango_utm, $post_proveedor_id, $post_id_contrato_suministro, $post_plan_proyecto, $post_plan_item, $estado_destino, $total_est_bruto, $post_motivo]);
+        $stmt = $pdo->prepare("INSERT INTO expedientes (codigo_interno, titulo_compra, usuario_creador_id, unidad_origen_id, centro_costo_id, tipo_compra_id, prioridad_id, rango_utm_id, proveedor_adjudicado_id, id_contrato_suministro, plan_compras_proyecto, plan_compras_item, estado_actual, monto_estimado, tipo_impuesto, motivo_compra) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$codigo, $post_titulo_compra, $user_id, $unidad_id, $centro_costo['id'], $tipo_compra_id, $post_prioridad, $post_rango_utm, $post_proveedor_id, $post_id_contrato_suministro, $post_plan_proyecto, $post_plan_item, $estado_destino, $total_est_bruto, $post_tipo_impuesto, $post_motivo]);
         $exp_id = $pdo->lastInsertId();
 
         // Subir Ficha de Proveedor si es nuevo
@@ -228,7 +237,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
                 $p_final = 0;
             } else {
                 $p_ingresado = floatval($prec[$i]);
-                $p_final = $p_ingresado * $iva_pct; // Forzado a neto
+                if ($post_tipo_impuesto === 'NETO') {
+                    $p_final = round($p_ingresado * $iva_pct, 2);
+                } else {
+                    $p_final = round($p_ingresado, 2);
+                }
             }
             if ($codigo_tc === 'CONVENIO_MARCO') {
                 $val_cm = trim($id_cm[$i] ?? '');

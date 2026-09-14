@@ -101,8 +101,10 @@ $post_rango_utm = $exp['rango_utm_id'] ?? '';
 $post_proveedor_id = $exp['proveedor_adjudicado_id'] ?? '';
 $post_id_contrato_suministro = $exp['id_contrato_suministro'] ?? '';
 $post_plan_proyecto = $exp['plan_compras_proyecto'] ?? '';
-$post_plan_item = $exp['plan_compras_item'] ?? '';
-$post_tipo_impuesto = 'NETO'; // Default UI
+$post_tipo_impuesto = $exp['tipo_impuesto'] ?? 'NETO';
+if (!in_array($post_tipo_impuesto, ['NETO', 'IVA_INCLUIDO', 'EXENTO'])) {
+    $post_tipo_impuesto = 'NETO';
+}
 
 $requiere_cot_inicial = 0;
 $stmtTCI = $pdo->prepare("SELECT requiere_cotizacion FROM tipos_compra WHERE id = ?");
@@ -111,7 +113,11 @@ $requiere_cot_inicial = (int) $stmtTCI->fetchColumn();
 
 $post_monto_disponible_neto = '';
 if ($requiere_cot_inicial) {
-    $post_monto_disponible_neto = round($exp['monto_estimado'] / 1.19);
+    if ($post_tipo_impuesto === 'NETO') {
+        $post_monto_disponible_neto = round($exp['monto_estimado'] / 1.19);
+    } else {
+        $post_monto_disponible_neto = round($exp['monto_estimado']);
+    }
 }
 
 $items_old = [];
@@ -120,13 +126,17 @@ $criterios_old = [];
 // Mapear DB items para JS
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     foreach($db_items as $it) {
-        $prec_neto = round(floatval($it['precio_unitario']) / 1.19, 2);
+        if ($post_tipo_impuesto === 'NETO') {
+            $prec_val = round(floatval($it['precio_unitario']) / 1.19, 2);
+        } else {
+            $prec_val = round(floatval($it['precio_unitario']), 2);
+        }
         $items_old[] = [
             'desc' => $it['descripcion'],
             'id_cm' => $it['id_producto_cm'] ?? '',
             'uni' => $it['unidad_medida'],
             'cant' => $it['cantidad'],
-            'prec' => $prec_neto, // Convertido de bruto (BD) a neto para que al re-guardar * 1.19 quede exacto
+            'prec' => $prec_val,
             'cuenta_id' => $it['presupuesto_asignado_id']
         ];
     }
@@ -228,24 +238,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
         $stmtTC->execute([$tipo_compra_id]);
         $requiere_cot = (int) $stmtTC->fetchColumn();
 
+        $post_tipo_impuesto = in_array($_POST['tipo_impuesto'] ?? 'NETO', ['NETO', 'IVA_INCLUIDO', 'EXENTO']) ? $_POST['tipo_impuesto'] : 'NETO';
         $iva_pct = 1.19;
         $total_est_bruto = 0;
 
         if ($requiere_cot) {
             $monto_raw = str_replace('.', '', $_POST['monto_disponible_neto'] ?? '0');
-            $monto_disp_neto = floatval($monto_raw);
-            $total_est_bruto = $monto_disp_neto * $iva_pct;
+            $monto_disp = floatval($monto_raw);
+            if ($post_tipo_impuesto === 'NETO') {
+                $total_est_bruto = round($monto_disp * $iva_pct);
+            } else {
+                $total_est_bruto = round($monto_disp);
+            }
         } else {
             foreach ($cant as $i => $c) {
-                $p_unit = floatval($prec[$i]);
-                $p_unit *= $iva_pct; // Forzar cálculo en neto
+                $p_ingresado = floatval($prec[$i]);
+                if ($post_tipo_impuesto === 'NETO') {
+                    $p_unit = round($p_ingresado * $iva_pct, 2);
+                } else {
+                    $p_unit = round($p_ingresado, 2);
+                }
                 $total_est_bruto += (floatval($c) * $p_unit);
             }
         }
 
         // --- UPDATE CABECERA ---
-        $stmtUpd = $pdo->prepare("UPDATE expedientes SET titulo_compra=?, motivo_compra=?, tipo_compra_id=?, prioridad_id=?, rango_utm_id=?, proveedor_adjudicado_id=?, id_contrato_suministro=?, plan_compras_proyecto=?, plan_compras_item=?, monto_estimado=?, estado_actual=? WHERE id=?");
-        $stmtUpd->execute([$post_titulo_compra, $post_motivo, $tipo_compra_id, $post_prioridad, $post_rango_utm, $post_proveedor_id, $post_id_contrato_suministro, $post_plan_proyecto, $post_plan_item, $total_est_bruto, $estado_destino, $id]);
+        $stmtUpd = $pdo->prepare("UPDATE expedientes SET titulo_compra=?, motivo_compra=?, tipo_compra_id=?, prioridad_id=?, rango_utm_id=?, proveedor_adjudicado_id=?, id_contrato_suministro=?, plan_compras_proyecto=?, plan_compras_item=?, monto_estimado=?, tipo_impuesto=?, estado_actual=? WHERE id=?");
+        $stmtUpd->execute([$post_titulo_compra, $post_motivo, $tipo_compra_id, $post_prioridad, $post_rango_utm, $post_proveedor_id, $post_id_contrato_suministro, $post_plan_proyecto, $post_plan_item, $total_est_bruto, $post_tipo_impuesto, $estado_destino, $id]);
 
         // Subir Ficha de Proveedor si es nuevo
         if (isset($_FILES['ficha_proveedor']) && $_FILES['ficha_proveedor']['error'] === UPLOAD_ERR_OK) {
@@ -275,7 +294,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
             if ($requiere_cot) {
                 $p_final = 0;
             } else {
-                $p_final = floatval($prec[$i]) * $iva_pct; // Forzado a neto
+                $p_ingresado = floatval($prec[$i]);
+                if ($post_tipo_impuesto === 'NETO') {
+                    $p_final = round($p_ingresado * $iva_pct, 2);
+                } else {
+                    $p_final = round($p_ingresado, 2);
+                }
             }
             if ($codigo_tc === 'CONVENIO_MARCO') {
                 $val_cm = trim($id_cm[$i] ?? '');
