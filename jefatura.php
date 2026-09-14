@@ -1,19 +1,111 @@
 <?php
-// jefatura.php - Visación Técnica de Jefatura (Vista UI V5.0 - Homologada con mis_solicitudes.php)
+// jefatura.php - Visación Técnica y Firma de Jefatura (Diseño SaaS Clean Minimalist)
 require_once __DIR__ . '/jefatura_controller.php';
+$user_name = $_SESSION['user_name'] ?? 'Usuario';
+$user_rol = $_SESSION['user_rol'] ?? '';
+$user_depto = $_SESSION['user_depto_nombre'] ?? 'Municipalidad';
+$es_subrogante = isset($_SESSION['es_subrogante']) && $_SESSION['es_subrogante'];
 ?><!DOCTYPE html>
-<html lang="es" data-bs-theme="light">
+<html lang="es">
 <head>
     <?php 
-    $titulo_pagina = "Bandeja de Entrada Jefatura";
+    $titulo_pagina = "Bandeja de Entrada Jefatura - Sistema OPI";
     include __DIR__ . '/head.php'; 
     ?>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans d-flex flex-column min-vh-100">
+<body>
 
-    <?php include __DIR__ . '/nav.php'; ?>
+    <!-- TOPBAR SAAS UNIFICADA -->
+    <header class="saas-topbar">
+        <a href="index.php" class="brand-box">
+            <div class="brand-logo-icon">O</div>
+            <div class="brand-text">
+                <h1>Sistema OPI</h1>
+                <p>Órdenes de Pedido Interno</p>
+            </div>
+        </a>
 
-    <div class="container mt-4 px-3 px-md-4">
+        <!-- Accesos directos rápidos -->
+        <nav class="saas-nav-links d-none d-lg-flex">
+            <a href="mis_solicitudes.php" class="saas-nav-item"><i class="bi bi-journal-text"></i> Mis Solicitudes</a>
+            <a href="nueva_solicitud.php" class="saas-nav-item"><i class="bi bi-plus-circle"></i> Nueva Solicitud</a>
+            <a href="jefatura.php" class="saas-nav-item active"><i class="bi bi-shield-check"></i> V°B° Jefatura</a>
+            <?php if($user_rol === 'PRESUPUESTO' || $user_rol === 'ADMIN_MUNICIPAL' || $user_rol === 'SYSADMIN'): ?>
+                <a href="control_presupuestario.php" class="saas-nav-item"><i class="bi bi-calculator"></i> Presupuesto</a>
+                <a href="centros_de_costo.php" class="saas-nav-item"><i class="bi bi-wallet2"></i> Centros Costo</a>
+            <?php endif; ?>
+            <?php if($user_rol === 'ADQUISICIONES' || $user_rol === 'SYSADMIN'): ?>
+                <a href="adquisiciones.php" class="saas-nav-item"><i class="bi bi-cart3"></i> Adquisiciones</a>
+            <?php endif; ?>
+        </nav>
+
+        <!-- Menú y Perfil -->
+        <div class="d-flex align-items-center gap-2">
+            <div class="dropdown">
+                <button class="btn-saas btn-saas-secondary btn-saas-sm dropdown-toggle d-flex align-items-center gap-1.5" type="button" id="dropdownGlobalNav" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-grid-fill text-primary"></i>
+                    <span class="d-none d-sm-inline">Módulos</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-light mt-2 p-2" aria-labelledby="dropdownGlobalNav" style="min-width: 250px;">
+                    <li><span class="dropdown-header text-uppercase text-secondary fw-bold" style="font-size: 9px;">Panel Principal</span></li>
+                    <?php if($user_rol === 'PRESUPUESTO' || $user_rol === 'ADMIN_MUNICIPAL' || $user_rol === 'SYSADMIN'): ?>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard OPIs</a></li>
+                    <?php endif; ?>
+                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="mis_solicitudes.php"><i class="bi bi-journal-text"></i> Mis Solicitudes</a></li>
+                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="nueva_solicitud.php"><i class="bi bi-plus-circle"></i> Nueva Solicitud</a></li>
+                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="subrogancia.php"><i class="bi bi-person-gear"></i> Configurar Suplente</a></li>
+                    
+                    <li><hr class="dropdown-divider"></li>
+                    <li><span class="dropdown-header text-uppercase text-secondary fw-bold" style="font-size: 9px;">Visaciones</span></li>
+                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2 active bg-primary text-white" href="jefatura.php"><i class="bi bi-shield-check"></i> V°B° Jefatura</a></li>
+                    <?php if($user_rol === 'ADMIN_MUNICIPAL' || $user_rol === 'SYSADMIN'): ?>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="administrador.php"><i class="bi bi-pencil-square"></i> Firma de OPI</a></li>
+                    <?php endif; ?>
+
+                    <?php if($user_rol === 'PRESUPUESTO' || $user_rol === 'FINANZAS' || $user_rol === 'SYSADMIN'): ?>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><span class="dropdown-header text-uppercase text-secondary fw-bold" style="font-size: 9px;">Presupuesto y Finanzas</span></li>
+                        <?php if($user_rol === 'PRESUPUESTO' || $user_rol === 'SYSADMIN'): ?>
+                            <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="control_presupuestario.php"><i class="bi bi-calculator"></i> VB Presupuestario</a></li>
+                            <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="centros_de_costo.php"><i class="bi bi-wallet2"></i> Centros de Costo</a></li>
+                            <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="mantenedor_cuentas.php"><i class="bi bi-list-columns-reverse"></i> Cuentas Presupuestarias</a></li>
+                        <?php endif; ?>
+                        <?php if($user_rol === 'FINANZAS' || $user_rol === 'SYSADMIN'): ?>
+                            <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="finanzas.php"><i class="bi bi-file-earmark-check"></i> Firma de CDP</a></li>
+                        <?php endif; ?>
+                    <?php endif; ?>
+
+                    <?php if($user_rol === 'ADQUISICIONES' || $user_rol === 'SYSADMIN'): ?>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><span class="dropdown-header text-uppercase text-secondary fw-bold" style="font-size: 9px;">Adquisiciones</span></li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="adquisiciones.php"><i class="bi bi-cart3"></i> Gestión de Adquisiciones</a></li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="cuadro_comparativo.php"><i class="bi bi-layout-split"></i> Cuadro Comparativo</a></li>
+                    <?php endif; ?>
+
+                    <?php if($user_rol === 'SYSADMIN'): ?>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><span class="dropdown-header text-uppercase text-secondary fw-bold" style="font-size: 9px;">Configuración</span></li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="admin_firmantes.php"><i class="bi bi-pen"></i> Firmantes Digitales</a></li>
+                        <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="admin_usuarios.php"><i class="bi bi-people"></i> Usuarios</a></li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+
+            <div class="user-pill d-none d-sm-flex">
+                <div class="user-avatar-circle"><?= strtoupper(substr($user_name, 0, 2)) ?></div>
+                <div class="d-none d-md-block text-start pe-2">
+                    <div class="fw-bold text-dark text-truncate" style="max-width: 140px; font-size: 12px;"><?= htmlspecialchars($user_name) ?></div>
+                    <div class="text-muted text-truncate" style="max-width: 140px; font-size: 10.5px;"><?= htmlspecialchars($user_depto) ?></div>
+                </div>
+            </div>
+
+            <a href="logout.php" class="btn-saas btn-saas-secondary btn-saas-sm" title="Cerrar Sesión">
+                <i class="bi bi-box-arrow-right"></i>
+            </a>
+        </div>
+    </header>
+
+    <div class="saas-container">
         
         <!-- MENSAJES DE ALERTA -->
         <?php if($mensaje): ?>
@@ -22,146 +114,199 @@ require_once __DIR__ . '/jefatura_controller.php';
             $iconClass = ($tipo_mensaje === 'error') ? 'exclamation-triangle-fill' : (($tipo_mensaje === 'warning') ? 'arrow-counterclockwise' : 'check-circle-fill');
             ?>
             <div class="alert alert-<?= $alertClass ?> d-flex align-items-center gap-2 mb-4 shadow-sm" role="alert">
-                <i class="bi bi-<?= $iconClass ?> shrink-0"></i>
+                <i class="bi bi-<?= $iconClass ?> shrink-0 fs-5"></i>
                 <div class="small fw-semibold"><?= htmlspecialchars($mensaje) ?></div>
             </div>
         <?php endif; ?>
 
-        <!-- VISTA: LISTA DE SOLICITUDES (TABS Y FILTROS) -->
+        <!-- ============================================================== -->
+        <!-- VISTA A: LISTA DE SOLICITUDES (TABS, FILTROS Y TABLA)           -->
+        <!-- ============================================================== -->
         <?php if($vista !== 'revisar'): ?>
             
-            <!-- CABECERA PRINCIPAL -->
-            <div class="row align-items-center mb-4 g-3">
-                <div class="col-12 col-md">
-                    <h1 class="h3 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
-                        <i class="bi bi-shield-check text-primary"></i>
-                        Bandeja de Visación de Jefatura
-                    </h1>
-                    <p class="text-muted small mb-0">
-                        <?php if(isset($_SESSION['es_subrogante']) && $_SESSION['es_subrogante']): ?>
-                            <span class="badge bg-warning text-dark me-2">SUBROGANTE</span>
-                        <?php endif; ?>
-                        Revise, controle y autorice las solicitudes de su unidad municipal.
-                    </p>
+            <!-- HEADER Y TÍTULO -->
+            <div class="page-header-row">
+                <div>
+                    <div class="breadcrumbs">
+                        <a href="index.php">Inicio</a>
+                        <i class="bi bi-chevron-right"></i>
+                        <span class="current">Bandeja de Jefatura</span>
+                    </div>
+                    <div class="page-title">
+                        <h2>
+                            Bandeja de Visación y Firma de Jefatura
+                            <?php if($es_subrogante): ?>
+                                <span class="badge bg-warning text-dark ms-2 fw-bold" style="font-size: 11px;">SUBROGANTE</span>
+                            <?php endif; ?>
+                        </h2>
+                        <p>Revise, controle y autorice oportunamente los requerimientos de compra de su unidad.</p>
+                    </div>
                 </div>
-                <div class="col-12 col-md-auto d-flex flex-wrap gap-2">
-                    <button onclick="toggleFiltros()" class="btn btn-outline-secondary btn-sm shadow-sm d-flex align-items-center gap-1.5">
+                <div class="d-flex align-items-center gap-2">
+                    <button onclick="toggleFiltros()" class="btn-saas btn-saas-secondary">
                         <i class="bi bi-funnel"></i>
-                        Filtros
+                        <span>Filtros</span>
                     </button>
                 </div>
             </div>
 
-            <!-- PESTAÑAS NAVEGABLES (TABS) -->
-            <div class="d-flex border-bottom mb-4 overflow-x-auto">
-                <a href="jefatura.php?view=pendientes" class="px-4 py-2.5 text-decoration-none fw-bold small border-bottom border-2 <?= $vista === 'pendientes' ? 'border-primary text-primary bg-white rounded-top' : 'border-transparent text-secondary hover-text-dark' ?> text-nowrap d-flex align-items-center gap-2">
-                    <i class="bi bi-clock-history"></i>
-                    Pendientes de Visación
-                    <span class="badge rounded-pill <?= $vista === 'pendientes' ? 'bg-primary text-white' : 'bg-secondary-subtle text-secondary-emphasis' ?>"><?= $count_pendientes ?></span>
-                </a>
-                <a href="jefatura.php?view=procesadas" class="px-4 py-2.5 text-decoration-none fw-bold small border-bottom border-2 <?= $vista === 'procesadas' ? 'border-primary text-primary bg-white rounded-top' : 'border-transparent text-secondary hover-text-dark' ?> text-nowrap d-flex align-items-center gap-2">
-                    <i class="bi bi-check2-square"></i>
-                    Procesadas por Mí
-                    <span class="badge rounded-pill <?= $vista === 'procesadas' ? 'bg-primary text-white' : 'bg-secondary-subtle text-secondary-emphasis' ?>"><?= $count_procesadas ?></span>
-                </a>
-                <a href="jefatura.php?view=todas" class="px-4 py-2.5 text-decoration-none fw-bold small border-bottom border-2 <?= $vista === 'todas' ? 'border-primary text-primary bg-white rounded-top' : 'border-transparent text-secondary hover-text-dark' ?> text-nowrap d-flex align-items-center gap-2">
-                    <i class="bi bi-diagram-3"></i>
-                    Todas la Unidad
-                    <span class="badge rounded-pill <?= $vista === 'todas' ? 'bg-primary text-white' : 'bg-secondary-subtle text-secondary-emphasis' ?>"><?= $count_todas ?></span>
-                </a>
+            <!-- TARJETAS KPI DE GESTIÓN -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <h5>Pendientes de Visación / Firma</h5>
+                        <div class="metric-number"><?= number_format($count_pendientes, 0, ',', '.') ?></div>
+                        <div class="metric-sub text-primary fw-bold">
+                            <i class="bi bi-clock-history"></i> En espera de su revisión
+                        </div>
+                    </div>
+                    <div class="metric-icon-box blue">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <h5>Procesadas por Mí</h5>
+                        <div class="metric-number"><?= number_format($count_procesadas, 0, ',', '.') ?></div>
+                        <div class="metric-sub text-success fw-bold">
+                            <i class="bi bi-check2-all"></i> Historial de trámites visados
+                        </div>
+                    </div>
+                    <div class="metric-icon-box green">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <h5>Total Requerimientos Unidad</h5>
+                        <div class="metric-number"><?= number_format($count_todas, 0, ',', '.') ?></div>
+                        <div class="metric-sub text-muted">
+                            <i class="bi bi-diagram-3"></i> Catálogo completo de la unidad
+                        </div>
+                    </div>
+                    <div class="metric-icon-box purple">
+                        <i class="bi bi-folder2-open"></i>
+                    </div>
+                </div>
             </div>
 
-            <!-- PANEL DE FILTROS -->
-            <div id="filtroPanel" class="card shadow-sm mb-4 <?= ($f_q || $f_tipo || $f_estado || $f_desde || $f_hasta) ? '' : 'd-none' ?>">
-                <div class="card-body p-3">
+            <!-- PANEL PRINCIPAL CON TABS Y TABLA -->
+            <div class="saas-panel">
+                
+                <!-- PESTAÑAS NAVEGABLES (TABS) -->
+                <div class="saas-tab-nav">
+                    <a href="jefatura.php?view=pendientes" class="saas-tab-item <?= $vista === 'pendientes' ? 'active' : '' ?>">
+                        <i class="bi bi-clock-history"></i>
+                        <span>Pendientes de Visación</span>
+                        <span class="saas-tab-badge"><?= $count_pendientes ?></span>
+                    </a>
+                    <a href="jefatura.php?view=procesadas" class="saas-tab-item <?= $vista === 'procesadas' ? 'active' : '' ?>">
+                        <i class="bi bi-check2-square"></i>
+                        <span>Procesadas por Mí</span>
+                        <span class="saas-tab-badge"><?= $count_procesadas ?></span>
+                    </a>
+                    <a href="jefatura.php?view=todas" class="saas-tab-item <?= $vista === 'todas' ? 'active' : '' ?>">
+                        <i class="bi bi-diagram-3"></i>
+                        <span>Todas de la Unidad</span>
+                        <span class="saas-tab-badge"><?= $count_todas ?></span>
+                    </a>
+                </div>
+
+                <!-- TOOLBAR Y PANEL DE FILTROS -->
+                <div id="filtroPanel" class="p-3 bg-light border-bottom <?= ($f_q || $f_tipo || $f_estado || $f_desde || $f_hasta) ? '' : 'd-none' ?>">
                     <form method="GET" action="jefatura.php">
                         <input type="hidden" name="view" value="<?= htmlspecialchars($vista) ?>">
-                        <div class="row g-3 align-items-end">
-                            <div class="col-12 col-sm-6 col-lg-3">
-                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Buscar (ID o Título)</label>
-                                <input type="text" name="f_q" value="<?= htmlspecialchars($f_q) ?>" class="form-control form-control-sm">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-12 col-md-3">
+                                <label class="form-label-saas mb-1" style="font-size: 11px;">Buscar (Código / Título / Solicitante)</label>
+                                <input type="text" name="f_q" value="<?= htmlspecialchars($f_q) ?>" placeholder="Ej: EXP-2026 o Insumos..." class="form-control-saas py-1.5">
                             </div>
-                            <div class="col-12 col-sm-6 col-lg-2">
-                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Tipo de Compra</label>
-                                <select name="f_tipo" class="form-select form-select-sm bg-white">
+                            <div class="col-12 col-sm-6 col-md-2">
+                                <label class="form-label-saas mb-1" style="font-size: 11px;">Tipo de Compra</label>
+                                <select name="f_tipo" class="form-control-saas py-1.5">
                                     <option value="">Todos</option>
                                     <?php foreach($tipos_compra_filtro as $t): ?>
                                         <option value="<?= $t['id'] ?>" <?= $f_tipo==$t['id']?'selected':'' ?>><?= htmlspecialchars($t['nombre']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-12 col-sm-6 col-lg-2">
-                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Estado</label>
-                                <select name="f_estado" class="form-select form-select-sm bg-white">
+                            <div class="col-12 col-sm-6 col-md-2">
+                                <label class="form-label-saas mb-1" style="font-size: 11px;">Estado</label>
+                                <select name="f_estado" class="form-control-saas py-1.5">
                                     <option value="">Todos</option>
                                     <?php foreach($estados_filtro as $e): ?>
                                         <option value="<?= $e['codigo'] ?>" <?= $f_estado==$e['codigo']?'selected':'' ?>><?= htmlspecialchars($e['nombre']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-12 col-sm-6 col-lg-3">
-                                <div class="row g-2">
+                            <div class="col-12 col-sm-6 col-md-3">
+                                <div class="row g-1">
                                     <div class="col-6">
-                                        <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Desde</label>
-                                        <input type="date" name="f_desde" value="<?= htmlspecialchars($f_desde) ?>" class="form-control form-control-sm text-secondary">
+                                        <label class="form-label-saas mb-1" style="font-size: 11px;">Desde</label>
+                                        <input type="date" name="f_desde" value="<?= htmlspecialchars($f_desde) ?>" class="form-control-saas py-1.5">
                                     </div>
                                     <div class="col-6">
-                                        <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Hasta</label>
-                                        <input type="date" name="f_hasta" value="<?= htmlspecialchars($f_hasta) ?>" class="form-control form-control-sm text-secondary">
+                                        <label class="form-label-saas mb-1" style="font-size: 11px;">Hasta</label>
+                                        <input type="date" name="f_hasta" value="<?= htmlspecialchars($f_hasta) ?>" class="form-control-saas py-1.5">
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-12 col-lg-2 d-flex gap-2 justify-content-end mt-2 mt-lg-0">
-                                <a href="jefatura.php?view=<?= htmlspecialchars($vista) ?>" class="btn btn-light btn-sm w-100 fw-bold border">Limpiar</a>
-                                <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold shadow-sm">Aplicar</button>
+                            <div class="col-12 col-sm-6 col-md-2 d-flex gap-2">
+                                <a href="jefatura.php?view=<?= htmlspecialchars($vista) ?>" class="btn-saas btn-saas-secondary w-100 justify-content-center py-1.5">Limpiar</a>
+                                <button type="submit" class="btn-saas btn-saas-primary w-100 justify-content-center py-1.5">Aplicar</button>
                             </div>
                         </div>
                     </form>
                 </div>
-            </div>
 
-            <!-- TABLA PRINCIPAL DE SOLICITUDES HOMOLOGADA -->
-            <div class="card shadow-sm border-light mb-4 overflow-hidden">
+                <!-- TABLA DE SOLICITUDES -->
                 <div class="table-responsive">
-                    <table class="table table-hover table-striped align-middle mb-0" style="min-width: 1000px;">
-                        <thead class="table-light text-uppercase small text-secondary">
+                    <table class="saas-table" style="min-width: 980px;">
+                        <thead>
                             <tr>
-                                <th class="p-3 text-nowrap" style="width: 180px;">ID / Fecha / Prioridad</th>
-                                <th class="p-3" style="min-width: 250px;">Trámite / Solicitante / CC</th>
-                                <th class="p-3 text-nowrap" style="width: 150px;">Clasificación</th>
-                                <th class="p-3 text-nowrap" style="width: 180px;">Estado Actual</th>
-                                <th class="p-3 text-end text-nowrap" style="width: 150px;">Monto Total</th>
-                                <th class="p-3 text-center text-nowrap" style="width: 150px;">Gestión</th>
+                                <th style="width: 170px;">ID / Fecha</th>
+                                <th style="min-width: 280px;">Título / Destino de los Bienes</th>
+                                <th style="width: 160px;">Clasificación</th>
+                                <th style="width: 180px;">Estado Trámite</th>
+                                <th style="width: 140px;" class="text-end">Monto Total</th>
+                                <th style="width: 140px;" class="text-center">Acción</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if(count($solicitudes) > 0): ?>
                                 <?php foreach($solicitudes as $row): ?>
                                 <tr>
-                                    <td class="p-3 text-nowrap">
-                                        <button type="button" onclick="abrirModalVerItems(<?= htmlspecialchars(json_encode($row['items_detalle']), ENT_QUOTES, 'UTF-8') ?>, '<?= $row['codigo_interno'] ?>')" class="btn btn-link p-0 text-start font-monospace fw-bold text-primary text-decoration-underline mb-1">
+                                    <!-- ID y Fecha -->
+                                    <td>
+                                        <button type="button" onclick="abrirModalVerItems(<?= htmlspecialchars(json_encode($row['items_detalle']), ENT_QUOTES, 'UTF-8') ?>, '<?= $row['codigo_interno'] ?>')" class="saas-code-btn d-block mb-1">
                                             <?= htmlspecialchars($row['codigo_interno']) ?>
                                         </button>
-                                        <div class="text-muted small" style="font-size: 11px;">
-                                            <i class="bi bi-clock me-1"></i>
+                                        <div class="row-sub d-flex align-items-center gap-1">
+                                            <i class="bi bi-clock"></i>
                                             <?= date('d/m/Y H:i', strtotime($row['created_at'])) ?>
                                         </div>
-                                        <span class="badge border mt-2 d-inline-block <?= $row['prioridad_css'] ?>" style="font-size: 10px;">
-                                            <?= htmlspecialchars($row['prioridad_nombre']) ?>
-                                        </span>
+                                        <div class="mt-1.5">
+                                            <span class="priority-indicator <?= $row['prioridad_css'] ?>">
+                                                <span class="prio-dot"></span>
+                                                <?= htmlspecialchars($row['prioridad_nombre']) ?>
+                                            </span>
+                                        </div>
                                     </td>
 
-                                    <td class="p-3">
-                                        <div class="fw-bold text-dark mb-1 leading-snug break-words" style="max-width: 450px;">
+                                    <!-- Título y Destino -->
+                                    <td>
+                                        <div class="row-title mb-1" style="max-width: 420px; font-size: 13.5px;">
                                             <?= htmlspecialchars($row['titulo_compra'] ?? 'Sin Título') ?>
                                         </div>
-                                        <div class="text-secondary small mb-1 break-words" style="max-width: 450px; font-size: 11px; line-height: 1.4;">
+                                        <div class="row-sub mb-2 text-truncate" style="max-width: 420px; font-size: 12px; color: var(--text-muted);">
                                             <?= htmlspecialchars($row['motivo_compra']) ?>
                                         </div>
-                                        <div class="d-flex align-items-center gap-2 flex-wrap text-muted fw-bold" style="font-size: 9px; letter-spacing: 0.5px;">
-                                            <span><i class="bi bi-person-fill me-0.5"></i> <?= htmlspecialchars($row['solicitante']) ?></span>
+                                        <div class="d-flex align-items-center gap-2 flex-wrap" style="font-size: 11px; color: var(--text-muted); font-weight: 500;">
+                                            <span class="d-flex align-items-center gap-1"><i class="bi bi-person-fill text-primary"></i> <?= htmlspecialchars($row['solicitante']) ?></span>
                                             <span>•</span>
-                                            <span><i class="bi bi-tag-fill me-0.5"></i> CC: <?= htmlspecialchars($row['cc_nombre']) ?></span>
+                                            <span class="d-flex align-items-center gap-1"><i class="bi bi-tag-fill text-secondary"></i> CC: <?= htmlspecialchars($row['cc_nombre']) ?></span>
                                         </div>
                                         
                                         <?php if($row['docs_adjuntos']): 
@@ -170,46 +315,59 @@ require_once __DIR__ . '/jefatura_controller.php';
                                             $docs_json = htmlspecialchars(json_encode($docs_array), ENT_QUOTES, 'UTF-8');
                                         ?>
                                             <div class="mt-2">
-                                                <button type="button" onclick="abrirModalAdjuntos(<?= $docs_json ?>, '<?= htmlspecialchars($row['codigo_interno']) ?>', <?= $row['id'] ?>)" class="btn btn-outline-primary btn-sm py-1 px-2.5 d-inline-flex align-items-center gap-1.5 font-bold" style="font-size: 10px;">
-                                                    <i class="bi bi-paperclip"></i>
-                                                    Ver Archivos (<?= $docs_count ?>)
+                                                <button type="button" onclick="abrirModalAdjuntos(<?= $docs_json ?>, '<?= htmlspecialchars($row['codigo_interno']) ?>', <?= $row['id'] ?>)" class="btn-saas btn-saas-secondary btn-saas-sm py-0.5 px-2" style="font-size: 11px;">
+                                                    <i class="bi bi-paperclip text-primary"></i>
+                                                    Archivos (<?= $docs_count ?>)
                                                 </button>
                                             </div>
                                         <?php endif; ?>
                                     </td>
 
-                                    <td class="p-3 text-nowrap">
-                                        <span class="badge bg-light text-dark border px-2 py-1.5 fw-bold" style="font-size: 11px;">
+                                    <!-- Clasificación / Tipo de Compra -->
+                                    <td>
+                                        <span class="saas-badge saas-badge-neutral">
                                             <?= htmlspecialchars($row['tipo_compra_nom']) ?>
                                         </span>
                                     </td>
 
-                                    <td class="p-3 text-nowrap">
-                                        <span class="badge px-2.5 py-1.5 <?= color_estado($row['estado_actual']) ?>" style="font-size: 11px;">
+                                    <!-- Estado Actual y Trazabilidad -->
+                                    <td>
+                                        <?php 
+                                        $st = $row['estado_actual'];
+                                        $badgeClass = 'saas-badge-neutral';
+                                        if (in_array($st, ['EN_REVISION_JEFATURA', 'EN_REVISION_PRESUPUESTO'])) $badgeClass = 'saas-badge-warning';
+                                        elseif (in_array($st, ['VB_PRESUPUESTO', 'VB_FINANZAS_CDP', 'FINALIZADO', 'ADJUDICADO'])) $badgeClass = 'saas-badge-success';
+                                        elseif (in_array($st, ['EN_FIRMA_JEFATURA', 'EN_FIRMA_ALCALDE', 'EN_GESTION_ADQUISICIONES'])) $badgeClass = 'saas-badge-info';
+                                        elseif (in_array($st, ['RECHAZADO', 'ANULADO'])) $badgeClass = 'saas-badge-danger';
+                                        ?>
+                                        <span class="saas-badge <?= $badgeClass ?> mb-1">
                                             <?= htmlspecialchars($row['estado_nombre']) ?>
                                         </span>
-
-                                        <div class="mt-1.5">
-                                            <button type="button" onclick="verTrazabilidad(<?= (int)$row['id'] ?>)" class="btn btn-link p-0 text-decoration-none text-secondary d-flex align-items-center gap-1" style="font-size: 11px;">
-                                                <i class="bi bi-clock-history text-primary"></i>
-                                                Ver Historial
+                                        <div>
+                                            <button type="button" onclick="verTrazabilidad(<?= (int)$row['id'] ?>)" class="btn btn-link p-0 text-decoration-none d-flex align-items-center gap-1" style="font-size: 11.5px; color: var(--primary);">
+                                                <i class="bi bi-clock-history"></i>
+                                                Historial
                                             </button>
                                         </div>
                                     </td>
 
-                                    <td class="p-3 text-end font-monospace fw-bold text-dark text-nowrap">
-                                        <?= money($row['monto_estimado']) ?>
+                                    <!-- Monto Total con Números Estándar -->
+                                    <td class="text-end">
+                                        <div class="price-text" style="font-size: 14px;">
+                                            <?= money($row['monto_estimado']) ?>
+                                        </div>
                                     </td>
 
-                                    <td class="p-3 text-center text-nowrap">
+                                    <!-- Botón de Acción -->
+                                    <td class="text-center">
                                         <?php if ($row['estado_actual'] === 'EN_FIRMA_JEFATURA'): ?>
-                                            <a href="jefatura.php?view=revisar&id=<?= $row['id'] ?>" class="btn btn-primary btn-sm fw-bold px-3 shadow-sm d-inline-flex align-items-center gap-1.5" style="background-color: #4f46e5; border-color: #4338ca;">
+                                            <a href="jefatura.php?view=revisar&id=<?= $row['id'] ?>" class="btn-saas btn-saas-primary btn-saas-sm">
                                                 <i class="bi bi-pen-fill"></i>
-                                                <span>Firmar OPI (1/3)</span>
+                                                <span>Firmar (1/3)</span>
                                             </a>
                                         <?php else: ?>
-                                            <a href="jefatura.php?view=revisar&id=<?= $row['id'] ?>" class="btn btn-primary btn-sm fw-bold px-3 shadow-sm d-inline-flex align-items-center gap-1">
-                                                <i class="bi bi-search"></i>
+                                            <a href="jefatura.php?view=revisar&id=<?= $row['id'] ?>" class="btn-saas btn-saas-secondary btn-saas-sm">
+                                                <i class="bi bi-search text-primary"></i>
                                                 <span>Revisar</span>
                                             </a>
                                         <?php endif; ?>
@@ -219,9 +377,9 @@ require_once __DIR__ . '/jefatura_controller.php';
                             <?php else: ?>
                                 <tr>
                                     <td colspan="6" class="p-5 text-center text-muted">
-                                        <div class="d-flex flex-column align-items-center justify-content-center">
+                                        <div class="d-flex flex-column align-items-center justify-content-center py-4">
                                             <i class="bi bi-inbox fs-1 text-slate-300 mb-2"></i>
-                                            <p class="mb-0 fw-semibold">No se encontraron solicitudes en esta vista.</p>
+                                            <p class="mb-0 fw-semibold text-secondary">No se encontraron requerimientos en esta vista.</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -229,64 +387,68 @@ require_once __DIR__ . '/jefatura_controller.php';
                         </tbody>
                     </table>
                 </div>
-            </div>
 
-            <!-- PAGINACIÓN -->
-            <?php if($total_pages > 1): ?>
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-                    <div class="text-muted small">
-                        Mostrando página <b><?= $page ?></b> de <b><?= $total_pages ?></b> (Total: <b><?= $total_records ?></b> solicitudes)
-                    </div>
-                    <nav aria-label="Navegación de solicitudes">
-                        <ul class="pagination pagination-sm mb-0">
-                            <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
-                                <a class="page-link" href="<?= $base_url . ($page - 1) ?>">Anterior</a>
-                            </li>
+                <!-- PAGINACIÓN SAAS -->
+                <?php if($total_pages > 1): ?>
+                    <div class="panel-footer">
+                        <div>
+                            Mostrando página <b><?= $page ?></b> de <b><?= $total_pages ?></b> (Total: <b><?= $total_records ?></b> solicitudes)
+                        </div>
+                        <ul class="saas-pagination">
+                            <?php if($page > 1): ?>
+                                <li><a class="saas-page-link" href="<?= $base_url . ($page - 1) ?>"><i class="bi bi-chevron-left"></i></a></li>
+                            <?php endif; ?>
+                            
                             <?php for($i = 1; $i <= $total_pages; $i++): ?>
-                                <li class="page-item <?= $i == $page ? 'active' : '' ?>">
-                                    <a class="page-link" href="<?= $base_url . $i ?>"><?= $i ?></a>
-                                </li>
+                                <li><a class="saas-page-link <?= $i == $page ? 'active' : '' ?>" href="<?= $base_url . $i ?>"><?= $i ?></a></li>
                             <?php endfor; ?>
-                            <li class="page-item <?= $page >= $total_pages ? 'disabled' : '' ?>">
-                                <a class="page-link" href="<?= $base_url . ($page + 1) ?>">Siguiente</a>
-                            </li>
+                            
+                            <?php if($page < $total_pages): ?>
+                                <li><a class="saas-page-link" href="<?= $base_url . ($page + 1) ?>"><i class="bi bi-chevron-right"></i></a></li>
+                            <?php endif; ?>
                         </ul>
-                    </nav>
-                </div>
-            <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+
+            </div>
 
         <?php endif; ?>
 
-        <!-- VISTA: REVISIÓN DE EXPEDIENTE -->
+        <!-- ============================================================== -->
+        <!-- VISTA B: REVISIÓN DETALLADA DE EXPEDIENTE                       -->
+        <!-- ============================================================== -->
         <?php if($vista === 'revisar' && isset($exp)): ?>
             
-            <div class="row align-items-center mb-4 g-3">
-                <div class="col-12 col-md">
-                    <?php if ($exp['estado_actual'] === 'EN_FIRMA_JEFATURA'): ?>
-                        <span class="badge text-white text-uppercase tracking-wider mb-1.5" style="font-size: 10px; letter-spacing: 0.5px; background-color: #4f46e5;">
-                            <i class="bi bi-pen-fill me-1"></i> Etapa 2: Firma Electrónica OPI (1/3) - Adjudicación
-                        </span>
-                    <?php else: ?>
-                        <span class="badge bg-primary text-uppercase tracking-wider mb-1.5" style="font-size: 9px; letter-spacing: 0.5px;">Fase: Visación de Jefatura</span>
-                    <?php endif; ?>
-                    <h1 class="h3 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
-                        Expediente: <span class="font-monospace text-primary">#<?= htmlspecialchars($exp['codigo_interno']) ?></span>
-                        <button type="button" onclick="verTrazabilidad(<?= (int)$exp['id'] ?>)" class="btn btn-outline-primary btn-sm px-2.5 py-1 fw-bold shadow-sm d-inline-flex align-items-center gap-1.5" style="font-size: 11px;">
-                            <i class="bi bi-clock-history"></i> Ver Historial
-                        </button>
-                    </h1>
+            <div class="page-header-row mb-4">
+                <div>
+                    <div class="breadcrumbs">
+                        <a href="index.php">Inicio</a>
+                        <i class="bi bi-chevron-right"></i>
+                        <a href="jefatura.php">Bandeja Jefatura</a>
+                        <i class="bi bi-chevron-right"></i>
+                        <span class="current">Revisión #<?= htmlspecialchars($exp['codigo_interno']) ?></span>
+                    </div>
+                    <div class="page-title">
+                        <div class="d-flex align-items-center gap-2.5 flex-wrap">
+                            <h2>Expediente: <span class="text-primary font-monospace">#<?= htmlspecialchars($exp['codigo_interno']) ?></span></h2>
+                            <button type="button" onclick="verTrazabilidad(<?= (int)$exp['id'] ?>)" class="btn-saas btn-saas-secondary btn-saas-sm">
+                                <i class="bi bi-clock-history text-primary"></i> Ver Historial
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-12 col-md-auto text-start text-md-end">
-                    <a href="jefatura.php" class="btn btn-outline-secondary btn-sm px-3 shadow-sm">
-                        <i class="bi bi-arrow-left me-1"></i> Volver a la Bandeja
+                <div>
+                    <a href="jefatura.php" class="btn-saas btn-saas-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver a la Bandeja
                     </a>
                 </div>
             </div>
 
+            <!-- BANNER ESPECIAL DE ETAPA EN FIRMA -->
             <?php if ($exp['estado_actual'] === 'EN_FIRMA_JEFATURA'): ?>
                 <div class="alert alert-primary border-primary-subtle d-flex align-items-center justify-content-between p-3 rounded-3 shadow-sm mb-4" style="background-color: #eef2ff; border-color: #c7d2fe;">
                     <div class="d-flex align-items-center gap-3">
-                        <div class="p-2 text-white rounded-circle d-flex align-items-center justify-content-center shrink-0" style="width: 42px; height: 42px; background-color: #4f46e5;">
+                        <div class="p-2 text-white rounded-circle d-flex align-items-center justify-content-center shrink-0" style="width: 44px; height: 44px; background-color: #4f46e5;">
                             <i class="bi bi-pen-fill fs-5"></i>
                         </div>
                         <div>
@@ -294,7 +456,7 @@ require_once __DIR__ . '/jefatura_controller.php';
                             <p class="small text-secondary mb-0">Adquisiciones ha completado el cuadro comparativo y adjudicado la compra. Corresponde estampar la primera firma electrónica en la Orden de Pedido Interno (OPI) oficial.</p>
                         </div>
                     </div>
-                    <a href="imprimir_solicitud.php?id=<?= $exp['id'] ?>" target="_blank" class="btn btn-outline-primary btn-sm fw-bold text-nowrap d-flex align-items-center gap-1.5 shadow-sm bg-white">
+                    <a href="imprimir_solicitud.php?id=<?= $exp['id'] ?>" target="_blank" class="btn-saas btn-saas-secondary shadow-sm text-nowrap">
                         <i class="bi bi-file-earmark-pdf-fill text-danger"></i>
                         Ver OPI Oficial a Firmar
                     </a>
@@ -304,78 +466,84 @@ require_once __DIR__ . '/jefatura_controller.php';
             <div class="row g-4">
                 
                 <!-- COLUMNA IZQUIERDA: RESUMEN Y ARCHIVOS -->
-                <div class="col-lg-4 space-y-4">
+                <div class="col-lg-4">
                     
-                    <!-- INFO GENERAL -->
-                    <div class="card shadow-sm border-light">
-                        <div class="card-header bg-white py-3">
-                            <h6 class="fw-bold mb-0 text-dark uppercase tracking-wider" style="font-size: 11px; letter-spacing: 0.5px;">Contexto de la Solicitud</h6>
+                    <!-- CONTEXTO GENERAL -->
+                    <div class="saas-card mb-4">
+                        <div class="saas-card-header">
+                            <h6 class="fw-bold mb-0 text-dark" style="font-size: 13px;">
+                                <i class="bi bi-info-circle text-primary me-1.5"></i>
+                                Contexto de la Solicitud
+                            </h6>
                         </div>
-                        <div class="card-body p-3">
+                        <div class="saas-card-body p-3">
                             <div class="d-flex flex-column gap-3 small">
                                 <?php if($exp['titulo_compra']): ?>
                                     <div>
-                                        <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 9px;">Título Compra:</span>
-                                        <span class="fw-bold text-dark fs-6"><?= htmlspecialchars($exp['titulo_compra']) ?></span>
+                                        <span class="form-label-saas mb-1">Título de la Compra:</span>
+                                        <div class="fw-bold text-dark fs-6"><?= htmlspecialchars($exp['titulo_compra']) ?></div>
                                     </div>
                                 <?php endif; ?>
                                 
                                 <div>
-                                    <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 9px;">Solicitante:</span>
-                                    <span class="text-secondary fw-semibold"><?= htmlspecialchars($exp['solicitante']) ?></span>
+                                    <span class="form-label-saas mb-1">Solicitante:</span>
+                                    <div class="text-secondary fw-semibold"><?= htmlspecialchars($exp['solicitante']) ?></div>
                                 </div>
                                 
                                 <div>
-                                    <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 9px;">Unidad Origen:</span>
-                                    <span class="text-secondary fw-semibold"><?= htmlspecialchars($exp['unidad']) ?></span>
+                                    <span class="form-label-saas mb-1">Unidad Origen:</span>
+                                    <div class="text-secondary fw-semibold"><?= htmlspecialchars($exp['unidad']) ?></div>
                                 </div>
                                 
                                 <div>
-                                    <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 9px;">Centro de Costo:</span>
-                                    <span class="text-secondary fw-semibold"><?= htmlspecialchars($exp['centro_costo']) ?></span>
+                                    <span class="form-label-saas mb-1">Centro de Costo:</span>
+                                    <div class="text-secondary fw-semibold"><?= htmlspecialchars($exp['centro_costo']) ?></div>
                                 </div>
                                 
                                 <div>
-                                    <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 9px;">Tipo de Compra:</span>
-                                    <span class="badge bg-light text-dark border"><?= htmlspecialchars($exp['tipo_compra_nom']) ?></span>
+                                    <span class="form-label-saas mb-1">Tipo de Compra:</span>
+                                    <span class="saas-badge saas-badge-neutral"><?= htmlspecialchars($exp['tipo_compra_nom']) ?></span>
                                 </div>
                                 
                                 <div>
-                                    <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 9px;">Justificación / Motivo:</span>
-                                    <p class="text-secondary mb-0 leading-relaxed bg-light p-2.5 rounded border border-light-subtle" style="font-size: 11px;">
+                                    <span class="form-label-saas mb-1">Los presentes bienes serán destinados a:</span>
+                                    <p class="text-secondary mb-0 p-2.5 rounded border bg-light" style="font-size: 12px; line-height: 1.5;">
                                         <?= nl2br(htmlspecialchars($exp['motivo_compra'])) ?>
                                     </p>
                                 </div>
 
                                 <?php if($exp['proveedor_nombre']): ?>
                                     <div>
-                                        <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 9px;">Proveedor Sugerido / Adjudicado:</span>
-                                        <span class="fw-bold text-primary"><?= htmlspecialchars($exp['proveedor_rut']) ?> - <?= htmlspecialchars($exp['proveedor_nombre']) ?></span>
+                                        <span class="form-label-saas mb-1">Proveedor Sugerido / Adjudicado:</span>
+                                        <div class="fw-bold text-primary"><?= htmlspecialchars($exp['proveedor_rut']) ?> - <?= htmlspecialchars($exp['proveedor_nombre']) ?></div>
                                     </div>
                                 <?php endif; ?>
                             </div>
                         </div>
                     </div>
 
-                    <!-- ARCHIVOS ADJUNTOS -->
-                    <div class="card shadow-sm border-light">
-                        <div class="card-header bg-white py-3">
-                            <h6 class="fw-bold mb-0 text-dark uppercase tracking-wider" style="font-size: 11px; letter-spacing: 0.5px;">Documentos de Respaldo</h6>
+                    <!-- DOCUMENTOS DE RESPALDO -->
+                    <div class="saas-card">
+                        <div class="saas-card-header">
+                            <h6 class="fw-bold mb-0 text-dark" style="font-size: 13px;">
+                                <i class="bi bi-paperclip text-primary me-1.5"></i>
+                                Documentos de Respaldo
+                            </h6>
                         </div>
-                        <div class="card-body p-3">
+                        <div class="saas-card-body p-3">
                             <?php if(empty($docs)): ?>
-                                <p class="text-muted small mb-0 italic">No hay archivos adjuntos a este expediente.</p>
+                                <p class="text-muted small mb-0 fst-italic">No hay archivos adjuntos a este requerimiento.</p>
                             <?php else: ?>
                                 <div class="d-flex flex-column gap-2">
                                     <?php foreach($docs as $doc): 
                                         $is_anulada = ($doc['tipo_doc'] === 'OPI_ANULADA');
                                     ?>
-                                        <a href="<?= htmlspecialchars($doc['ruta_archivo']) ?>" target="_blank" class="d-flex align-items-center justify-content-between p-2.5 bg-light border rounded-3 text-decoration-none hover-bg-gray transition">
+                                        <a href="<?= htmlspecialchars($doc['ruta_archivo']) ?>" target="_blank" class="d-flex align-items-center justify-content-between p-2.5 bg-light border rounded text-decoration-none transition">
                                             <div class="d-flex align-items-center gap-2 min-w-0 flex-1">
                                                 <i class="bi bi-file-earmark-text text-primary fs-5 shrink-0"></i>
                                                 <div class="text-truncate flex-1">
                                                     <p class="mb-0 text-truncate small <?= $is_anulada ? 'text-danger text-decoration-line-through' : 'text-dark fw-bold' ?>" style="max-width: 220px;"><?= htmlspecialchars($doc['nombre_original']) ?></p>
-                                                    <p class="mb-0 text-uppercase text-muted" style="font-size: 9px;"><?= str_replace('_', ' ', $doc['tipo_doc']) ?></p>
+                                                    <p class="mb-0 text-uppercase text-muted" style="font-size: 9.5px;"><?= str_replace('_', ' ', $doc['tipo_doc']) ?></p>
                                                 </div>
                                             </div>
                                             <i class="bi bi-arrow-right-short text-secondary fs-4 shrink-0"></i>
@@ -389,67 +557,64 @@ require_once __DIR__ . '/jefatura_controller.php';
                 </div>
 
                 <!-- COLUMNA DERECHA: TABLA DE PRODUCTOS E ITEMS -->
-                <div class="col-lg-8 space-y-4">
+                <div class="col-lg-8">
                     
-                    <div class="card shadow-sm border-light">
-                        <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
-                            <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                                <i class="bi bi-cart3 text-secondary"></i>
+                    <!-- DETALLE PRODUCTOS -->
+                    <div class="saas-card mb-4">
+                        <div class="saas-card-header">
+                            <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2" style="font-size: 13.5px;">
+                                <i class="bi bi-cart3 text-primary"></i>
                                 Detalle de Productos / Servicios
                             </h6>
                             <div class="text-end">
-                                <span class="text-muted text-uppercase fw-bold mb-0" style="font-size: 9px;">Monto Total</span>
-                                <div class="h5 fw-black text-primary mb-0 font-monospace"><?= money($exp['monto_definitivo'] ?? $exp['monto_estimado']) ?></div>
+                                <span class="form-label-saas mb-0 text-end" style="font-size: 10px;">Monto Total</span>
+                                <div class="h5 fw-bold text-primary mb-0 price-text"><?= money($exp['monto_definitivo'] ?? $exp['monto_estimado']) ?></div>
                             </div>
                         </div>
                         
-                        <div class="card-body bg-slate-50 p-3">
-                            <div class="d-flex flex-column gap-3">
+                        <div class="saas-card-body p-3 bg-light">
+                            <div class="d-flex flex-column gap-2.5">
                                 <?php foreach($items as $it): 
                                     $costo_linea = $it['cantidad'] * $it['precio_unitario'];
                                 ?>
-                                    <!-- Item Card -->
-                                    <div class="bg-white border rounded-3 p-3 shadow-sm">
-                                        <!-- Header del Item: Cuenta y Monto -->
+                                    <div class="bg-white border rounded p-3 shadow-sm">
                                         <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
                                             <div>
                                                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                                                    <span class="font-monospace text-dark fw-bold small" style="font-size: 12px;"><?= $it['cuenta_codigo'] ?></span>
+                                                    <span class="badge bg-light text-dark border font-monospace fw-bold" style="font-size: 11.5px;"><?= $it['cuenta_codigo'] ?></span>
                                                     <?php if(!empty($it['ag_codigo'])): ?>
-                                                        <span class="badge bg-secondary-subtle text-secondary-emphasis" style="font-size: 8px;">AG: <?= $it['ag_codigo'] ?></span>
+                                                        <span class="badge bg-secondary-subtle text-secondary-emphasis" style="font-size: 9px;">AG: <?= $it['ag_codigo'] ?></span>
                                                     <?php endif; ?>
                                                 </div>
                                             </div>
                                             <div class="text-end">
-                                                <span class="text-muted d-block text-uppercase fw-bold" style="font-size: 8px;">Monto C/IVA</span>
-                                                <span class="fw-bold font-monospace text-dark" style="font-size: 14px;">
+                                                <span class="text-muted d-block text-uppercase fw-bold" style="font-size: 9px;">Total Línea</span>
+                                                <span class="fw-bold price-text text-dark" style="font-size: 14px;">
                                                     <?= money($costo_linea) ?>
                                                 </span>
                                             </div>
                                         </div>
 
-                                        <!-- Producto / Descripción -->
-                                        <div class="bg-light p-2.5 rounded-3 mb-2">
+                                        <div class="bg-light p-2.5 rounded mb-2">
                                             <div class="d-flex justify-content-between align-items-center gap-3">
-                                                <div class="text-slate-800 small fw-bold leading-normal"><?= htmlspecialchars($it['descripcion']) ?></div>
+                                                <div class="text-dark small fw-semibold"><?= htmlspecialchars($it['descripcion']) ?></div>
                                                 <div class="text-secondary small fw-bold text-nowrap text-end">
-                                                    <?= floatval($it['cantidad']) ?> <span class="text-muted small" style="font-weight: normal;"><?= $it['unidad_medida'] ?></span>
+                                                    <?= floatval($it['cantidad']) ?> <span class="text-muted small fw-normal"><?= $it['unidad_medida'] ?></span>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <!-- Precio Unitario y Convenio Marco -->
-                                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-2 border-top border-light-subtle small">
+                                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-2 border-top small">
                                             <div>
-                                                <span class="text-muted" style="font-size: 10px;">Monto Unitario:</span>
-                                                <span class="font-monospace fw-bold text-secondary" style="font-size: 11px;">
+                                                <span class="text-muted" style="font-size: 11px;">Monto Unitario:</span>
+                                                <span class="price-text fw-bold text-secondary ms-1" style="font-size: 12px;">
                                                     <?= money($it['precio_unitario']) ?>
                                                 </span>
                                             </div>
                                             <?php if($exp['tipo_compra_cod'] === 'CONVENIO_MARCO'): ?>
                                                 <div class="text-end">
-                                                    <span class="text-muted" style="font-size: 10px;">ID Convenio Marco:</span>
-                                                    <span class="font-monospace text-primary fw-bold" style="font-size: 11px;"><?= htmlspecialchars($it['id_producto_cm']) ?></span>
+                                                    <span class="text-muted" style="font-size: 11px;">ID Convenio Marco:</span>
+                                                    <span class="text-primary fw-bold font-monospace ms-1"><?= htmlspecialchars($it['id_producto_cm']) ?></span>
                                                 </div>
                                             <?php endif; ?>
                                         </div>
@@ -461,29 +626,29 @@ require_once __DIR__ . '/jefatura_controller.php';
 
                     <!-- CRITERIOS DE EVALUACIÓN (SI APLICAN) -->
                     <?php if(!empty($criterios)): ?>
-                    <div class="card border-info bg-info-subtle shadow-sm">
-                        <div class="card-header bg-white border-info text-info-emphasis py-3">
-                            <h6 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                    <div class="saas-card mb-4 border-info">
+                        <div class="saas-card-header bg-info-subtle">
+                            <h6 class="fw-bold mb-0 text-info-emphasis d-flex align-items-center gap-2" style="font-size: 13px;">
                                 <i class="bi bi-calculator-fill text-info"></i>
                                 Criterios de Evaluación Propuestos
                             </h6>
                         </div>
-                        <div class="card-body p-3">
-                            <div class="table-responsive rounded-3 border">
-                                <table class="table table-sm table-striped align-middle mb-0 bg-white">
-                                    <thead class="table-light text-uppercase" style="font-size: 10px;">
+                        <div class="saas-card-body p-0">
+                            <div class="table-responsive">
+                                <table class="saas-table mb-0">
+                                    <thead>
                                         <tr>
-                                            <th class="p-2 text-center" style="width: 60px;">N°</th>
-                                            <th class="p-2">Descripción del Criterio</th>
-                                            <th class="p-2 text-center" style="width: 100px;">Ponderación</th>
+                                            <th class="text-center" style="width: 60px;">N°</th>
+                                            <th>Descripción del Criterio</th>
+                                            <th class="text-center" style="width: 120px;">Ponderación</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <?php foreach($criterios as $cr): ?>
                                         <tr>
-                                            <td class="p-2 text-center fw-bold text-secondary"><?= $cr['numero_criterio'] ?></td>
-                                            <td class="p-2 fw-semibold text-dark small"><?= htmlspecialchars($cr['nombre_criterio']) ?></td>
-                                            <td class="p-2 text-center fw-black text-primary"><?= floatval($cr['porcentaje']) ?>%</td>
+                                            <td class="text-center fw-bold text-secondary"><?= $cr['numero_criterio'] ?></td>
+                                            <td class="fw-semibold text-dark small"><?= htmlspecialchars($cr['nombre_criterio']) ?></td>
+                                            <td class="text-center fw-bold text-primary price-text"><?= floatval($cr['porcentaje']) ?>%</td>
                                         </tr>
                                         <?php endforeach; ?>
                                     </tbody>
@@ -493,17 +658,17 @@ require_once __DIR__ . '/jefatura_controller.php';
                     </div>
                     <?php endif; ?>
 
-                    <!-- TARJETA DE RESOLUCIÓN SOBRIA -->
-                    <div class="card shadow-sm border-light">
-                        <div class="card-header bg-white border-bottom py-3">
-                            <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                    <!-- TARJETA DE RESOLUCIÓN -->
+                    <div class="saas-card">
+                        <div class="saas-card-header">
+                            <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2" style="font-size: 13.5px;">
                                 <i class="bi bi-shield-check text-primary"></i>
                                 Resolución de Jefatura
-                            </h5>
+                            </h6>
                         </div>
-                        <div class="card-body p-4">
+                        <div class="saas-card-body p-4">
                             <?php if (!empty($es_accionable)): ?>
-                                <p class="text-secondary small mb-4">Seleccione una de las acciones autorizadas por el flujo para proceder con el expediente.</p>
+                                <p class="text-secondary small mb-4">Seleccione una de las acciones autorizadas por el flujo para proceder con el requerimiento.</p>
                                 
                                 <?php 
                                 $transiciones = obtener_transiciones_disponibles($pdo, $exp['id']); 
@@ -542,12 +707,12 @@ require_once __DIR__ . '/jefatura_controller.php';
                                              firmante_rut: '<?= htmlspecialchars(addslashes($firmante_rut)) ?>',
                                              firmante_cargo: '<?= htmlspecialchars(addslashes($firmante_cargo)) ?>',
                                              firmante_unidad: '<?= htmlspecialchars(addslashes($firmante_unidad)) ?>'
-                                         })" class="btn btn-primary py-2.5 w-100 mb-4 shadow d-flex align-items-center justify-content-center gap-2 fw-bold" style="background-color: #4f46e5; border-color: #4338ca;">
+                                         })" class="btn-saas btn-saas-primary py-2.5 w-100 mb-4 justify-content-center fw-bold shadow-sm" style="background-color: #4f46e5; border-color: #4338ca; font-size: 14px;">
                                              <i class="bi bi-pen-fill"></i>
                                              Firmar OPI con FirmaGob (1/3)
                                          </button>
                                      <?php elseif ($t_aprobar): ?>
-                                         <button type="submit" name="transicion_id" value="<?= $t_aprobar['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t_aprobar['accion_label']) ?>?')" class="btn btn-primary py-2.5 w-100 mb-4 shadow-sm d-flex align-items-center justify-content-center gap-2 fw-semibold">
+                                         <button type="submit" name="transicion_id" value="<?= $t_aprobar['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t_aprobar['accion_label']) ?>?')" class="btn-saas btn-saas-primary py-2.5 w-100 mb-4 justify-content-center fw-bold shadow-sm" style="font-size: 14px;">
                                              <i class="bi bi-check-circle-fill"></i>
                                              <?= htmlspecialchars($t_aprobar['accion_label']) ?>
                                          </button>
@@ -555,10 +720,10 @@ require_once __DIR__ . '/jefatura_controller.php';
                                          <div class="alert alert-secondary text-center small py-2 mb-4">No hay transiciones de aprobación disponibles.</div>
                                      <?php endif; ?>
 
-                                    <!-- ÁREA DE COMENTARIOS (OBLIGATORIA PARA RETORNAR O RECHAZAR) -->
-                                    <div class="border-top pt-3.5">
-                                        <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Comentario / Motivo de la Observación (Obligatorio para Devolver/Rechazar)</label>
-                                        <textarea name="motivo_rechazo" rows="3" class="form-control text-sm mb-3 bg-light"></textarea>
+                                    <!-- ÁREA DE OBSERVACIONES / MOTIVO -->
+                                    <div class="border-top pt-3">
+                                        <label class="form-label-saas mb-1">Observación / Motivo (Obligatorio para Devolver o Rechazar)</label>
+                                        <textarea name="motivo_rechazo" rows="3" placeholder="Indique las razones de la devolución o rechazo..." class="form-control-saas mb-3 bg-light"></textarea>
                                         
                                         <div class="row g-2">
                                             <!-- BOTONES DE DEVOLUCIÓN -->
@@ -566,8 +731,8 @@ require_once __DIR__ . '/jefatura_controller.php';
                                                 if ($t['accion_codigo'] === 'DEVOLVER'):
                                             ?>
                                                 <div class="col-sm-6">
-                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn btn-outline-secondary w-100 py-2 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
-                                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn-saas btn-saas-secondary w-100 justify-content-center py-2">
+                                                        <i class="bi bi-arrow-counterclockwise text-warning"></i>
                                                         <?= htmlspecialchars($t['accion_label']) ?>
                                                     </button>
                                                 </div>
@@ -580,8 +745,8 @@ require_once __DIR__ . '/jefatura_controller.php';
                                                 if ($t['accion_codigo'] === 'RECHAZAR'):
                                             ?>
                                                 <div class="col-sm-6">
-                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn btn-outline-danger w-100 py-2 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
-                                                        <i class="bi bi-x-circle"></i>
+                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn-saas btn-saas-danger w-100 justify-content-center py-2">
+                                                        <i class="bi bi-x-circle text-danger"></i>
                                                         <?= htmlspecialchars($t['accion_label']) ?>
                                                     </button>
                                                 </div>
@@ -592,18 +757,18 @@ require_once __DIR__ . '/jefatura_controller.php';
                                     </div>
                                 </form>
                             <?php else: ?>
-                                <div class="text-center py-2">
-                                    <div class="p-3 bg-success-subtle text-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 56px; height: 56px;">
-                                        <i class="bi bi-check-lg fs-3"></i>
+                                <div class="text-center py-3">
+                                    <div class="p-3 bg-success-subtle text-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 54px; height: 54px;">
+                                        <i class="bi bi-check-lg fs-2"></i>
                                     </div>
                                     <h5 class="fw-bold text-dark mb-1">Visación Completada</h5>
-                                    <p class="text-secondary small mb-4">La solicitud ha sido procesada por la Jefatura de Unidad en esta fase.</p>
+                                    <p class="text-secondary small mb-4">La solicitud ya ha sido procesada por la Jefatura de Unidad en esta fase.</p>
                                     
-                                    <div class="bg-light rounded-3 p-3 border d-inline-block text-start mx-auto" style="min-width: 280px;">
-                                        <span class="text-muted fw-bold d-block text-uppercase mb-1" style="font-size: 8px;">Estado Actual del Expediente</span>
+                                    <div class="bg-light rounded p-3 border d-inline-block text-start mx-auto" style="min-width: 280px;">
+                                        <span class="form-label-saas mb-1" style="font-size: 9.5px;">Estado Actual del Expediente</span>
                                         <span class="fw-bold text-dark fs-6 d-block"><?= htmlspecialchars($exp['estado_nombre'] ?? $exp['estado_actual']) ?></span>
-                                        <span class="badge bg-primary-subtle text-primary-emphasis mt-2 px-2 py-1 fs-6" style="font-size: 9px; font-weight: bold;">
-                                            Cargo Responsable: <?= htmlspecialchars($exp['rol_responsable'] ?? 'Siguiente Etapa') ?>
+                                        <span class="saas-badge saas-badge-info mt-2">
+                                            Responsable: <?= htmlspecialchars($exp['rol_responsable'] ?? 'Siguiente Etapa') ?>
                                         </span>
                                     </div>
                                 </div>
@@ -618,21 +783,21 @@ require_once __DIR__ . '/jefatura_controller.php';
 
     </div>
 
-    <!-- MODAL ADJUNTOS (BOOTSTRAP 5) -->
+    <!-- MODAL ADJUNTOS -->
     <div class="modal fade" id="modalAdjuntos" tabindex="-1" aria-labelledby="modalAdjuntosLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-3 shadow">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold text-dark" id="modalAdjuntosLabel">Documentos Adjuntos</h5>
+            <div class="modal-content rounded-3 shadow border-0">
+                <div class="modal-header border-bottom py-3">
+                    <h5 class="modal-title fw-bold text-dark" id="modalAdjuntosLabel" style="font-size: 15px;">Documentos Adjuntos</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <div class="bg-light border p-3 rounded-3 mb-3 d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+                    <div class="bg-light border p-3 rounded mb-3 d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
                         <div>
-                            <span class="text-uppercase text-muted fw-bold" style="font-size: 9px; letter-spacing: 0.5px;">Expediente:</span>
-                            <div id="modalAdjuntosCodigo" class="font-monospace fw-bold text-dark"></div>
+                            <span class="form-label-saas mb-0" style="font-size: 10px;">Expediente:</span>
+                            <div id="modalAdjuntosCodigo" class="fw-bold text-dark font-monospace"></div>
                         </div>
-                        <a id="btnDescargarZip" href="#" class="btn btn-primary btn-sm fw-bold shadow-sm d-flex align-items-center gap-1.5 w-100 w-sm-auto justify-content-center">
+                        <a id="btnDescargarZip" href="#" class="btn-saas btn-saas-primary btn-saas-sm">
                             <i class="bi bi-download"></i>
                             Bajar ZIP
                         </a>
@@ -640,47 +805,50 @@ require_once __DIR__ . '/jefatura_controller.php';
                     
                     <div id="modalAdjuntosLista" class="d-flex flex-column gap-2 overflow-y-auto" style="max-height: 350px;"></div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar Visor</button>
+                <div class="modal-footer border-top py-2.5">
+                    <button type="button" class="btn-saas btn-saas-secondary btn-saas-sm" data-bs-dismiss="modal">Cerrar Visor</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL DETALLE ÍTEMS (BOOTSTRAP 5) -->
+    <!-- MODAL DETALLE ÍTEMS -->
     <div class="modal fade" id="modalVerItems" tabindex="-1" aria-labelledby="modalVerItemsLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content rounded-3 shadow">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold text-dark" id="modalVerItemsLabel">Detalle de Ítems del Requerimiento</h5>
+            <div class="modal-content rounded-3 shadow border-0">
+                <div class="modal-header border-bottom py-3">
+                    <h5 class="modal-title fw-bold text-dark" id="modalVerItemsLabel" style="font-size: 15px;">Detalle de Ítems del Requerimiento</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <div class="bg-light border p-3 rounded-3 mb-3">
-                        <span class="text-uppercase text-muted fw-bold" style="font-size: 9px; letter-spacing: 0.5px;">Expediente:</span>
-                        <div id="modalVerItemsCodigo" class="font-monospace fw-bold text-primary"></div>
+                    <div class="bg-light border p-3 rounded mb-3">
+                        <span class="form-label-saas mb-0" style="font-size: 10px;">Expediente:</span>
+                        <div id="modalVerItemsCodigo" class="fw-bold text-primary font-monospace"></div>
                     </div>
                     
-                    <div class="table-responsive rounded-3 border">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light text-uppercase small text-secondary">
+                    <div class="table-responsive rounded border">
+                        <table class="saas-table mb-0">
+                            <thead>
                                 <tr>
-                                    <th class="p-3">Descripción del Producto/Servicio</th>
-                                    <th class="p-3 text-center" style="width: 100px;">Cant.</th>
-                                    <th class="p-3 text-end" style="width: 150px;">Valor Unit. Ingresado</th>
-                                    <th class="p-3 text-end" style="width: 160px;">Total Línea</th>
+                                    <th>Descripción del Producto / Servicio</th>
+                                    <th class="text-center" style="width: 100px;">Cant.</th>
+                                    <th class="text-end" style="width: 140px;">Valor Unitario</th>
+                                    <th class="text-end" style="width: 150px;">Total Línea</th>
                                 </tr>
                             </thead>
                             <tbody id="modalVerItemsBody"></tbody>
                         </table>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar Visor</button>
+                <div class="modal-footer border-top py-2.5">
+                    <button type="button" class="btn-saas btn-saas-secondary btn-saas-sm" data-bs-dismiss="modal">Cerrar Visor</button>
                 </div>
             </div>
         </div>
     </div>
+
+    <?php include __DIR__ . '/modal_trazabilidad.php'; ?>
+    <?php include __DIR__ . '/components/modal_firmagob.php'; ?>
 
     <script>
         function escapeHTML(str) {
@@ -746,14 +914,14 @@ require_once __DIR__ . '/jefatura_controller.php';
                     link.href = ruta;
                     link.target = '_blank';
                     link.title = nombreOriginal;
-                    link.className = 'd-flex align-items-center justify-content-between p-2.5 bg-light border rounded-3 text-decoration-none hover-bg-gray transition mb-2';
+                    link.className = 'd-flex align-items-center justify-content-between p-2.5 bg-light border rounded text-decoration-none transition mb-2';
                     
                     link.innerHTML = `
                         <div class="d-flex align-items-center gap-2 min-w-0 flex-1">
                             <i class="bi bi-file-earmark-text text-primary fs-5 shrink-0"></i>
                             <div class="text-truncate flex-1">
                                 <p class="mb-0 text-truncate small ${titleClass}" style="max-width: 320px;">${nombreOriginal}</p>
-                                <p class="mb-0 small text-uppercase tracking-wide ${subtitleClass}" style="font-size: 9px;">${tipoDoc} - ${fecha}</p>
+                                <p class="mb-0 small text-uppercase ${subtitleClass}" style="font-size: 9.5px;">${tipoDoc} - ${fecha}</p>
                             </div>
                         </div>
                         <i class="bi bi-arrow-right-short text-secondary fs-4 shrink-0"></i>
@@ -771,17 +939,17 @@ require_once __DIR__ . '/jefatura_controller.php';
             tbody.innerHTML = '';
             
             if (!items || items.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-muted italic">No hay ítems registrados.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-muted fst-italic">No hay ítems registrados.</td></tr>`;
             } else {
                 items.forEach(item => {
                     const cant = parseFloat(item.cantidad);
                     const prec = parseFloat(item.precio_unitario);
                     const tr = `
                         <tr class="align-middle">
-                            <td class="p-3 text-secondary fw-semibold small">${escapeHTML(item.descripcion)}</td>
-                            <td class="p-3 text-center fw-bold text-dark">${cant} <span class="text-muted d-block" style="font-size: 10px;">${item.unidad_medida}</span></td>
-                            <td class="p-3 text-end text-muted font-monospace">${formatCurrency(prec)}</td>
-                            <td class="p-3 text-end fw-bold text-dark font-monospace">${formatCurrency(cant * prec)}</td>
+                            <td class="text-secondary fw-semibold small">${escapeHTML(item.descripcion)}</td>
+                            <td class="text-center fw-bold text-dark">${cant} <span class="text-muted d-block" style="font-size: 10px;">${item.unidad_medida}</span></td>
+                            <td class="text-end text-muted price-text">${formatCurrency(prec)}</td>
+                            <td class="text-end fw-bold text-dark price-text">${formatCurrency(cant * prec)}</td>
                         </tr>
                     `;
                     tbody.innerHTML += tr;
@@ -791,7 +959,7 @@ require_once __DIR__ . '/jefatura_controller.php';
             if (modalVerItemsInstance) modalVerItemsInstance.show();
         }
     </script>
-    <?php include __DIR__ . '/components/modal_firmagob.php'; ?>
+
 <?php include __DIR__ . '/footer.php'; ?>
 </body>
 </html>
