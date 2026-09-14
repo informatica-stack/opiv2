@@ -8,6 +8,9 @@
    1. VARIABLES GLOBALES Y PALETA CROMÁTICA (:root)
    -------------------------------------------------------------------------- */
 :root {
+    /* Forzado de esquema claro para accesibilidad universal */
+    color-scheme: light;
+
     /* Paleta Corporativa Principal */
     --color-primary: #2563eb;
     --color-primary-hover: #1d4ed8;
@@ -80,23 +83,9 @@
     --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Soporte de Modo Oscuro Automático por Preferencia del Sistema */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg-body: #0b0f19;
-        --bg-surface: #111827;
-        --bg-subtle: #1f2937;
-        --border-color: #374151;
-        --text-main: #f3f4f6;
-        --text-muted: #9ca3af;
-        --text-light: #6b7280;
-
-        --bg-sidebar: #030712;
-        --bg-topbar: #030712;
-
-        --color-slate-100: #1f2937;
-        --color-slate-50:  #111827;
-    }
+/* Esquema Institucional Fijo (Garantiza contraste óptimo y accesibilidad WCAG en cualquier navegador/SO) */
+html, :root {
+    color-scheme: light !important;
 }
 
 /* --------------------------------------------------------------------------

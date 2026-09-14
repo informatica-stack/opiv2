@@ -2,7 +2,7 @@
 // jefatura.php - Visación Técnica de Jefatura (Vista UI V5.0 - Homologada con mis_solicitudes.php)
 require_once __DIR__ . '/jefatura_controller.php';
 ?><!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="light">
 <head>
     <?php 
     $titulo_pagina = "Bandeja de Entrada Jefatura";

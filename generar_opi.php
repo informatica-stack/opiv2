@@ -14,9 +14,10 @@ $stmtI->execute([$id]);
 $items = $stmtI->fetchAll();
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
+    <meta name="color-scheme" content="light">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="bg-gray-100 p-8 min-h-screen flex justify-center">

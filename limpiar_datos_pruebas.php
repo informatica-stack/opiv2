@@ -179,7 +179,7 @@ if ($is_cli) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="light">
 <head>
     <?php 
     $titulo_pagina = "Limpieza y Reseteo del Sistema";

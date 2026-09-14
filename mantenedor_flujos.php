@@ -228,7 +228,7 @@ if ($tipo_seleccionado_id) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="light">
 <head>
     <?php 
     $titulo_pagina = "Diseñador de Flujos Dinámicos";

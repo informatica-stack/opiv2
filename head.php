@@ -6,6 +6,8 @@ if (!isset($titulo_pagina)) {
 ?>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<script>document.documentElement.setAttribute('data-bs-theme', 'light');</script>
 <title><?= htmlspecialchars($titulo_pagina) ?></title>
 
 <!-- Preconexión Anticipada DNS/TLS a CDNs -->

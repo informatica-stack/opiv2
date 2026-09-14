@@ -109,7 +109,7 @@ function estado_fecha($inicio, $fin) {
 ?>
 
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="light">
 <head>
     <?php 
     $titulo_pagina = "Configuración de Suplente";

@@ -3,7 +3,7 @@
 require_once __DIR__ . '/finanzas_controller.php'; 
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="light">
 <head>
     <?php 
     $titulo_pagina = "Firma de CDP - Finanzas";

@@ -59,7 +59,7 @@ function redirectBasedOnRole($role) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="light">
 <head>
     <?php 
     $titulo_pagina = "Acceso al Sistema";

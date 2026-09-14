@@ -190,7 +190,7 @@ if ($accion === 'edit' && $id_editar) {
 $tab_activa = $_GET['tab'] ?? ($count_pendientes > 0 && !isset($_GET['action']) ? 'pendientes' : 'activos');
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="light">
 <head>
     <?php 
     $titulo_pagina = "Usuarios del Sistema";

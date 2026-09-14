@@ -79,7 +79,7 @@ function money($v) {
     return '$ ' . number_format((float)$v, 0, ',', '.');
 }
 ?><!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="light">
 <head>
     <?php 
     $titulo_pagina = "Plan de Cuentas Global";

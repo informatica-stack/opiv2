@@ -3,7 +3,7 @@
 require_once __DIR__ . '/control_presupuestario_controller.php'; 
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="light">
 <head>
     <?php 
     $titulo_pagina = "Control Presupuestario";

@@ -3,7 +3,7 @@
 require_once __DIR__ . '/configuracion_sistema_controller.php';
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="light">
 <head>
     <?php 
     $titulo_pagina = "Configuración del Sistema";

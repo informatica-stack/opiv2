@@ -7,7 +7,7 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 $es_admin = (($_SESSION['user_rol'] ?? '') === 'SYSADMIN');
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="light">
 <head>
     <?php 
     $titulo_pagina = "Mantenimiento en Curso";
