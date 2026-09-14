@@ -11,6 +11,38 @@ require_once __DIR__ . '/dashboard_controller.php';
     ?>
     <!-- Chart.js 4.4 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        .kpi-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-radius: 12px;
+        }
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+        }
+        .chart-container {
+            position: relative;
+            height: 280px;
+            width: 100%;
+        }
+        .badge-estado-pill {
+            font-size: 11px;
+            padding: 4px 10px;
+            font-weight: 600;
+            border-radius: 20px;
+        }
+        .table-custom-dashboard td {
+            padding: 12px 14px;
+            vertical-align: middle;
+            font-size: 13px;
+        }
+        .table-custom-dashboard th {
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            padding: 12px 14px;
+        }
+    </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans d-flex flex-column min-vh-100">
 
@@ -160,7 +192,7 @@ require_once __DIR__ . '/dashboard_controller.php';
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
                             <span class="text-uppercase text-secondary fw-bold" style="font-size: 10px; letter-spacing: 0.5px;">Monto Total Imputado</span>
-                            <h3 class="fw-bold text-dark mb-0 mt-1 tabular-nums fs-4">
+                            <h3 class="fw-black text-dark mb-0 mt-1 font-monospace fs-4">
                                 $ <?= number_format($kpi_monto_comprometido, 0, ',', '.') ?>
                             </h3>
                         </div>
@@ -169,8 +201,8 @@ require_once __DIR__ . '/dashboard_controller.php';
                         </div>
                     </div>
                     <div class="d-flex align-items-center justify-content-between pt-2 border-top text-muted small" style="font-size: 11px;">
-                        <span>Neto: <strong class="tabular-nums">$ <?= number_format($kpi_monto_neto_est, 0, ',', '.') ?></strong></span>
-                        <span>IVA 19%: <strong class="tabular-nums">$ <?= number_format($kpi_monto_iva_est, 0, ',', '.') ?></strong></span>
+                        <span>Neto: <strong>$ <?= number_format($kpi_monto_neto_est, 0, ',', '.') ?></strong></span>
+                        <span>IVA 19%: <strong>$ <?= number_format($kpi_monto_iva_est, 0, ',', '.') ?></strong></span>
                     </div>
                 </div>
             </div>
@@ -181,7 +213,7 @@ require_once __DIR__ . '/dashboard_controller.php';
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
                             <span class="text-uppercase text-secondary fw-bold" style="font-size: 10px; letter-spacing: 0.5px;">OPIs Registradas</span>
-                            <h3 class="fw-bold text-dark mb-0 mt-1 tabular-nums fs-4">
+                            <h3 class="fw-black text-dark mb-0 mt-1 font-monospace fs-4">
                                 <?= number_format($kpi_total_expedientes, 0, ',', '.') ?> <span class="fs-6 fw-normal text-muted">trámites</span>
                             </h3>
                         </div>
@@ -190,8 +222,8 @@ require_once __DIR__ . '/dashboard_controller.php';
                         </div>
                     </div>
                     <div class="d-flex align-items-center justify-content-between pt-2 border-top small" style="font-size: 11px;">
-                        <span class="text-success fw-bold tabular-nums"><i class="bi bi-check-circle me-0.5"></i> <?= $kpi_count_finalizados ?> Finalizados</span>
-                        <span class="text-primary fw-bold tabular-nums"><i class="bi bi-arrow-repeat me-0.5"></i> <?= $kpi_count_en_curso ?> En Curso</span>
+                        <span class="text-success fw-bold"><i class="bi bi-check-circle me-0.5"></i> <?= $kpi_count_finalizados ?> Finalizados</span>
+                        <span class="text-primary fw-bold"><i class="bi bi-arrow-repeat me-0.5"></i> <?= $kpi_count_en_curso ?> En Curso</span>
                     </div>
                 </div>
             </div>
@@ -202,7 +234,7 @@ require_once __DIR__ . '/dashboard_controller.php';
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
                             <span class="text-uppercase text-secondary fw-bold" style="font-size: 10px; letter-spacing: 0.5px;">Monto Finalizado (Con OC)</span>
-                            <h3 class="fw-bold text-success mb-0 mt-1 tabular-nums fs-4">
+                            <h3 class="fw-black text-success mb-0 mt-1 font-monospace fs-4">
                                 $ <?= number_format($kpi_monto_finalizado, 0, ',', '.') ?>
                             </h3>
                         </div>
@@ -211,8 +243,8 @@ require_once __DIR__ . '/dashboard_controller.php';
                         </div>
                     </div>
                     <div class="d-flex align-items-center justify-content-between pt-2 border-top text-muted small" style="font-size: 11px;">
-                        <span>Efectividad: <strong class="tabular-nums"><?= $kpi_total_expedientes > 0 ? round(($kpi_count_finalizados / $kpi_total_expedientes) * 100, 1) : 0 ?>%</strong> de trámites</span>
-                        <span class="tabular-nums"><?= $kpi_count_finalizados ?> OCs emitidas</span>
+                        <span>Efectividad: <strong><?= $kpi_total_expedientes > 0 ? round(($kpi_count_finalizados / $kpi_total_expedientes) * 100, 1) : 0 ?>%</strong> de trámites</span>
+                        <span><?= $kpi_count_finalizados ?> OCs emitidas</span>
                     </div>
                 </div>
             </div>
@@ -223,7 +255,7 @@ require_once __DIR__ . '/dashboard_controller.php';
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
                             <span class="text-uppercase text-secondary fw-bold" style="font-size: 10px; letter-spacing: 0.5px;">Monto en Tramitación</span>
-                            <h3 class="fw-bold text-purple mb-0 mt-1 tabular-nums fs-4" style="color: #6f42c1;">
+                            <h3 class="fw-black text-purple mb-0 mt-1 font-monospace fs-4" style="color: #6f42c1;">
                                 $ <?= number_format($kpi_monto_en_curso, 0, ',', '.') ?>
                             </h3>
                         </div>
@@ -233,7 +265,7 @@ require_once __DIR__ . '/dashboard_controller.php';
                     </div>
                     <div class="d-flex align-items-center justify-content-between pt-2 border-top text-muted small" style="font-size: 11px;">
                         <span>En Adquisiciones / Firmas</span>
-                        <span class="text-danger fw-bold tabular-nums"><?= $kpi_count_rechazados ?> Rechazados</span>
+                        <span class="text-danger fw-bold"><?= $kpi_count_rechazados ?> Rechazados</span>
                     </div>
                 </div>
             </div>
@@ -399,14 +431,14 @@ require_once __DIR__ . '/dashboard_controller.php';
                                     <tr>
                                         <!-- Código OPI -->
                                         <td class="text-center">
-                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle tabular-nums px-2 py-1 fs-7">
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace px-2 py-1 fs-7">
                                                 <?= htmlspecialchars($exp['codigo_interno']) ?>
                                             </span>
                                         </td>
 
                                         <!-- Fecha / Solicitante -->
                                         <td>
-                                            <div class="fw-semibold text-dark tabular-nums"><?= date('d/m/Y', strtotime($exp['created_at'])) ?></div>
+                                            <div class="fw-semibold text-dark"><?= date('d/m/Y', strtotime($exp['created_at'])) ?></div>
                                             <div class="text-muted small" style="font-size: 11px;">
                                                 <i class="bi bi-person me-0.5"></i> <?= htmlspecialchars($exp['usuario_nombre'] ?? 'N/A') ?>
                                             </div>
@@ -434,14 +466,14 @@ require_once __DIR__ . '/dashboard_controller.php';
                                                 <div class="fw-semibold text-dark small text-truncate" style="max-width: 200px;" title="<?= htmlspecialchars($exp['prov_nombre']) ?>">
                                                     <?= htmlspecialchars($exp['prov_nombre']) ?>
                                                 </div>
-                                                <div class="text-secondary tabular-nums" style="font-size: 10px;"><?= htmlspecialchars($exp['prov_rut'] ?? '') ?></div>
+                                                <div class="text-secondary font-monospace" style="font-size: 10px;"><?= htmlspecialchars($exp['prov_rut'] ?? '') ?></div>
                                             <?php else: ?>
                                                 <span class="text-muted fst-italic small">En Cotización / Por Asignar</span>
                                             <?php endif; ?>
                                         </td>
 
                                         <!-- Monto OPI -->
-                                        <td class="text-end fw-bold text-dark tabular-nums">
+                                        <td class="text-end font-monospace fw-bold text-dark">
                                             $ <?= number_format($exp['monto_estimado'], 0, ',', '.') ?>
                                             <div class="text-muted" style="font-size: 9px; font-weight: normal;">
                                                 <?= ($exp['tipo_impuesto'] === 'IVA_INCLUIDO') ? 'IVA Inc.' : 'Neto+IVA' ?>

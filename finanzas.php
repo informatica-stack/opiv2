@@ -1,20 +1,82 @@
 <?php 
-// finanzas.php - Vista del Módulo de Finanzas (V1.0)
+// finanzas.php - Vista del Módulo de Finanzas (Diseño SaaS Clean Minimalist)
 require_once __DIR__ . '/finanzas_controller.php'; 
+$user_name = $_SESSION['user_name'] ?? 'Usuario';
+$user_rol = $_SESSION['user_rol'] ?? '';
+$user_depto = $_SESSION['user_depto_nombre'] ?? 'Dirección de Finanzas';
 ?>
 <!DOCTYPE html>
-<html lang="es" data-bs-theme="light">
+<html lang="es">
 <head>
     <?php 
-    $titulo_pagina = "Firma de CDP - Finanzas";
+    $titulo_pagina = "Firma de CDP - Finanzas - Sistema OPI";
     include __DIR__ . '/head.php'; 
     ?>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans d-flex flex-column min-vh-100">
+<body>
 
-    <?php include __DIR__ . '/nav.php'; ?>
+    <!-- TOPBAR SAAS UNIFICADA -->
+    <header class="saas-topbar">
+        <a href="index.php" class="brand-box">
+            <div class="brand-logo-icon">O</div>
+            <div class="brand-text">
+                <h1>Sistema OPI</h1>
+                <p>Órdenes de Pedido Interno</p>
+            </div>
+        </a>
 
-    <div class="container mt-4 px-3 px-md-4">
+        <!-- Accesos directos rápidos -->
+        <nav class="saas-nav-links d-none d-lg-flex">
+            <a href="mis_solicitudes.php" class="saas-nav-item"><i class="bi bi-journal-text"></i> Mis Solicitudes</a>
+            <a href="nueva_solicitud.php" class="saas-nav-item"><i class="bi bi-plus-circle"></i> Nueva Solicitud</a>
+            <?php if(isset($_SESSION['es_jefe']) && $_SESSION['es_jefe'] == 1 || $user_rol === 'JEFE_UNIDAD' || $user_rol === 'ADMIN_MUNICIPAL' || $user_rol === 'SYSADMIN'): ?>
+                <a href="jefatura.php" class="saas-nav-item"><i class="bi bi-shield-check"></i> V°B° Jefatura</a>
+            <?php endif; ?>
+            <a href="control_presupuestario.php" class="saas-nav-item"><i class="bi bi-calculator"></i> Presupuesto</a>
+            <a href="finanzas.php" class="saas-nav-item active"><i class="bi bi-file-earmark-check"></i> Firma CDP</a>
+            <?php if($user_rol === 'ADQUISICIONES' || $user_rol === 'SYSADMIN'): ?>
+                <a href="adquisiciones.php" class="saas-nav-item"><i class="bi bi-cart3"></i> Adquisiciones</a>
+            <?php endif; ?>
+        </nav>
+
+        <!-- Menú y Perfil -->
+        <div class="d-flex align-items-center gap-2">
+            <div class="dropdown">
+                <button class="btn-saas btn-saas-secondary btn-saas-sm dropdown-toggle d-flex align-items-center gap-1.5" type="button" id="dropdownGlobalNav" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-grid-fill text-primary"></i>
+                    <span class="d-none d-sm-inline">Módulos</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-light mt-2 p-2" aria-labelledby="dropdownGlobalNav" style="min-width: 250px;">
+                    <li><span class="dropdown-header text-uppercase text-secondary fw-bold" style="font-size: 9px;">Panel Principal</span></li>
+                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard OPIs</a></li>
+                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="mis_solicitudes.php"><i class="bi bi-journal-text"></i> Mis Solicitudes</a></li>
+                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="nueva_solicitud.php"><i class="bi bi-plus-circle"></i> Nueva Solicitud</a></li>
+                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="subrogancia.php"><i class="bi bi-person-gear"></i> Configurar Suplente</a></li>
+                    
+                    <li><hr class="dropdown-divider"></li>
+                    <li><span class="dropdown-header text-uppercase text-secondary fw-bold" style="font-size: 9px;">Presupuesto y Finanzas</span></li>
+                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="control_presupuestario.php"><i class="bi bi-calculator"></i> VB Presupuestario</a></li>
+                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="centros_de_costo.php"><i class="bi bi-wallet2"></i> Centros de Costo</a></li>
+                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="mantenedor_cuentas.php"><i class="bi bi-list-columns-reverse"></i> Cuentas Presupuestarias</a></li>
+                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2 active bg-primary text-white" href="finanzas.php"><i class="bi bi-file-earmark-check"></i> Firma de CDP</a></li>
+                </ul>
+            </div>
+
+            <div class="user-pill d-none d-sm-flex">
+                <div class="user-avatar-circle"><?= strtoupper(substr($user_name, 0, 2)) ?></div>
+                <div class="d-none d-md-block text-start pe-2">
+                    <div class="fw-bold text-dark text-truncate" style="max-width: 140px; font-size: 12px;"><?= htmlspecialchars($user_name) ?></div>
+                    <div class="text-muted text-truncate" style="max-width: 140px; font-size: 10.5px;"><?= htmlspecialchars($user_depto) ?></div>
+                </div>
+            </div>
+
+            <a href="logout.php" class="btn-saas btn-saas-secondary btn-saas-sm" title="Cerrar Sesión">
+                <i class="bi bi-box-arrow-right"></i>
+            </a>
+        </div>
+    </header>
+
+    <div class="saas-container">
 
         <!-- MENSAJES DE ALERTA -->
         <?php if($mensaje): ?>
@@ -23,140 +85,194 @@ require_once __DIR__ . '/finanzas_controller.php';
             $iconClass = ($tipo_mensaje === 'error') ? 'exclamation-triangle-fill' : (($tipo_mensaje === 'warning') ? 'arrow-counterclockwise' : 'check-circle-fill');
             ?>
             <div class="alert alert-<?= $alertClass ?> d-flex align-items-center gap-2 mb-4 shadow-sm" role="alert">
-                <i class="bi bi-<?= $iconClass ?> shrink-0"></i>
+                <i class="bi bi-<?= $iconClass ?> shrink-0 fs-5"></i>
                 <div class="small fw-semibold"><?= htmlspecialchars($mensaje) ?></div>
             </div>
         <?php endif; ?>
 
-        <!-- VISTAS: BANDEJA DE LISTADOS HOMOLOGADA -->
+        <!-- ============================================================== -->
+        <!-- VISTA A: LISTADO DE BANDEJA FINANZAS (TABS, FILTROS Y TABLA)    -->
+        <!-- ============================================================== -->
         <?php if($vista !== 'revisar'): ?>
             
-            <!-- CABECERA PRINCIPAL -->
-            <div class="row align-items-center mb-4 g-3">
-                <div class="col-12 col-md">
-                    <h1 class="h3 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
-                        <i class="bi bi-file-earmark-check text-primary"></i>
-                        Firma de CDP - Finanzas
-                    </h1>
-                    <p class="text-muted small mb-0">Dirección de Administración y Finanzas (DAF). Adjuntar certificados SMC.</p>
+            <!-- HEADER Y TÍTULO -->
+            <div class="page-header-row">
+                <div>
+                    <div class="breadcrumbs">
+                        <a href="index.php">Inicio</a>
+                        <i class="bi bi-chevron-right"></i>
+                        <span class="current">Finanzas</span>
+                    </div>
+                    <div class="page-title">
+                        <h2>Firma de Certificados de Disponibilidad Presupuestaria (CDP)</h2>
+                        <p>Dirección de Administración y Finanzas (DAF). Firma digital oficial y carga de certificados SMC.</p>
+                    </div>
                 </div>
-                <div class="col-12 col-md-auto d-flex flex-wrap gap-2">
-                    <button onclick="toggleFiltros()" class="btn btn-outline-secondary btn-sm shadow-sm d-flex align-items-center gap-1.5">
+                <div class="d-flex align-items-center gap-2">
+                    <button onclick="toggleFiltros()" class="btn-saas btn-saas-secondary">
                         <i class="bi bi-funnel"></i>
-                        Filtros
+                        <span>Filtros</span>
                     </button>
                 </div>
             </div>
 
-            <!-- PESTAÑAS NAVEGABLES (TABS) HOMOLOGADAS -->
-            <div class="d-flex border-bottom mb-4 overflow-x-auto">
-                <a href="finanzas.php?view=pendientes" class="px-4 py-2.5 text-decoration-none fw-bold small border-bottom border-2 <?= $vista === 'pendientes' ? 'border-primary text-primary bg-white rounded-top' : 'border-transparent text-secondary hover-text-dark' ?> text-nowrap d-flex align-items-center gap-2">
-                    <i class="bi bi-clock-history"></i>
-                    Pendientes de Certificado
-                    <span class="badge rounded-pill <?= $vista === 'pendientes' ? 'bg-primary text-white' : 'bg-secondary-subtle text-secondary-emphasis' ?>"><?= $count_pendientes ?></span>
-                </a>
-                <a href="finanzas.php?view=procesados" class="px-4 py-2.5 text-decoration-none fw-bold small border-bottom border-2 <?= $vista === 'procesados' ? 'border-primary text-primary bg-white rounded-top' : 'border-transparent text-secondary hover-text-dark' ?> text-nowrap d-flex align-items-center gap-2">
-                    <i class="bi bi-check2-square"></i>
-                    Procesados por Mí
-                    <span class="badge rounded-pill <?= $vista === 'procesados' ? 'bg-primary text-white' : 'bg-secondary-subtle text-secondary-emphasis' ?>"><?= $count_procesados ?></span>
-                </a>
-                <a href="finanzas.php?view=todas" class="px-4 py-2.5 text-decoration-none fw-bold small border-bottom border-2 <?= $vista === 'todas' ? 'border-primary text-primary bg-white rounded-top' : 'border-transparent text-secondary hover-text-dark' ?> text-nowrap d-flex align-items-center gap-2">
-                    <i class="bi bi-diagram-3"></i>
-                    Todas las Solicitudes
-                    <span class="badge rounded-pill <?= $vista === 'todas' ? 'bg-primary text-white' : 'bg-secondary-subtle text-secondary-emphasis' ?>"><?= $count_todas ?></span>
-                </a>
+            <!-- TARJETAS KPI DE GESTIÓN -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <h5>Pendientes de Certificado</h5>
+                        <div class="metric-number"><?= number_format($count_pendientes, 0, ',', '.') ?></div>
+                        <div class="metric-sub text-warning fw-bold">
+                            <i class="bi bi-hourglass-split"></i> En espera de firma DAF
+                        </div>
+                    </div>
+                    <div class="metric-icon-box yellow">
+                        <i class="bi bi-file-earmark-check"></i>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <h5>Procesados por Mí</h5>
+                        <div class="metric-number"><?= number_format($count_procesados, 0, ',', '.') ?></div>
+                        <div class="metric-sub text-success fw-bold">
+                            <i class="bi bi-check2-all"></i> CDPs emitidos / visados
+                        </div>
+                    </div>
+                    <div class="metric-icon-box green">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <h5>Total de Solicitudes</h5>
+                        <div class="metric-number"><?= number_format($count_todas, 0, ',', '.') ?></div>
+                        <div class="metric-sub text-muted">
+                            <i class="bi bi-diagram-3"></i> Catálogo financiero DAF
+                        </div>
+                    </div>
+                    <div class="metric-icon-box purple">
+                        <i class="bi bi-folder2-open"></i>
+                    </div>
+                </div>
             </div>
 
-            <!-- PANEL DE FILTROS -->
-            <div id="filtroPanel" class="card shadow-sm mb-4 <?= ($f_q || $f_tipo || $f_estado || $f_desde || $f_hasta) ? '' : 'd-none' ?>">
-                <div class="card-body p-3">
+            <!-- PANEL PRINCIPAL CON TABS Y TABLA -->
+            <div class="saas-panel">
+                
+                <!-- PESTAÑAS NAVEGABLES (3 TABS) -->
+                <div class="saas-tab-nav">
+                    <a href="finanzas.php?view=pendientes" class="saas-tab-item <?= $vista === 'pendientes' ? 'active' : '' ?>">
+                        <i class="bi bi-clock-history"></i>
+                        <span>Pendientes de Certificado</span>
+                        <span class="saas-tab-badge"><?= $count_pendientes ?></span>
+                    </a>
+                    <a href="finanzas.php?view=procesados" class="saas-tab-item <?= $vista === 'procesados' ? 'active' : '' ?>">
+                        <i class="bi bi-check2-square"></i>
+                        <span>Procesados por Mí</span>
+                        <span class="saas-tab-badge"><?= $count_procesados ?></span>
+                    </a>
+                    <a href="finanzas.php?view=todas" class="saas-tab-item <?= $vista === 'todas' ? 'active' : '' ?>">
+                        <i class="bi bi-diagram-3"></i>
+                        <span>Todas las Solicitudes</span>
+                        <span class="saas-tab-badge"><?= $count_todas ?></span>
+                    </a>
+                </div>
+
+                <!-- TOOLBAR Y PANEL DE FILTROS -->
+                <div id="filtroPanel" class="p-3 bg-light border-bottom <?= ($f_q || $f_tipo || $f_estado || $f_desde || $f_hasta) ? '' : 'd-none' ?>">
                     <form method="GET" action="finanzas.php">
                         <input type="hidden" name="view" value="<?= htmlspecialchars($vista) ?>">
-                        <div class="row g-3 align-items-end">
-                            <div class="col-12 col-sm-6 col-lg-3">
-                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Buscar (ID o Título)</label>
-                                <input type="text" name="f_q" value="<?= htmlspecialchars($f_q) ?>" class="form-control form-control-sm">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-12 col-md-3">
+                                <label class="form-label-saas mb-1" style="font-size: 11px;">Buscar (Código / Título / Solicitante)</label>
+                                <input type="text" name="f_q" value="<?= htmlspecialchars($f_q) ?>" placeholder="Ej: EXP-2026..." class="form-control-saas py-1.5">
                             </div>
-                            <div class="col-12 col-sm-6 col-lg-2">
-                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Tipo de Compra</label>
-                                <select name="f_tipo" class="form-select form-select-sm bg-white">
+                            <div class="col-12 col-sm-6 col-md-2">
+                                <label class="form-label-saas mb-1" style="font-size: 11px;">Tipo de Compra</label>
+                                <select name="f_tipo" class="form-control-saas py-1.5">
                                     <option value="">Todos</option>
                                     <?php foreach($tipos_compra_filtro as $t): ?>
                                         <option value="<?= $t['id'] ?>" <?= $f_tipo==$t['id']?'selected':'' ?>><?= htmlspecialchars($t['nombre']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-12 col-sm-6 col-lg-2">
-                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Estado</label>
-                                <select name="f_estado" class="form-select form-select-sm bg-white">
+                            <div class="col-12 col-sm-6 col-md-2">
+                                <label class="form-label-saas mb-1" style="font-size: 11px;">Estado</label>
+                                <select name="f_estado" class="form-control-saas py-1.5">
                                     <option value="">Todos</option>
                                     <?php foreach($estados_filtro as $e): ?>
                                         <option value="<?= $e['codigo'] ?>" <?= $f_estado==$e['codigo']?'selected':'' ?>><?= htmlspecialchars($e['nombre']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-12 col-sm-6 col-lg-3">
-                                <div class="row g-2">
+                            <div class="col-12 col-sm-6 col-md-3">
+                                <div class="row g-1">
                                     <div class="col-6">
-                                        <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Desde</label>
-                                        <input type="date" name="f_desde" value="<?= htmlspecialchars($f_desde) ?>" class="form-control form-control-sm text-secondary">
+                                        <label class="form-label-saas mb-1" style="font-size: 11px;">Desde</label>
+                                        <input type="date" name="f_desde" value="<?= htmlspecialchars($f_desde) ?>" class="form-control-saas py-1.5">
                                     </div>
                                     <div class="col-6">
-                                        <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Hasta</label>
-                                        <input type="date" name="f_hasta" value="<?= htmlspecialchars($f_hasta) ?>" class="form-control form-control-sm text-secondary">
+                                        <label class="form-label-saas mb-1" style="font-size: 11px;">Hasta</label>
+                                        <input type="date" name="f_hasta" value="<?= htmlspecialchars($f_hasta) ?>" class="form-control-saas py-1.5">
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-12 col-lg-2 d-flex gap-2 justify-content-end mt-2 mt-lg-0">
-                                <a href="finanzas.php?view=<?= htmlspecialchars($vista) ?>" class="btn btn-light btn-sm w-100 fw-bold border">Limpiar</a>
-                                <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold shadow-sm">Aplicar</button>
+                            <div class="col-12 col-sm-6 col-md-2 d-flex gap-2">
+                                <a href="finanzas.php?view=<?= htmlspecialchars($vista) ?>" class="btn-saas btn-saas-secondary w-100 justify-content-center py-1.5">Limpiar</a>
+                                <button type="submit" class="btn-saas btn-saas-primary w-100 justify-content-center py-1.5">Aplicar</button>
                             </div>
                         </div>
                     </form>
                 </div>
-            </div>
 
-            <!-- TABLA PRINCIPAL HOMOLOGADA DE 6 COLUMNAS -->
-            <div class="card shadow-sm border-light mb-4 overflow-hidden">
+                <!-- TABLA DE SOLICITUDES -->
                 <div class="table-responsive">
-                    <table class="table table-hover table-striped align-middle mb-0" style="min-width: 1000px;">
-                        <thead class="table-light text-uppercase small text-secondary">
+                    <table class="saas-table" style="min-width: 980px;">
+                        <thead>
                             <tr>
-                                <th class="p-3 text-nowrap" style="width: 180px;">ID / Fecha / Prioridad</th>
-                                <th class="p-3" style="min-width: 250px;">Trámite / Solicitante / CC</th>
-                                <th class="p-3 text-nowrap" style="width: 150px;">Clasificación</th>
-                                <th class="p-3 text-nowrap" style="width: 180px;">Fase / Estado Actual</th>
-                                <th class="p-3 text-end text-nowrap" style="width: 150px;">Monto Total</th>
-                                <th class="p-3 text-center text-nowrap" style="width: 150px;">Gestión</th>
+                                <th style="width: 170px;">ID / Fecha</th>
+                                <th style="min-width: 280px;">Título / Destino / Solicitante</th>
+                                <th style="width: 160px;">Clasificación</th>
+                                <th style="width: 180px;">Fase / Estado Actual</th>
+                                <th style="width: 140px;" class="text-end">Monto Total</th>
+                                <th style="width: 140px;" class="text-center">Gestión</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if(count($solicitudes) > 0): ?>
                                 <?php foreach($solicitudes as $row): ?>
                                 <tr>
-                                    <td class="p-3 text-nowrap">
-                                        <button type="button" onclick="abrirModalVerItems(<?= htmlspecialchars(json_encode($row['items_detalle']), ENT_QUOTES, 'UTF-8') ?>, '<?= $row['codigo_interno'] ?>')" class="btn btn-link p-0 text-start font-monospace fw-bold text-primary text-decoration-underline mb-1">
+                                    <!-- ID y Fecha -->
+                                    <td>
+                                        <button type="button" onclick="abrirModalVerItems(<?= htmlspecialchars(json_encode($row['items_detalle']), ENT_QUOTES, 'UTF-8') ?>, '<?= $row['codigo_interno'] ?>')" class="saas-code-btn d-block mb-1">
                                             <?= htmlspecialchars($row['codigo_interno']) ?>
                                         </button>
-                                        <div class="text-muted small" style="font-size: 11px;">
-                                            <i class="bi bi-clock me-1"></i>
+                                        <div class="row-sub d-flex align-items-center gap-1">
+                                            <i class="bi bi-clock"></i>
                                             <?= date('d/m/Y H:i', strtotime($row['created_at'])) ?>
                                         </div>
-                                        <span class="badge border mt-2 d-inline-block <?= $row['prioridad_css'] ?>" style="font-size: 10px;">
-                                            <?= htmlspecialchars($row['prioridad_nombre']) ?>
-                                        </span>
+                                        <div class="mt-1.5">
+                                            <span class="priority-indicator <?= $row['prioridad_css'] ?>">
+                                                <span class="prio-dot"></span>
+                                                <?= htmlspecialchars($row['prioridad_nombre']) ?>
+                                            </span>
+                                        </div>
                                     </td>
 
-                                    <td class="p-3">
-                                        <div class="fw-bold text-dark mb-1 leading-snug break-words" style="max-width: 450px;">
+                                    <!-- Título y Destino -->
+                                    <td>
+                                        <div class="row-title mb-1" style="max-width: 420px; font-size: 13.5px;">
                                             <?= htmlspecialchars($row['titulo_compra'] ?? 'Sin Título') ?>
                                         </div>
-                                        <div class="text-secondary small mb-1 break-words" style="max-width: 450px; font-size: 11px; line-height: 1.4;">
-                                            <i class="bi bi-person me-1"></i><?= htmlspecialchars($row['solicitante']) ?> (<?= htmlspecialchars($row['unidad_nombre']) ?>)
+                                        <div class="row-sub mb-2 text-truncate" style="max-width: 420px; font-size: 12px; color: var(--text-muted);">
+                                            <?= htmlspecialchars($row['motivo_compra']) ?>
                                         </div>
-                                        <div class="text-uppercase text-muted fw-bold mb-2" style="font-size: 9px; letter-spacing: 0.5px;">
-                                            <i class="bi bi-tag-fill me-1"></i>
-                                            CC: <?= htmlspecialchars($row['cc_nombre']) ?>
+                                        <div class="d-flex align-items-center gap-2 flex-wrap" style="font-size: 11px; color: var(--text-muted); font-weight: 500;">
+                                            <span class="d-flex align-items-center gap-1"><i class="bi bi-person-fill text-primary"></i> <?= htmlspecialchars($row['solicitante']) ?> (<?= htmlspecialchars($row['unidad_nombre']) ?>)</span>
+                                            <span>•</span>
+                                            <span class="d-flex align-items-center gap-1"><i class="bi bi-tag-fill text-secondary"></i> CC: <?= htmlspecialchars($row['cc_nombre']) ?></span>
                                         </div>
                                         
                                         <?php if(!empty($row['docs_adjuntos'])): 
@@ -165,47 +281,58 @@ require_once __DIR__ . '/finanzas_controller.php';
                                             $docs_json = htmlspecialchars(json_encode($docs_array), ENT_QUOTES, 'UTF-8');
                                         ?>
                                             <div class="mt-2">
-                                                <button type="button" onclick="abrirModalAdjuntos(<?= $docs_json ?>, '<?= htmlspecialchars($row['codigo_interno']) ?>', <?= $row['id'] ?>)" class="btn btn-outline-primary btn-sm py-1 px-2.5 d-inline-flex align-items-center gap-1.5 font-bold" style="font-size: 10px;">
-                                                    <i class="bi bi-paperclip"></i>
-                                                    Ver Archivos (<?= $docs_count ?>)
+                                                <button type="button" onclick="abrirModalAdjuntos(<?= $docs_json ?>, '<?= htmlspecialchars($row['codigo_interno']) ?>', <?= $row['id'] ?>)" class="btn-saas btn-saas-secondary btn-saas-sm py-0.5 px-2" style="font-size: 11px;">
+                                                    <i class="bi bi-paperclip text-primary"></i>
+                                                    Archivos (<?= $docs_count ?>)
                                                 </button>
                                             </div>
                                         <?php endif; ?>
                                     </td>
 
-                                    <td class="p-3 text-nowrap">
-                                        <span class="badge bg-light text-dark border px-2 py-1.5 fw-bold d-block mb-1" style="font-size: 11px;">
+                                    <!-- Clasificación -->
+                                    <td>
+                                        <span class="saas-badge saas-badge-neutral d-inline-block mb-1">
                                             <?= htmlspecialchars($row['tipo_compra_nom']) ?>
                                         </span>
                                         <?php if(!empty($row['rango_utm_nombre'])): ?>
-                                            <span class="badge bg-secondary-subtle text-secondary border px-2 py-1" style="font-size: 9px;">
+                                            <span class="badge bg-light text-secondary border d-block" style="font-size: 9.5px; width: fit-content;">
                                                 <?= htmlspecialchars($row['rango_utm_nombre']) ?>
                                             </span>
                                         <?php endif; ?>
                                     </td>
 
-                                    <td class="p-3 text-nowrap">
-                                        <span class="badge <?= color_estado($row['estado_actual']) ?> px-2.5 py-1.5 rounded-2 d-inline-block text-wrap" style="font-size: 10px; max-width: 180px;">
+                                    <!-- Estado y Trazabilidad -->
+                                    <td>
+                                        <?php 
+                                        $st = $row['estado_actual'];
+                                        $badgeClass = 'saas-badge-neutral';
+                                        if (in_array($st, ['ESPERANDO_CDP_FINANZAS', 'ESPERANDO_CDP_FINANZAS_FINAL'])) $badgeClass = 'saas-badge-warning';
+                                        elseif (in_array($st, ['VB_FINANZAS_CDP', 'FINALIZADO', 'ADJUDICADO'])) $badgeClass = 'saas-badge-success';
+                                        elseif (in_array($st, ['RECHAZADO', 'ANULADO'])) $badgeClass = 'saas-badge-danger';
+                                        ?>
+                                        <span class="saas-badge <?= $badgeClass ?> mb-1">
                                             <?= htmlspecialchars($row['estado_nombre']) ?>
                                         </span>
-                                        <div class="mt-1.5">
-                                            <button type="button" onclick="verTrazabilidad(<?= (int)$row['id'] ?>)" class="btn btn-link p-0 text-decoration-none text-secondary d-flex align-items-center gap-1" style="font-size: 11px;">
-                                                <i class="bi bi-clock-history text-primary"></i>
-                                                Ver Historial
+                                        <div>
+                                            <button type="button" onclick="verTrazabilidad(<?= (int)$row['id'] ?>)" class="btn btn-link p-0 text-decoration-none d-flex align-items-center gap-1" style="font-size: 11.5px; color: var(--primary);">
+                                                <i class="bi bi-clock-history"></i>
+                                                Historial
                                             </button>
                                         </div>
                                     </td>
 
-                                    <td class="p-3 text-end text-nowrap">
-                                        <div class="font-monospace fw-bold text-dark" style="font-size: 13px;">
+                                    <!-- Monto Total -->
+                                    <td class="text-end">
+                                        <div class="price-text" style="font-size: 14px;">
                                             <?= money($row['monto_definitivo'] ?? $row['monto_estimado']) ?>
                                         </div>
                                     </td>
 
-                                    <td class="p-3 text-center text-nowrap">
-                                        <a href="finanzas.php?view=revisar&id=<?= $row['id'] ?>" class="btn <?= $vista === 'pendientes' ? 'btn-primary' : 'btn-outline-primary' ?> btn-sm px-3 fw-bold shadow-sm d-inline-flex align-items-center gap-1">
+                                    <!-- Acción -->
+                                    <td class="text-center">
+                                        <a href="finanzas.php?view=revisar&id=<?= $row['id'] ?>" class="btn-saas <?= $vista === 'pendientes' ? 'btn-saas-primary' : 'btn-saas-secondary' ?> btn-saas-sm">
                                             <i class="bi bi-file-earmark-check"></i>
-                                            <?= $vista === 'pendientes' ? 'Gestionar' : 'Ver Detalle' ?>
+                                            <span><?= $vista === 'pendientes' ? 'Gestionar' : 'Ver Detalle' ?></span>
                                         </a>
                                     </td>
                                 </tr>
@@ -213,32 +340,50 @@ require_once __DIR__ . '/finanzas_controller.php';
                             <?php else: ?>
                                 <tr>
                                     <td colspan="6" class="p-5 text-center text-muted">
-                                        <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
-                                        <p class="mb-0 fw-semibold">No se encontraron solicitudes registradas en esta bandeja de finanzas.</p>
+                                        <div class="d-flex flex-column align-items-center justify-content-center py-4">
+                                            <i class="bi bi-inbox fs-1 text-slate-300 mb-2"></i>
+                                            <p class="mb-0 fw-semibold text-secondary">No se encontraron requerimientos registrados en esta bandeja de finanzas.</p>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
+
             </div>
+
         <?php endif; ?>
 
-        <!-- VISTA: REVISIÓN DE EXPEDIENTE -->
+        <!-- ============================================================== -->
+        <!-- VISTA B: REVISIÓN DE EXPEDIENTE Y FIRMA DE CDP                  -->
+        <!-- ============================================================== -->
         <?php if($vista === 'revisar' && isset($expediente)): ?>
-            <div class="row align-items-center mb-4 g-3">
-                <div class="col-12 col-md">
-                    <span class="badge bg-primary text-uppercase tracking-wider mb-1.5" style="font-size: 9px; letter-spacing: 0.5px;">Área Finanzas: Carga de CDP SMC</span>
-                    <h1 class="h3 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
-                        Expediente: <span class="font-monospace text-primary">#<?= htmlspecialchars($expediente['codigo_interno']) ?></span>
-                        <button type="button" onclick="verTrazabilidad(<?= (int)$expediente['id'] ?>)" class="btn btn-outline-primary btn-sm px-2.5 py-1 fw-bold shadow-sm d-inline-flex align-items-center gap-1.5" style="font-size: 11px;">
-                            <i class="bi bi-clock-history"></i> Ver Historial
-                        </button>
-                    </h1>
+            
+            <div class="page-header-row mb-4">
+                <div>
+                    <div class="breadcrumbs">
+                        <a href="index.php">Inicio</a>
+                        <i class="bi bi-chevron-right"></i>
+                        <a href="finanzas.php">Finanzas</a>
+                        <i class="bi bi-chevron-right"></i>
+                        <span class="current">Revisión #<?= htmlspecialchars($expediente['codigo_interno']) ?></span>
+                    </div>
+                    <div class="page-title">
+                        <div class="d-flex align-items-center gap-2.5 flex-wrap">
+                            <h2>Expediente: <span class="text-primary font-monospace">#<?= htmlspecialchars($expediente['codigo_interno']) ?></span></h2>
+                            <span class="saas-badge saas-badge-info">
+                                Área Finanzas: Emisión y Firma de CDP
+                            </span>
+                            <button type="button" onclick="verTrazabilidad(<?= (int)$expediente['id'] ?>)" class="btn-saas btn-saas-secondary btn-saas-sm">
+                                <i class="bi bi-clock-history text-primary"></i> Ver Historial
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-12 col-md-auto text-start text-md-end">
-                    <a href="finanzas.php" class="btn btn-outline-secondary btn-sm px-3 shadow-sm">
-                        <i class="bi bi-arrow-left me-1"></i> Volver a la Bandeja
+                <div>
+                    <a href="finanzas.php" class="btn-saas btn-saas-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver a la Bandeja
                     </a>
                 </div>
             </div>
@@ -246,66 +391,83 @@ require_once __DIR__ . '/finanzas_controller.php';
             <div class="row g-4">
                 
                 <!-- COLUMNA IZQUIERDA: RESUMEN Y ARCHIVOS -->
-                <div class="col-lg-4 space-y-4">
+                <div class="col-lg-4">
                     
-                    <div class="card shadow-sm border-light">
-                        <div class="card-header bg-white py-3">
-                            <h6 class="fw-bold mb-0 text-dark uppercase tracking-wider" style="font-size: 11px; letter-spacing: 0.5px;">Contexto de la Solicitud</h6>
+                    <!-- CONTEXTO GENERAL -->
+                    <div class="saas-card mb-4">
+                        <div class="saas-card-header">
+                            <h6 class="fw-bold mb-0 text-dark" style="font-size: 13px;">
+                                <i class="bi bi-info-circle text-primary me-1.5"></i>
+                                Contexto de la Solicitud
+                            </h6>
                         </div>
-                        <div class="card-body p-3">
+                        <div class="saas-card-body p-3">
                             <div class="d-flex flex-column gap-3 small">
+                                
                                 <?php if($expediente['titulo_compra']): ?>
                                     <div>
-                                        <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 9px;">Título Compra:</span>
-                                        <span class="fw-bold text-dark fs-6"><?= htmlspecialchars($expediente['titulo_compra']) ?></span>
+                                        <span class="form-label-saas mb-1">Título de la Compra:</span>
+                                        <div class="fw-bold text-dark fs-6"><?= htmlspecialchars($expediente['titulo_compra']) ?></div>
                                     </div>
                                 <?php endif; ?>
                                 
-                                <div class="row g-3">
+                                <div class="row g-2">
                                     <div class="col-6">
-                                        <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 9px;">Unidad:</span>
-                                        <span class="text-secondary fw-semibold"><?= htmlspecialchars($expediente['unidad']) ?></span>
+                                        <span class="form-label-saas mb-1">Unidad:</span>
+                                        <div class="text-secondary fw-semibold"><?= htmlspecialchars($expediente['unidad']) ?></div>
                                     </div>
                                     <div class="col-6">
-                                        <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 9px;">Tipo de Compra:</span>
-                                        <span class="text-secondary fw-semibold"><?= htmlspecialchars($expediente['tipo_compra_nom']) ?></span>
+                                        <span class="form-label-saas mb-1">Tipo de Compra:</span>
+                                        <div class="text-secondary fw-semibold"><?= htmlspecialchars($expediente['tipo_compra_nom']) ?></div>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 9px;">Centro de Costo:</span>
-                                    <span class="badge bg-indigo-subtle text-indigo fw-bold text-wrap text-start mt-1 px-2.5 py-1.5 fs-6">[ID: <?= $expediente['centro_costo_id'] ?>] <?= htmlspecialchars($expediente['centro_costo']) ?></span>
+                                    <span class="form-label-saas mb-1">Centro de Costo:</span>
+                                    <div class="p-2 bg-light rounded border fw-semibold text-dark">
+                                        <span class="badge bg-primary text-white me-1">ID: <?= $expediente['centro_costo_id'] ?></span>
+                                        <?= htmlspecialchars($expediente['centro_costo']) ?>
+                                    </div>
                                 </div>
 
-                                <div class="pt-2 border-t mt-2">
-                                    <span class="text-muted fw-bold d-block text-uppercase mb-1" style="font-size: 9px;">Justificación del Gasto:</span>
-                                    <div class="bg-light p-2.5 rounded border small text-secondary leading-relaxed" style="max-height: 180px; overflow-y: auto; font-size: 11px;">
-                                        <?= nl2br(htmlspecialchars($expediente['motivo_compra'])) ?>
+                                <?php if(!empty($expediente['proveedor_nombre'])): ?>
+                                    <div class="p-2.5 bg-success-subtle border border-success-subtle rounded text-success-emphasis">
+                                        <span class="form-label-saas mb-1" style="font-size: 9.5px; color: var(--success);">Proveedor Adjudicado:</span>
+                                        <div class="fw-bold mb-0.5"><?= htmlspecialchars($expediente['proveedor_nombre']) ?></div>
+                                        <div class="small font-monospace text-muted">RUT: <?= htmlspecialchars($expediente['proveedor_rut']) ?></div>
+                                    </div>
+                                <?php endif; ?>
+
+                                <div class="pt-2 border-top">
+                                    <span class="form-label-saas mb-1">Destino de los Bienes / Justificación:</span>
+                                    <div class="bg-light p-2.5 rounded border small text-secondary" style="max-height: 180px; overflow-y: auto; font-size: 11.5px; line-height: 1.5;">
+                                        <?= nl2br(htmlspecialchars($expediente['motivo_compra'] ?? '')) ?>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- ARCHIVOS ADJUNTOS -->
-                    <div class="card shadow-sm border-light">
-                        <div class="card-header bg-white py-3">
-                            <h6 class="fw-bold mb-0 text-dark uppercase tracking-wider" style="font-size: 11px; letter-spacing: 0.5px;">Archivos Adjuntos (<?= count($docs) ?>)</h6>
+                    <!-- DOCUMENTOS ADJUNTOS -->
+                    <div class="saas-card">
+                        <div class="saas-card-header">
+                            <h6 class="fw-bold mb-0 text-dark" style="font-size: 13px;">
+                                <i class="bi bi-paperclip text-primary me-1.5"></i>
+                                Archivos Adjuntos (<?= count($docs) ?>)
+                            </h6>
                         </div>
-                        <div class="card-body p-3">
+                        <div class="saas-card-body p-3">
                             <?php if(empty($docs)): ?>
-                                <div class="text-center py-4 bg-light border border-dashed rounded-3">
-                                    <p class="text-muted small mb-0 italic">No hay archivos adjuntos cargados.</p>
-                                </div>
+                                <p class="text-muted small mb-0 fst-italic">No hay archivos adjuntos cargados.</p>
                             <?php else: ?>
                                 <div class="d-flex flex-column gap-2">
                                     <?php foreach($docs as $doc): ?>
-                                        <a href="<?= htmlspecialchars($doc['ruta_archivo']) ?>" target="_blank" class="d-flex align-items-center justify-content-between p-2.5 bg-light border rounded-3 text-decoration-none hover-bg-gray transition">
+                                        <a href="<?= htmlspecialchars($doc['ruta_archivo']) ?>" target="_blank" class="d-flex align-items-center justify-content-between p-2.5 bg-light border rounded text-decoration-none transition">
                                             <div class="d-flex align-items-center gap-2 min-w-0 flex-grow-1">
                                                 <i class="bi bi-file-earmark-text text-primary fs-5 shrink-0"></i>
                                                 <div class="text-truncate">
                                                     <p class="mb-0 text-truncate small fw-bold text-dark"><?= htmlspecialchars($doc['nombre_original']) ?></p>
-                                                    <p class="mb-0 text-uppercase text-muted" style="font-size: 9px;"><?= str_replace('_', ' ', $doc['tipo_doc']) ?></p>
+                                                    <p class="mb-0 text-uppercase text-muted" style="font-size: 9.5px;"><?= str_replace('_', ' ', $doc['tipo_doc']) ?></p>
                                                 </div>
                                             </div>
                                             <i class="bi bi-arrow-right-short text-secondary fs-4 shrink-0"></i>
@@ -318,54 +480,51 @@ require_once __DIR__ . '/finanzas_controller.php';
                 </div>
 
                 <!-- COLUMNA DERECHA: TABLA DE CUENTAS E IMPUTACIÓN -->
-                <div class="col-lg-8 space-y-4">
+                <div class="col-lg-8">
                     
-                    <div class="card shadow-sm border-light overflow-hidden">
-                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                            <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                                <i class="bi bi-diagram-3 text-secondary"></i>
+                    <div class="saas-card mb-4">
+                        <div class="saas-card-header">
+                            <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2" style="font-size: 13.5px;">
+                                <i class="bi bi-diagram-3 text-primary"></i>
                                 Imputación Contable
                             </h6>
                             <div class="text-end">
-                                <span class="text-muted text-uppercase fw-bold" style="font-size: 9px;">Monto Total</span>
-                                <div class="h5 fw-black text-primary font-monospace mb-0"><?= money($expediente['monto_definitivo'] ?? $expediente['monto_estimado']) ?></div>
+                                <span class="form-label-saas mb-0 text-end" style="font-size: 10px;">Monto Total</span>
+                                <div class="h5 fw-bold text-primary mb-0 price-text"><?= money($expediente['monto_definitivo'] ?? $expediente['monto_estimado']) ?></div>
                             </div>
                         </div>
                         
-                        <div class="card-body bg-slate-50 p-3">
-                            <div class="d-flex flex-column gap-3">
+                        <div class="saas-card-body p-3 bg-light">
+                            <div class="d-flex flex-column gap-2.5">
                                 <?php foreach($items as $it): 
                                     $costo_linea = $it['cantidad'] * $it['precio_unitario'];
                                 ?>
-                                    <!-- Item Card -->
-                                    <div class="bg-white border rounded-3 p-3 shadow-sm">
-                                        <!-- Header del Item: Cuenta y Monto -->
+                                    <div class="bg-white border rounded p-3 shadow-sm">
                                         <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
                                             <div>
                                                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                                                    <span class="font-monospace text-dark fw-bold small" style="font-size: 12px;"><?= $it['cuenta_codigo'] ?></span>
+                                                    <span class="badge bg-light text-dark border font-monospace fw-bold" style="font-size: 11.5px;"><?= $it['cuenta_codigo'] ?></span>
                                                     <?php if($it['ag_codigo']): ?>
-                                                        <span class="badge bg-secondary-subtle text-secondary-emphasis" style="font-size: 8px;">AG: <?= $it['ag_codigo'] ?></span>
+                                                        <span class="badge bg-secondary-subtle text-secondary-emphasis" style="font-size: 9px;">AG: <?= $it['ag_codigo'] ?></span>
                                                     <?php endif; ?>
                                                 </div>
-                                                <div class="text-muted text-uppercase mt-0.5" style="font-size: 10px; font-weight: 600;" title="<?= $it['cuenta_nombre'] ?>">
+                                                <div class="text-muted text-uppercase mt-1" style="font-size: 10.5px; font-weight: 600;" title="<?= $it['cuenta_nombre'] ?>">
                                                     <?= htmlspecialchars($it['cuenta_nombre']) ?>
                                                 </div>
                                             </div>
                                             <div class="text-end">
-                                                <span class="text-muted d-block text-uppercase fw-bold" style="font-size: 8px;">Monto Total</span>
-                                                <span class="fw-bold font-monospace text-dark" style="font-size: 14px;">
+                                                <span class="text-muted d-block text-uppercase fw-bold" style="font-size: 9px;">Total Línea</span>
+                                                <span class="fw-bold price-text text-dark" style="font-size: 14px;">
                                                     <?= money($costo_linea) ?>
                                                 </span>
                                             </div>
                                         </div>
 
-                                        <!-- Producto / Descripción -->
-                                        <div class="bg-light p-2.5 rounded-3 mb-2">
+                                        <div class="bg-light p-2.5 rounded">
                                             <div class="d-flex justify-content-between align-items-center gap-3">
-                                                <div class="text-slate-800 small fw-bold leading-normal"><?= htmlspecialchars($it['descripcion']) ?></div>
+                                                <div class="text-dark small fw-semibold"><?= htmlspecialchars($it['descripcion']) ?></div>
                                                 <div class="text-secondary small fw-bold text-nowrap text-end">
-                                                    <?= floatval($it['cantidad']) ?> <span class="text-muted small" style="font-weight: normal;"><?= $it['unidad_medida'] ?></span>
+                                                    <?= floatval($it['cantidad']) ?> <span class="text-muted small fw-normal"><?= $it['unidad_medida'] ?></span>
                                                 </div>
                                             </div>
                                         </div>
@@ -375,15 +534,15 @@ require_once __DIR__ . '/finanzas_controller.php';
                         </div>
                     </div>
 
-                    <!-- ACCIONES DE RESOLUCIÓN SOBRIAS -->
-                    <div class="card shadow-sm border-light">
-                        <div class="card-header bg-white border-bottom py-3">
-                            <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                    <!-- ACCIONES DE RESOLUCIÓN Y FIRMA DE CDP -->
+                    <div class="saas-card">
+                        <div class="saas-card-header">
+                            <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2" style="font-size: 13.5px;">
                                 <i class="bi bi-file-earmark-check text-primary"></i>
-                                Firma de CDP - Finanzas
-                            </h5>
+                                Firma de Certificado de Disponibilidad (CDP) - Finanzas
+                            </h6>
                         </div>
-                        <div class="card-body p-4">
+                        <div class="saas-card-body p-4">
                             
                             <?php if($es_accionable): ?>
                                 <p class="text-secondary small mb-3">Revise los antecedentes presupuestarios y proceda a estampar la firma electrónica en el Certificado de Disponibilidad (CDP).</p>
@@ -409,16 +568,19 @@ require_once __DIR__ . '/finanzas_controller.php';
                                 ?>
 
                                 <!-- PASO 1: REVISIÓN DE DOCUMENTOS DE RESPALDO -->
-                                <div class="card border border-light-subtle bg-light shadow-sm mb-4">
-                                    <div class="card-header bg-white border-bottom py-2.5 fw-bold text-sm d-flex justify-content-between align-items-center">
-                                        <span class="text-dark"><i class="bi bi-file-earmark-ruled text-primary me-1.5"></i> 1. Documentos de Respaldo Presupuestario</span>
+                                <div class="saas-card border bg-light mb-4">
+                                    <div class="saas-card-header py-2.5">
+                                        <span class="text-dark fw-bold" style="font-size: 13px;">
+                                            <i class="bi bi-file-earmark-ruled text-primary me-1.5"></i>
+                                            1. Documentos de Respaldo Presupuestario
+                                        </span>
                                     </div>
-                                    <div class="card-body p-3">
-                                        <div class="d-flex flex-column gap-2 bg-white p-2.5 rounded-3 border">
+                                    <div class="saas-card-body p-3">
+                                        <div class="d-flex flex-column gap-2 bg-white p-2.5 rounded border">
                                             <?php if($doc_borrador): ?>
-                                                <a href="<?= htmlspecialchars($doc_borrador['ruta_archivo']) ?>" target="_blank" class="btn btn-outline-primary btn-sm text-start fw-semibold d-flex align-items-center justify-content-between px-3 py-2">
+                                                <a href="<?= htmlspecialchars($doc_borrador['ruta_archivo']) ?>" target="_blank" class="btn-saas btn-saas-secondary text-start justify-content-between py-2 w-100">
                                                     <span><i class="bi bi-file-earmark-pdf-fill text-danger me-2 fs-5 align-middle"></i> <strong>Borrador de CDP</strong> (Emitido por Control Presupuestario)</span>
-                                                    <i class="bi bi-box-arrow-up-right fs-6"></i>
+                                                    <i class="bi bi-box-arrow-up-right"></i>
                                                 </a>
                                             <?php else: ?>
                                                 <div class="alert alert-warning py-2 px-3 mb-0 small d-flex align-items-center gap-2">
@@ -428,25 +590,25 @@ require_once __DIR__ . '/finanzas_controller.php';
                                             <?php endif; ?>
 
                                             <?php if($doc_situacion): ?>
-                                                <a href="<?= htmlspecialchars($doc_situacion['ruta_archivo']) ?>" target="_blank" class="btn btn-outline-secondary btn-sm text-start fw-semibold d-flex align-items-center justify-content-between px-3 py-2">
+                                                <a href="<?= htmlspecialchars($doc_situacion['ruta_archivo']) ?>" target="_blank" class="btn-saas btn-saas-secondary text-start justify-content-between py-2 w-100">
                                                     <span><i class="bi bi-file-earmark-text-fill text-info me-2 fs-5 align-middle"></i> <strong>Situación Presupuestaria de Gastos</strong></span>
-                                                    <i class="bi bi-box-arrow-up-right fs-6"></i>
+                                                    <i class="bi bi-box-arrow-up-right"></i>
                                                 </a>
                                             <?php endif; ?>
 
                                             <?php if($doc_opi_visada): ?>
-                                                <a href="<?= htmlspecialchars($doc_opi_visada['ruta_archivo']) ?>" target="_blank" class="btn btn-outline-dark btn-sm text-start fw-semibold d-flex align-items-center justify-content-between px-3 py-2">
+                                                <a href="<?= htmlspecialchars($doc_opi_visada['ruta_archivo']) ?>" target="_blank" class="btn-saas btn-saas-secondary text-start justify-content-between py-2 w-100">
                                                     <span><i class="bi bi-file-earmark-check-fill text-success me-2 fs-5 align-middle"></i> <strong>OPI con V°B° Presupuestario (2/3)</strong></span>
-                                                    <i class="bi bi-box-arrow-up-right fs-6"></i>
+                                                    <i class="bi bi-box-arrow-up-right"></i>
                                                 </a>
                                             <?php endif; ?>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- PASO 2: ACCIÓN PRINCIPAL DE FIRMA DIGITAL FIRMAGOB -->
-                                <div class="card border border-primary-subtle bg-blue-50/50 shadow-sm mb-4" style="background-color: #f8faff;">
-                                    <div class="card-body p-3 text-center">
+                                <!-- PASO 2: FIRMA DIGITAL FIRMAGOB DEL CDP -->
+                                <div class="saas-card border-primary-subtle mb-4" style="background-color: #f8faff;">
+                                    <div class="saas-card-body p-3 text-center">
                                         <h6 class="fw-bold text-dark mb-1 d-flex align-items-center justify-content-center gap-2">
                                             <i class="bi bi-shield-lock-fill text-primary"></i>
                                             2. Firma Electrónica Oficial del CDP
@@ -454,7 +616,7 @@ require_once __DIR__ . '/finanzas_controller.php';
                                         <p class="text-secondary small mb-3" style="font-size: 11.5px;">Estampe su Firma Electrónica Avanzada Oficial FirmaGob en el Certificado de Disponibilidad Presupuestaria.</p>
                                         
                                         <?php if ($t_aprobar): ?>
-                                            <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $expediente['id'] ?>, transicion_id: <?= $t_aprobar['id'] ?>, etapa: 'CDP_FINANZAS', codigo_interno: '<?= htmlspecialchars($expediente['codigo_interno']) ?>', monto: '<?= $expediente['monto_definitivo'] ?: $expediente['monto_estimado'] ?>', doc_titulo: 'Certificado de Disponibilidad Presupuestaria (CDP)'})" class="btn btn-primary py-2.5 px-4 shadow fw-bold d-inline-flex align-items-center justify-content-center gap-2 w-100">
+                                            <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $expediente['id'] ?>, transicion_id: <?= $t_aprobar['id'] ?>, etapa: 'CDP_FINANZAS', codigo_interno: '<?= htmlspecialchars($expediente['codigo_interno']) ?>', monto: '<?= $expediente['monto_definitivo'] ?: $expediente['monto_estimado'] ?>', doc_titulo: 'Certificado de Disponibilidad Presupuestaria (CDP)'})" class="btn-saas btn-saas-primary py-2.5 px-4 justify-content-center fw-bold w-100 fs-6 shadow-sm">
                                                 <i class="bi bi-fingerprint fs-5"></i>
                                                 <span>Firmar CDP Oficial con FirmaGob (OTP)</span>
                                             </button>
@@ -462,11 +624,11 @@ require_once __DIR__ . '/finanzas_controller.php';
                                     </div>
                                 </div>
 
-                                <!-- ALTERNATIVA: SUBIDA MANUAL DE CDP EMITIDO EN SMC -->
+                                <!-- ALTERNATIVA: SUBIDA MANUAL SMC -->
                                 <div class="accordion mb-4" id="accFirmaManual">
-                                    <div class="accordion-item border rounded-3 overflow-hidden">
+                                    <div class="accordion-item border rounded overflow-hidden">
                                         <h2 class="accordion-header" id="headingManual">
-                                            <button class="accordion-button collapsed py-2.5 px-3 bg-light text-secondary small fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseManual" aria-expanded="false" aria-controls="collapseManual" style="font-size: 11px;">
+                                            <button class="accordion-button collapsed py-2.5 px-3 bg-light text-secondary small fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseManual" aria-expanded="false" aria-controls="collapseManual" style="font-size: 11.5px;">
                                                 <i class="bi bi-upload me-2 text-primary"></i> Alternativa: Cargar CDP Firmado desde Sistema SMC (DocDigital / Externo)
                                             </button>
                                         </h2>
@@ -480,14 +642,14 @@ require_once __DIR__ . '/finanzas_controller.php';
                                                         <input type="hidden" name="transicion_id" value="<?= $t_aprobar['id'] ?>">
                                                     <?php endif; ?>
                                                     
-                                                    <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Adjuntar Certificado PDF Emitido y Firmado:</label>
+                                                    <label class="form-label-saas mb-1">Adjuntar Certificado PDF Emitido y Firmado:</label>
                                                     <div class="input-group mb-2">
-                                                        <input type="file" name="archivo_cdp" accept="application/pdf" class="form-control form-control-sm bg-light" required>
-                                                        <button type="submit" class="btn btn-outline-primary btn-sm fw-bold px-3">
-                                                            <i class="bi bi-cloud-arrow-up-fill me-1"></i> Cargar CDP y Finalizar
+                                                        <input type="file" name="archivo_cdp" accept="application/pdf" class="form-control form-control-sm" required>
+                                                        <button type="submit" class="btn-saas btn-saas-primary btn-saas-sm">
+                                                            <i class="bi bi-cloud-arrow-up-fill"></i> Cargar CDP y Finalizar
                                                         </button>
                                                     </div>
-                                                    <span class="text-muted" style="font-size: 10px;"><i class="bi bi-info-circle me-1"></i> Use esta vía si el certificado fue firmado externamente fuera del portal FirmaGob.</span>
+                                                    <span class="text-muted small" style="font-size: 10.5px;"><i class="bi bi-info-circle me-1"></i> Use esta vía si el certificado fue firmado externamente fuera del portal FirmaGob.</span>
                                                 </form>
                                             </div>
                                         </div>
@@ -499,9 +661,9 @@ require_once __DIR__ . '/finanzas_controller.php';
                                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                     <input type="hidden" name="expediente_id" value="<?= $expediente['id'] ?>">
 
-                                    <div class="border-top pt-3.5">
-                                        <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Reparos y Observaciones (Requerido para Devolver o Rechazar)</label>
-                                        <textarea name="motivo_rechazo" rows="3" placeholder="Indique las razones de devolución u observaciones para Control Presupuestario..." class="form-control text-sm mb-3 bg-light"></textarea>
+                                    <div class="border-top pt-3">
+                                        <label class="form-label-saas mb-1">Reparos y Observaciones (Requerido para Devolver o Rechazar)</label>
+                                        <textarea name="motivo_rechazo" rows="3" placeholder="Indique las razones de devolución u observaciones para Control Presupuestario..." class="form-control-saas mb-3 bg-light"></textarea>
                                         
                                         <div class="row g-2">
                                             <!-- Botones de Devolución -->
@@ -509,8 +671,8 @@ require_once __DIR__ . '/finanzas_controller.php';
                                                 if ($t['accion_codigo'] === 'DEVOLVER'):
                                             ?>
                                                 <div class="col-sm-6">
-                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" formnovalidate onclick="return confirm('¿Confirma devolver la solicitud a Control Presupuestario?')" class="btn btn-outline-secondary w-100 py-2 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
-                                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" formnovalidate onclick="return confirm('¿Confirma devolver la solicitud a Control Presupuestario?')" class="btn-saas btn-saas-secondary w-100 justify-content-center py-2">
+                                                        <i class="bi bi-arrow-counterclockwise text-warning"></i>
                                                         <?= htmlspecialchars($t['accion_label']) ?>
                                                     </button>
                                                 </div>
@@ -521,8 +683,8 @@ require_once __DIR__ . '/finanzas_controller.php';
                                                 if ($t['accion_codigo'] === 'RECHAZAR'):
                                             ?>
                                                 <div class="col-sm-6">
-                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" formnovalidate onclick="return confirm('¿Confirma rechazar definitivamente la solicitud?')" class="btn btn-outline-danger w-100 py-2 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
-                                                        <i class="bi bi-x-circle"></i>
+                                                    <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" formnovalidate onclick="return confirm('¿Confirma rechazar definitivamente la solicitud?')" class="btn-saas btn-saas-danger w-100 justify-content-center py-2">
+                                                        <i class="bi bi-x-circle text-danger"></i>
                                                         <?= htmlspecialchars($t['accion_label']) ?>
                                                     </button>
                                                 </div>
@@ -533,14 +695,14 @@ require_once __DIR__ . '/finanzas_controller.php';
                             
                             <?php else: ?>
                                 <div class="text-center py-4">
-                                    <div class="p-3 bg-success-subtle text-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 56px; height: 56px;">
-                                        <i class="bi bi-check-lg fs-3"></i>
+                                    <div class="p-3 bg-success-subtle text-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 54px; height: 54px;">
+                                        <i class="bi bi-check-lg fs-2"></i>
                                     </div>
                                     <h5 class="fw-bold text-dark mb-1">CDP Tramitado</h5>
                                     <p class="text-secondary small mb-4">El certificado fue emitido y cargado de forma exitosa.</p>
                                     
-                                    <div class="bg-light rounded-3 p-3 border d-inline-block text-start mx-auto" style="min-width: 280px;">
-                                        <span class="text-muted fw-bold d-block text-uppercase mb-1" style="font-size: 8px;">Estado Actual del Trámite</span>
+                                    <div class="bg-light rounded p-3 border d-inline-block text-start mx-auto" style="min-width: 280px;">
+                                        <span class="form-label-saas mb-1" style="font-size: 9.5px;">Estado Actual del Trámite</span>
                                         <span class="fw-bold text-dark fs-6 d-block"><?= htmlspecialchars($expediente['estado_nombre']) ?></span>
                                     </div>
                                 </div>
@@ -554,21 +716,23 @@ require_once __DIR__ . '/finanzas_controller.php';
 
         <?php endif; ?>
 
-    <!-- MODAL ADJUNTOS (BOOTSTRAP 5) -->
+    </div>
+
+    <!-- MODAL ADJUNTOS -->
     <div class="modal fade" id="modalAdjuntos" tabindex="-1" aria-labelledby="modalAdjuntosLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-3 shadow">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold text-dark" id="modalAdjuntosLabel">Documentos Adjuntos</h5>
+            <div class="modal-content rounded-3 shadow border-0">
+                <div class="modal-header border-bottom py-3">
+                    <h5 class="modal-title fw-bold text-dark" id="modalAdjuntosLabel" style="font-size: 15px;">Documentos Adjuntos</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <div class="bg-light border p-3 rounded-3 mb-3 d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+                    <div class="bg-light border p-3 rounded mb-3 d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
                         <div>
-                            <span class="text-uppercase text-muted fw-bold" style="font-size: 9px; letter-spacing: 0.5px;">Expediente:</span>
-                            <div id="modalAdjuntosCodigo" class="font-monospace fw-bold text-dark"></div>
+                            <span class="form-label-saas mb-0" style="font-size: 10px;">Expediente:</span>
+                            <div id="modalAdjuntosCodigo" class="fw-bold text-dark font-monospace"></div>
                         </div>
-                        <a id="btnDescargarZip" href="#" class="btn btn-primary btn-sm fw-bold shadow-sm d-flex align-items-center gap-1.5 w-100 w-sm-auto justify-content-center">
+                        <a id="btnDescargarZip" href="#" class="btn-saas btn-saas-primary btn-saas-sm">
                             <i class="bi bi-download"></i>
                             Bajar ZIP
                         </a>
@@ -576,49 +740,50 @@ require_once __DIR__ . '/finanzas_controller.php';
                     
                     <div id="modalAdjuntosLista" class="d-flex flex-column gap-2 overflow-y-auto" style="max-height: 350px;"></div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar Visor</button>
+                <div class="modal-footer border-top py-2.5">
+                    <button type="button" class="btn-saas btn-saas-secondary btn-saas-sm" data-bs-dismiss="modal">Cerrar Visor</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL DETALLE ÍTEMS (BOOTSTRAP 5) -->
+    <!-- MODAL DETALLE ÍTEMS -->
     <div class="modal fade" id="modalVerItems" tabindex="-1" aria-labelledby="modalVerItemsLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content rounded-3 shadow">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold text-dark" id="modalVerItemsLabel">Detalle de Ítems del Requerimiento</h5>
+            <div class="modal-content rounded-3 shadow border-0">
+                <div class="modal-header border-bottom py-3">
+                    <h5 class="modal-title fw-bold text-dark" id="modalVerItemsLabel" style="font-size: 15px;">Detalle de Ítems del Requerimiento</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <div class="bg-light border p-3 rounded-3 mb-3">
-                        <span class="text-uppercase text-muted fw-bold" style="font-size: 9px; letter-spacing: 0.5px;">Expediente:</span>
-                        <div id="modalVerItemsCodigo" class="font-monospace fw-bold text-primary"></div>
+                    <div class="bg-light border p-3 rounded mb-3">
+                        <span class="form-label-saas mb-0" style="font-size: 10px;">Expediente:</span>
+                        <div id="modalVerItemsCodigo" class="fw-bold text-primary font-monospace"></div>
                     </div>
                     
-                    <div class="table-responsive rounded-3 border">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light text-uppercase small text-secondary">
+                    <div class="table-responsive rounded border">
+                        <table class="saas-table mb-0">
+                            <thead>
                                 <tr>
-                                    <th class="p-3">Descripción del Producto/Servicio</th>
-                                    <th class="p-3 text-center" style="width: 100px;">Cant.</th>
-                                    <th class="p-3 text-end" style="width: 150px;">Valor Unit. Ingresado</th>
-                                    <th class="p-3 text-end" style="width: 160px;">Total Línea</th>
+                                    <th>Descripción del Producto / Servicio</th>
+                                    <th class="text-center" style="width: 100px;">Cant.</th>
+                                    <th class="text-end" style="width: 140px;">Valor Unitario</th>
+                                    <th class="text-end" style="width: 150px;">Total Línea</th>
                                 </tr>
                             </thead>
                             <tbody id="modalVerItemsBody"></tbody>
                         </table>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar Visor</button>
+                <div class="modal-footer border-top py-2.5">
+                    <button type="button" class="btn-saas btn-saas-secondary btn-saas-sm" data-bs-dismiss="modal">Cerrar Visor</button>
                 </div>
             </div>
         </div>
     </div>
 
     <?php include __DIR__ . '/modal_trazabilidad.php'; ?>
+    <?php include __DIR__ . '/components/modal_firmagob.php'; ?>
 
     <script>
     function escapeHTML(str) { 
@@ -669,14 +834,14 @@ require_once __DIR__ . '/finanzas_controller.php';
                 link.href = ruta;
                 link.target = '_blank';
                 link.title = nombreOriginal;
-                link.className = 'd-flex align-items-center justify-content-between p-2.5 bg-light border rounded-3 text-decoration-none hover-bg-gray transition mb-2';
+                link.className = 'd-flex align-items-center justify-content-between p-2.5 bg-light border rounded text-decoration-none transition mb-2';
                 
                 link.innerHTML = `
                     <div class="d-flex align-items-center gap-2 min-w-0 flex-1">
                         <i class="bi bi-file-earmark-text text-primary fs-5 shrink-0"></i>
                         <div class="text-truncate flex-1">
                             <p class="mb-0 text-truncate small ${titleClass}" style="max-width: 320px;">${nombreOriginal}</p>
-                            <p class="mb-0 small text-uppercase tracking-wide ${subtitleClass}" style="font-size: 9px;">${tipoDoc} - ${fecha}</p>
+                            <p class="mb-0 small text-uppercase ${subtitleClass}" style="font-size: 9.5px;">${tipoDoc} - ${fecha}</p>
                         </div>
                     </div>
                     <i class="bi bi-arrow-right-short text-secondary fs-4 shrink-0"></i>
@@ -694,17 +859,17 @@ require_once __DIR__ . '/finanzas_controller.php';
         tbody.innerHTML = '';
         
         if (!items || items.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-muted italic">No hay ítems registrados.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-muted fst-italic">No hay ítems registrados.</td></tr>`;
         } else {
             items.forEach(item => {
                 const cant = parseFloat(item.cantidad);
                 const prec = parseFloat(item.precio_unitario);
                 const tr = `
                     <tr class="align-middle">
-                        <td class="p-3 text-secondary fw-semibold small">${escapeHTML(item.descripcion)}</td>
-                        <td class="p-3 text-center fw-bold text-dark">${cant} <span class="text-muted d-block" style="font-size: 10px;">${escapeHTML(item.unidad_medida)}</span></td>
-                        <td class="p-3 text-end text-muted font-monospace">${formatCurrency(prec)}</td>
-                        <td class="p-3 text-end fw-bold text-dark font-monospace">${formatCurrency(cant * prec)}</td>
+                        <td class="text-secondary fw-semibold small">${escapeHTML(item.descripcion)}</td>
+                        <td class="text-center fw-bold text-dark">${cant} <span class="text-muted d-block" style="font-size: 10px;">${escapeHTML(item.unidad_medida)}</span></td>
+                        <td class="text-end text-muted price-text">${formatCurrency(prec)}</td>
+                        <td class="text-end fw-bold text-dark price-text">${formatCurrency(cant * prec)}</td>
                     </tr>
                 `;
                 tbody.innerHTML += tr;
@@ -714,8 +879,7 @@ require_once __DIR__ . '/finanzas_controller.php';
         if (modalVerItemsInstance) modalVerItemsInstance.show();
     }
     </script>
-    </div>
-    <?php include __DIR__ . '/components/modal_firmagob.php'; ?>
+
 <?php include __DIR__ . '/footer.php'; ?>
 </body>
 </html>
