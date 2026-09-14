@@ -18,7 +18,7 @@ switch ($rol) {
         header('Location: mis_solicitudes.php');
         break;
     case 'PRESUPUESTO': 
-        header('Location: control_presupuestario.php'); 
+        header('Location: dashboard.php'); 
         break;
     case 'FINANZAS': 
         header('Location: finanzas.php'); 

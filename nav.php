@@ -29,6 +29,9 @@ $user_name = $_SESSION['user_name'] ?? 'Usuario';
                 <ul class="dropdown-menu dropdown-menu-end shadow-lg border-light mt-2 p-2" aria-labelledby="dropdownNavMenu" style="min-width: 250px;">
                     
                     <li><span class="dropdown-header text-uppercase text-secondary fw-bold" style="font-size: 9px; letter-spacing: 0.5px;">Panel Principal</span></li>
+                    <?php if($rol === 'PRESUPUESTO' || $rol === 'ADMIN_MUNICIPAL' || $rol === 'SYSADMIN'): ?>
+                        <li><a class="dropdown-item rounded-3 py-2 small d-flex align-items-center gap-2 <?= ($pagina_actual === 'dashboard.php') ? 'active bg-primary text-white' : 'text-dark' ?>" href="dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard OPIs</a></li>
+                    <?php endif; ?>
                     <li><a class="dropdown-item rounded-3 py-2 small d-flex align-items-center gap-2 <?= ($pagina_actual === 'mis_solicitudes.php') ? 'active bg-primary text-white' : 'text-dark' ?>" href="mis_solicitudes.php"><i class="bi bi-journal-text"></i> Mis Solicitudes</a></li>
                     <li><a class="dropdown-item rounded-3 py-2 small d-flex align-items-center gap-2 <?= ($pagina_actual === 'nueva_solicitud.php') ? 'active bg-primary text-white' : 'text-dark' ?>" href="nueva_solicitud.php"><i class="bi bi-plus-circle"></i> Nueva Solicitud</a></li>
                     <li><a class="dropdown-item rounded-3 py-2 small d-flex align-items-center gap-2 <?= ($pagina_actual === 'subrogancia.php') ? 'active bg-primary text-white' : 'text-dark' ?>" href="subrogancia.php"><i class="bi bi-person-gear"></i> Configurar Suplente</a></li>
@@ -46,6 +49,7 @@ $user_name = $_SESSION['user_name'] ?? 'Usuario';
                         <li><hr class="dropdown-divider"></li>
                         <li><span class="dropdown-header text-uppercase text-secondary fw-bold" style="font-size: 9px; letter-spacing: 0.5px;">Presupuesto y Finanzas</span></li>
                         <?php if($rol === 'PRESUPUESTO' || $rol === 'SYSADMIN'): ?>
+                            <li><a class="dropdown-item rounded-3 py-2 small d-flex align-items-center gap-2 <?= ($pagina_actual === 'dashboard.php') ? 'active bg-primary text-white' : 'text-dark' ?>" href="dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard OPIs</a></li>
                             <li><a class="dropdown-item rounded-3 py-2 small d-flex align-items-center gap-2 <?= ($pagina_actual === 'control_presupuestario.php') ? 'active bg-primary text-white' : 'text-dark' ?>" href="control_presupuestario.php"><i class="bi bi-calculator"></i> VB Presupuestario</a></li>
                             <li><a class="dropdown-item rounded-3 py-2 small d-flex align-items-center gap-2 <?= ($pagina_actual === 'centros_de_costo.php') ? 'active bg-primary text-white' : 'text-dark' ?>" href="centros_de_costo.php"><i class="bi bi-wallet2"></i> Centros de Costo</a></li>
                             <li><a class="dropdown-item rounded-3 py-2 small d-flex align-items-center gap-2 <?= ($pagina_actual === 'mantenedor_cuentas.php') ? 'active bg-primary text-white' : 'text-dark' ?>" href="mantenedor_cuentas.php"><i class="bi bi-list-columns-reverse"></i> Cuentas Presupuestarias</a></li>
