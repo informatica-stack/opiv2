@@ -304,8 +304,11 @@ if ($vista === 'lista') {
     }
 
     if ($f_q) {
-        $where[] = "(e.codigo_interno LIKE :q OR e.folio_opi LIKE :q OR e.titulo_compra LIKE :q OR e.motivo_compra LIKE :q)";
-        $params[':q'] = "%$f_q%";
+        $where[] = "(e.codigo_interno LIKE :q1 OR e.folio_opi LIKE :q2 OR e.titulo_compra LIKE :q3 OR e.motivo_compra LIKE :q4)";
+        $params[':q1'] = "%$f_q%";
+        $params[':q2'] = "%$f_q%";
+        $params[':q3'] = "%$f_q%";
+        $params[':q4'] = "%$f_q%";
     }
     if ($f_tipo) {
         $where[] = "e.tipo_compra_id = :tipo";

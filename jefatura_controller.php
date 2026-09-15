@@ -30,7 +30,7 @@ $f_hasta  = trim($_GET['f_hasta'] ?? '');
 // =====================================================================
 // MANEJO DE ACCIONES (POST) - MOTOR DE FLUJOS DINÁMICO & PARALELO
 // =====================================================================
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     try {
         $pdo->beginTransaction();
         $id = isset($_POST['expediente_id']) ? (int)$_POST['expediente_id'] : null;
@@ -237,10 +237,10 @@ if ($rol === 'ADMIN_MUNICIPAL' || $rol === 'SYSADMIN') {
         SELECT COUNT(DISTINCT e.id) 
         FROM expedientes e 
         LEFT JOIN expedientes_autorizaciones_cc ac ON e.id = ac.expediente_id
-        WHERE (e.estado_actual = 'EN_FIRMA_JEFATURA' AND e.unidad_origen_id = :uid)
-           OR (e.estado_actual = 'EN_REVISION_JEFATURA' AND ac.unidad_responsable_id = :uid AND ac.estado = 'PENDIENTE')
+        WHERE (e.estado_actual = 'EN_FIRMA_JEFATURA' AND e.unidad_origen_id = :uid1)
+           OR (e.estado_actual = 'EN_REVISION_JEFATURA' AND ac.unidad_responsable_id = :uid2 AND ac.estado = 'PENDIENTE')
     ");
-    $stmtCountPend->execute([':uid' => $unidad_id]);
+    $stmtCountPend->execute([':uid1' => $unidad_id, ':uid2' => $unidad_id]);
 }
 $count_pendientes = $stmtCountPend->fetchColumn();
 
@@ -267,9 +267,9 @@ if ($rol === 'ADMIN_MUNICIPAL' || $rol === 'SYSADMIN') {
         SELECT COUNT(DISTINCT e.id) 
         FROM expedientes e 
         LEFT JOIN expedientes_autorizaciones_cc ac ON e.id = ac.expediente_id
-        WHERE e.unidad_origen_id = :uid OR ac.unidad_responsable_id = :uid
+        WHERE e.unidad_origen_id = :uid1 OR ac.unidad_responsable_id = :uid2
     ");
-    $stmtCountTodas->execute([':uid' => $unidad_id]);
+    $stmtCountTodas->execute([':uid1' => $unidad_id, ':uid2' => $unidad_id]);
 }
 $count_todas = $stmtCountTodas->fetchColumn();
 
@@ -354,15 +354,18 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
 
     if ($rol !== 'ADMIN_MUNICIPAL' && $rol !== 'SYSADMIN') {
         if ($vista === 'pendientes') {
-            $where[] = "((e.estado_actual = 'EN_FIRMA_JEFATURA' AND e.unidad_origen_id = :uid_origen) OR (e.estado_actual = 'EN_REVISION_JEFATURA' AND EXISTS (SELECT 1 FROM expedientes_autorizaciones_cc ac WHERE ac.expediente_id = e.id AND ac.unidad_responsable_id = :uid_origen AND ac.estado = 'PENDIENTE')))";
-            $params[':uid_origen'] = $unidad_id;
+            $where[] = "((e.estado_actual = 'EN_FIRMA_JEFATURA' AND e.unidad_origen_id = :uid_origen1) OR (e.estado_actual = 'EN_REVISION_JEFATURA' AND EXISTS (SELECT 1 FROM expedientes_autorizaciones_cc ac WHERE ac.expediente_id = e.id AND ac.unidad_responsable_id = :uid_origen2 AND ac.estado = 'PENDIENTE')))";
+            $params[':uid_origen1'] = $unidad_id;
+            $params[':uid_origen2'] = $unidad_id;
         } elseif ($vista === 'procesadas') {
-            $where[] = "(EXISTS (SELECT 1 FROM expedientes_historial eh WHERE eh.expediente_id = e.id AND eh.usuario_id = :hist_uid AND eh.accion IN ('APROBAR', 'RECHAZAR', 'DEVOLVER', 'FIRMAR_JEFATURA', 'FIRMA_ELECTRONICA', 'AUTORIZAR_CC')) OR EXISTS (SELECT 1 FROM expedientes_autorizaciones_cc ac WHERE ac.expediente_id = e.id AND ac.visado_por_id = :hist_uid))";
-            $params[':hist_uid'] = $user_id;
+            $where[] = "(EXISTS (SELECT 1 FROM expedientes_historial eh WHERE eh.expediente_id = e.id AND eh.usuario_id = :hist_uid1 AND eh.accion IN ('APROBAR', 'RECHAZAR', 'DEVOLVER', 'FIRMAR_JEFATURA', 'FIRMA_ELECTRONICA', 'AUTORIZAR_CC')) OR EXISTS (SELECT 1 FROM expedientes_autorizaciones_cc ac WHERE ac.expediente_id = e.id AND ac.visado_por_id = :hist_uid2))";
+            $params[':hist_uid1'] = $user_id;
+            $params[':hist_uid2'] = $user_id;
         } else {
             // todas
-            $where[] = "(e.unidad_origen_id = :uid_origen OR EXISTS (SELECT 1 FROM expedientes_autorizaciones_cc ac WHERE ac.expediente_id = e.id AND ac.unidad_responsable_id = :uid_origen))";
-            $params[':uid_origen'] = $unidad_id;
+            $where[] = "(e.unidad_origen_id = :uid_origen1 OR EXISTS (SELECT 1 FROM expedientes_autorizaciones_cc ac WHERE ac.expediente_id = e.id AND ac.unidad_responsable_id = :uid_origen2))";
+            $params[':uid_origen1'] = $unidad_id;
+            $params[':uid_origen2'] = $unidad_id;
         }
     } else {
         if ($vista === 'pendientes') {
@@ -374,8 +377,10 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
     }
 
     if ($f_q) {
-        $where[] = "(e.codigo_interno LIKE :q OR e.motivo_compra LIKE :q OR e.titulo_compra LIKE :q)";
-        $params[':q'] = "%$f_q%";
+        $where[] = "(e.codigo_interno LIKE :q1 OR e.motivo_compra LIKE :q2 OR e.titulo_compra LIKE :q3)";
+        $params[':q1'] = "%$f_q%";
+        $params[':q2'] = "%$f_q%";
+        $params[':q3'] = "%$f_q%";
     }
     if ($f_tipo) { $where[] = "e.tipo_compra_id = :tipo"; $params[':tipo'] = $f_tipo; }
     if ($f_estado) { $where[] = "e.estado_actual = :est"; $params[':est'] = $f_estado; }
@@ -429,20 +434,24 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
 $tipos_compra_filtro = $pdo->query("SELECT id, nombre FROM tipos_compra WHERE activo=1 ORDER BY nombre")->fetchAll();
 $estados_filtro = $pdo->query("SELECT codigo, nombre FROM estados_tramite ORDER BY nombre")->fetchAll();
 
-function color_estado($estado_codigo) {
-    if ($estado_codigo === 'EN_FIRMA_JEFATURA') return 'text-white fw-bold shadow-sm" style="background-color: #4f46e5;';
-    if (in_array($estado_codigo, ['BORRADOR', 'EN_REVISION_JEFATURA'])) return 'bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle';
-    if (in_array($estado_codigo, ['RECHAZADO', 'ANULADO'])) return 'bg-danger-subtle text-danger-emphasis text-decoration-line-through border border-danger-subtle';
-    if ($estado_codigo === 'FINALIZADO') return 'bg-success-subtle text-success-emphasis fw-bold border border-success-subtle';
-    if (in_array($estado_codigo, ['EN_COTIZACION_ADQ', 'EN_GESTION_ADQUISICIONES'])) return 'bg-info-subtle text-info-emphasis fw-bold border border-info-subtle';
-    if ($estado_codigo === 'EN_EVALUACION_OFERTAS') return 'bg-warning-subtle text-warning-emphasis fw-bold border border-warning-subtle';
-    if ($estado_codigo === 'EN_CORRECCION') return 'bg-danger-subtle text-danger-emphasis fw-bold border border-danger-subtle'; 
-    return 'bg-primary-subtle text-primary-emphasis border border-primary-subtle';
+if (!function_exists('color_estado')) {
+    function color_estado($estado_codigo) {
+        if ($estado_codigo === 'EN_FIRMA_JEFATURA') return 'text-white fw-bold shadow-sm" style="background-color: #4f46e5;';
+        if (in_array($estado_codigo, ['BORRADOR', 'EN_REVISION_JEFATURA'])) return 'bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle';
+        if (in_array($estado_codigo, ['RECHAZADO', 'ANULADO'])) return 'bg-danger-subtle text-danger-emphasis text-decoration-line-through border border-danger-subtle';
+        if ($estado_codigo === 'FINALIZADO') return 'bg-success-subtle text-success-emphasis fw-bold border border-success-subtle';
+        if (in_array($estado_codigo, ['EN_COTIZACION_ADQ', 'EN_GESTION_ADQUISICIONES'])) return 'bg-info-subtle text-info-emphasis fw-bold border border-info-subtle';
+        if ($estado_codigo === 'EN_EVALUACION_OFERTAS') return 'bg-warning-subtle text-warning-emphasis fw-bold border border-warning-subtle';
+        if ($estado_codigo === 'EN_CORRECCION') return 'bg-danger-subtle text-danger-emphasis fw-bold border border-danger-subtle'; 
+        return 'bg-primary-subtle text-primary-emphasis border border-primary-subtle';
+    }
 }
 
-function money($v) {
-    if ($v === null || $v === '') return '$ 0';
-    return '$ ' . number_format((float)$v, 0, ',', '.');
+if (!function_exists('money')) {
+    function money($v) {
+        if ($v === null || $v === '') return '$ 0';
+        return '$ ' . number_format((float)$v, 0, ',', '.');
+    }
 }
 
 $query_string = $_GET; unset($query_string['p']);

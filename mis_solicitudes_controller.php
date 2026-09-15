@@ -106,8 +106,10 @@ $where = ["e.usuario_creador_id = :uid"];
 $params = [':uid' => $user_id];
 
 if ($f_q) { 
-    $where[] = "(e.codigo_interno LIKE :q OR e.motivo_compra LIKE :q OR e.titulo_compra LIKE :q)"; 
-    $params[':q'] = "%$f_q%"; 
+    $where[] = "(e.codigo_interno LIKE :q1 OR e.motivo_compra LIKE :q2 OR e.titulo_compra LIKE :q3)"; 
+    $params[':q1'] = "%$f_q%"; 
+    $params[':q2'] = "%$f_q%"; 
+    $params[':q3'] = "%$f_q%"; 
 }
 if ($f_tipo) { $where[] = "e.tipo_compra_id = :tipo"; $params[':tipo'] = $f_tipo; }
 if ($f_estado) { $where[] = "e.estado_actual = :est"; $params[':est'] = $f_estado; }
@@ -155,19 +157,23 @@ unset($row);
 $tipos_compra_filtro = $pdo->query("SELECT id, nombre FROM tipos_compra WHERE activo=1 ORDER BY nombre")->fetchAll();
 $estados_filtro = $pdo->query("SELECT codigo, nombre FROM estados_tramite ORDER BY nombre")->fetchAll();
 
-function color_estado($estado_codigo) {
-    if (in_array($estado_codigo, ['BORRADOR', 'EN_REVISION_JEFATURA'])) return 'bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle';
-    if (in_array($estado_codigo, ['RECHAZADO', 'ANULADO'])) return 'bg-danger-subtle text-danger-emphasis text-decoration-line-through border border-danger-subtle';
-    if ($estado_codigo === 'FINALIZADO') return 'bg-success-subtle text-success-emphasis fw-bold border border-success-subtle';
-    if (in_array($estado_codigo, ['EN_COTIZACION_ADQ', 'EN_GESTION_ADQUISICIONES'])) return 'bg-info-subtle text-info-emphasis fw-bold border border-info-subtle';
-    if ($estado_codigo === 'EN_EVALUACION_OFERTAS') return 'bg-warning-subtle text-warning-emphasis fw-bold border border-warning-subtle';
-    if ($estado_codigo === 'EN_CORRECCION') return 'bg-danger-subtle text-danger-emphasis fw-bold border border-danger-subtle'; 
-    return 'bg-primary-subtle text-primary-emphasis border border-primary-subtle';
+if (!function_exists('color_estado')) {
+    function color_estado($estado_codigo) {
+        if (in_array($estado_codigo, ['BORRADOR', 'EN_REVISION_JEFATURA'])) return 'bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle';
+        if (in_array($estado_codigo, ['RECHAZADO', 'ANULADO'])) return 'bg-danger-subtle text-danger-emphasis text-decoration-line-through border border-danger-subtle';
+        if ($estado_codigo === 'FINALIZADO') return 'bg-success-subtle text-success-emphasis fw-bold border border-success-subtle';
+        if (in_array($estado_codigo, ['EN_COTIZACION_ADQ', 'EN_GESTION_ADQUISICIONES'])) return 'bg-info-subtle text-info-emphasis fw-bold border border-info-subtle';
+        if ($estado_codigo === 'EN_EVALUACION_OFERTAS') return 'bg-warning-subtle text-warning-emphasis fw-bold border border-warning-subtle';
+        if ($estado_codigo === 'EN_CORRECCION') return 'bg-danger-subtle text-danger-emphasis fw-bold border border-danger-subtle'; 
+        return 'bg-primary-subtle text-primary-emphasis border border-primary-subtle';
+    }
 }
 
-function money($v) {
-    if ($v === null || $v === '') return '$ 0';
-    return '$ ' . number_format((float)$v, 0, ',', '.');
+if (!function_exists('money')) {
+    function money($v) {
+        if ($v === null || $v === '') return '$ 0';
+        return '$ ' . number_format((float)$v, 0, ',', '.');
+    }
 }
 
 $query_string = $_GET; unset($query_string['p']); unset($query_string['anular_id']); unset($query_string['descargar_zip']); 
