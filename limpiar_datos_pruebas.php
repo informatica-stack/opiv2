@@ -52,21 +52,52 @@ if ($ejecutar) {
     try {
         $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
 
+        // Auto-crear tabla expedientes_autorizaciones_cc si no existe en la base de datos
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `expedientes_autorizaciones_cc` (
+              `id` INT AUTO_INCREMENT PRIMARY KEY,
+              `expediente_id` INT NOT NULL,
+              `tipo_autorizacion` ENUM('UNIDAD_ORIGEN', 'CENTRO_COSTO_EXTERNO') DEFAULT 'CENTRO_COSTO_EXTERNO',
+              `centro_costo_id` INT NOT NULL,
+              `unidad_responsable_id` INT NOT NULL,
+              `monto_imputado` DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+              `estado` ENUM('PENDIENTE', 'APROBADO', 'RECHAZADO', 'DEVUELTO') DEFAULT 'PENDIENTE',
+              `visado_por_id` INT NULL,
+              `fecha_visacion` DATETIME NULL,
+              `comentario` TEXT NULL,
+              `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+              `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              INDEX `idx_exp_aut_exp` (`expediente_id`),
+              INDEX `idx_exp_aut_cc` (`centro_costo_id`),
+              INDEX `idx_exp_aut_un` (`unidad_responsable_id`),
+              INDEX `idx_exp_aut_estado` (`estado`),
+              CONSTRAINT `fk_aut_exp` FOREIGN KEY (`expediente_id`) REFERENCES `expedientes`(`id`) ON DELETE CASCADE,
+              CONSTRAINT `fk_aut_cc` FOREIGN KEY (`centro_costo_id`) REFERENCES `centros_costo`(`id`),
+              CONSTRAINT `fk_aut_un` FOREIGN KEY (`unidad_responsable_id`) REFERENCES `unidades`(`id`),
+              CONSTRAINT `fk_aut_usr` FOREIGN KEY (`visado_por_id`) REFERENCES `usuarios`(`id`) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+        ");
+
         $tablas = [
             'expedientes_firmas',
             'expedientes_documentos',
             'expedientes_historial',
+            'expedientes_autorizaciones_cc',
             'expedientes_criterios',
             'expedientes_items',
             'expedientes'
         ];
 
         foreach ($tablas as $t) {
-            // Contar antes de borrar
-            $cnt = $pdo->query("SELECT COUNT(*) FROM `$t`")->fetchColumn();
-            $pdo->exec("DELETE FROM `$t`");
-            $pdo->exec("ALTER TABLE `$t` AUTO_INCREMENT = 1");
-            $detalles[$t] = $cnt;
+            // Verificar si la tabla existe antes de consultar
+            $chkTable = $pdo->query("SHOW TABLES LIKE '$t'")->fetchColumn();
+            if ($chkTable) {
+                // Contar antes de borrar
+                $cnt = $pdo->query("SELECT COUNT(*) FROM `$t`")->fetchColumn();
+                $pdo->exec("DELETE FROM `$t`");
+                $pdo->exec("ALTER TABLE `$t` AUTO_INCREMENT = 1");
+                $detalles[$t] = $cnt;
+            }
         }
 
         // Limpiar proveedores de prueba creados durante los ensayos (preservando los iniciales id <= 2)
