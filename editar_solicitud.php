@@ -1047,11 +1047,29 @@ foreach($otros_proveedores as $p) {
             let valUni = data ? data.uni : 'UNIDAD';
 
             let options = '<option value="">Sel. Cuenta...</option>';
-            cuentasDisponibles.forEach(c => {
-                let ag = c.ag_codigo ? `[${c.ag_codigo}] ` : '';
-                let sel = (c.id == valCuenta) ? 'selected' : '';
-                options += `<option value="${c.id}" ${sel}>${c.codigo} ${ag}- ${c.nombre}</option>`;
-            });
+            const propias = cuentasDisponibles.filter(c => c.es_propia == 1);
+            const externas = cuentasDisponibles.filter(c => c.es_propia != 1);
+
+            if (propias.length > 0) {
+                options += '<optgroup label="🏢 Cuentas de Mi Centro de Costos">';
+                propias.forEach(c => {
+                    let ag = c.ag_codigo ? `[${c.ag_codigo}] ` : '';
+                    let sel = (c.id == valCuenta) ? 'selected' : '';
+                    options += `<option value="${c.id}" ${sel}>${c.codigo} ${ag}- ${c.nombre}</option>`;
+                });
+                options += '</optgroup>';
+            }
+
+            if (externas.length > 0) {
+                options += '<optgroup label="⚠️ Cuentas de Otros CC (Requiere Autorización)">';
+                externas.forEach(c => {
+                    let ag = c.ag_codigo ? `[${c.ag_codigo}] ` : '';
+                    let sel = (c.id == valCuenta) ? 'selected' : '';
+                    let ccNom = c.cc_nombre || c.cc_codigo || 'CC Ext';
+                    options += `<option value="${c.id}" ${sel}>${c.codigo} ${ag}- ${c.nombre} [CC: ${ccNom}]</option>`;
+                });
+                options += '</optgroup>';
+            }
 
             const arrUnidades = ['UNIDAD', 'GLOBAL', 'CAJA', 'LITROS', 'MESES'];
             let uniOptions = '';

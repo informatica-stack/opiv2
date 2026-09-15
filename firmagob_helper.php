@@ -143,6 +143,10 @@ function firmagob_firmar_archivo($ruta_pdf_entrada, $run_firmante, $descripcion,
         ];
     }
 
+    if (empty(FIRMAGOB_API_TOKEN_KEY) || empty(FIRMAGOB_SECRET)) {
+        throw new Exception("FirmaGob no configurado: Por favor configure las variables de entorno FIRMAGOB_API_TOKEN_KEY y FIRMAGOB_SECRET en Dokploy.");
+    }
+
     $purpose_usar = $purpose ?: (
         (FIRMAGOB_MODO === 'DESATENDIDA') ? 'Desatendido' : FIRMAGOB_PURPOSE
     );

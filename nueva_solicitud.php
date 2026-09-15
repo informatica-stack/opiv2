@@ -702,27 +702,54 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
             const cont = document.getElementById('listaCuentasContainer');
             cont.innerHTML = '';
             if (!cuentas || cuentas.length === 0) {
-                cont.innerHTML = '<div class="p-4 text-center text-muted small">No hay cuentas asignadas al Centro de Costo.</div>';
+                cont.innerHTML = '<div class="p-4 text-center text-muted small">No se encontraron cuentas presupuestarias.</div>';
                 return;
             }
 
-            cuentas.forEach(c => {
+            const propias = cuentas.filter(c => c.es_propia == 1);
+            const externas = cuentas.filter(c => c.es_propia != 1);
+
+            const renderCard = (c) => {
                 const card = document.createElement('div');
-                card.className = 'cuenta-item-card d-flex align-items-center justify-content-between';
+                card.className = 'cuenta-item-card d-flex align-items-center justify-content-between p-2.5 mb-2 rounded border bg-white';
+                card.style.cursor = 'pointer';
                 const agBadge = c.ag_codigo ? `<span class="badge bg-secondary-subtle text-secondary me-1.5">${escapeHtml(c.ag_codigo)}</span>` : '';
+                const ccBadge = (c.es_propia != 1) 
+                    ? `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1" style="font-size: 10.5px;"><i class="bi bi-arrow-left-right me-1"></i>CC Ext: ${escapeHtml(c.cc_nombre || c.cc_codigo)}</span>`
+                    : `<span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1" style="font-size: 10.5px;"><i class="bi bi-building me-1"></i>Mi CC</span>`;
+                
                 card.innerHTML = `
-                    <div class="min-w-0 pe-2">
-                        <div class="d-flex align-items-center gap-1.5 mb-0.5">
+                    <div class="min-w-0 pe-2 flex-grow-1">
+                        <div class="d-flex align-items-center flex-wrap gap-1 mb-1">
                             ${agBadge}
                             <strong class="text-primary" style="font-size: 13px;">${escapeHtml(c.codigo)}</strong>
+                            ${ccBadge}
                         </div>
                         <div class="text-dark small text-truncate" style="font-weight: 500;">${escapeHtml(c.nombre)}</div>
                     </div>
-                    <button type="button" class="btn-saas btn-saas-secondary btn-saas-sm shrink-0">Seleccionar</button>
+                    <button type="button" class="btn-saas btn-saas-secondary btn-saas-sm shrink-0 ms-2">Seleccionar</button>
                 `;
                 card.onclick = () => aplicarCuentaAFila(c);
-                cont.appendChild(card);
-            });
+                return card;
+            };
+
+            if (propias.length > 0) {
+                const h = document.createElement('div');
+                h.className = 'text-uppercase text-secondary fw-bold small mb-2 px-1 d-flex align-items-center gap-1.5';
+                h.style.fontSize = '11px';
+                h.innerHTML = '<i class="bi bi-building text-primary"></i> Cuentas de Mi Centro de Costos';
+                cont.appendChild(h);
+                propias.forEach(c => cont.appendChild(renderCard(c)));
+            }
+
+            if (externas.length > 0) {
+                const h = document.createElement('div');
+                h.className = 'text-uppercase text-warning-emphasis fw-bold small mt-3 mb-2 px-1 d-flex align-items-center gap-1.5';
+                h.style.fontSize = '11px';
+                h.innerHTML = '<i class="bi bi-shield-exclamation text-warning"></i> Cuentas de Otros Centros de Costos (Requiere Autorización Externa)';
+                cont.appendChild(h);
+                externas.forEach(c => cont.appendChild(renderCard(c)));
+            }
         }
 
         function filtrarCuentas(q) {
@@ -730,7 +757,9 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
             const filtered = cuentasPresupuestarias.filter(c => 
                 c.codigo.toLowerCase().includes(needle) || 
                 c.nombre.toLowerCase().includes(needle) || 
-                (c.ag_codigo && c.ag_codigo.toLowerCase().includes(needle))
+                (c.ag_codigo && c.ag_codigo.toLowerCase().includes(needle)) ||
+                (c.cc_nombre && c.cc_nombre.toLowerCase().includes(needle)) ||
+                (c.cc_codigo && c.cc_codigo.toLowerCase().includes(needle))
             );
             renderCuentasLista(filtered);
         }
@@ -751,10 +780,13 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
 
             if (hiddenInput) hiddenInput.value = cuenta.id;
             if (labelSpan) {
-                labelSpan.innerHTML = `<i class="bi bi-wallet2 me-1 text-primary"></i> <strong class="text-primary">${escapeHtml(cuenta.codigo)}</strong> <span class="text-muted small text-truncate d-none d-xl-inline" style="max-width: 90px;">· ${escapeHtml(cuenta.nombre)}</span>`;
+                const extBadge = (cuenta.es_propia != 1) 
+                    ? `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1" style="font-size: 10px;" title="Requiere autorización de Jefatura ${escapeHtml(cuenta.cc_nombre || cuenta.cc_codigo)}"><i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>CC Externo</span>`
+                    : '';
+                labelSpan.innerHTML = `<i class="bi bi-wallet2 me-1 text-primary"></i> <strong class="text-primary">${escapeHtml(cuenta.codigo)}</strong>${extBadge} <span class="text-muted small text-truncate d-none d-xl-inline" style="max-width: 90px;">· ${escapeHtml(cuenta.nombre)}</span>`;
             }
             if (btn) {
-                btn.title = `${cuenta.codigo} - ${cuenta.nombre}`;
+                btn.title = `${cuenta.codigo} - ${cuenta.nombre}` + (cuenta.es_propia != 1 ? ` [CC: ${cuenta.cc_nombre}]` : '');
                 btn.classList.remove('btn-saas-secondary');
                 btn.classList.add('btn-saas-secondary');
             }
@@ -874,8 +906,11 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
 
             if (cuentaSeleccionada) {
                 valCuentaId = cuentaSeleccionada.id;
-                btnLabelHtml = `<i class="bi bi-wallet2 me-1 text-primary"></i> <strong class="text-primary">${escapeHtml(cuentaSeleccionada.codigo)}</strong> <span class="text-muted small text-truncate d-none d-xl-inline" style="max-width: 90px;">· ${escapeHtml(cuentaSeleccionada.nombre)}</span>`;
-                btnTitle = `${cuentaSeleccionada.codigo} - ${cuentaSeleccionada.nombre}`;
+                const extBadge = (cuentaSeleccionada.es_propia != 1) 
+                    ? `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1" style="font-size: 10px;" title="Requiere autorización de Jefatura ${escapeHtml(cuentaSeleccionada.cc_nombre || cuentaSeleccionada.cc_codigo)}"><i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>CC Externo</span>`
+                    : '';
+                btnLabelHtml = `<i class="bi bi-wallet2 me-1 text-primary"></i> <strong class="text-primary">${escapeHtml(cuentaSeleccionada.codigo)}</strong>${extBadge} <span class="text-muted small text-truncate d-none d-xl-inline" style="max-width: 90px;">· ${escapeHtml(cuentaSeleccionada.nombre)}</span>`;
+                btnTitle = `${cuentaSeleccionada.codigo} - ${cuentaSeleccionada.nombre}` + (cuentaSeleccionada.es_propia != 1 ? ` [CC: ${cuentaSeleccionada.cc_nombre}]` : '');
             }
 
             const tr = document.createElement('tr');

@@ -1,6 +1,7 @@
 <?php
-// jefatura_controller.php - Lógica de Negocio (V5.0 - Homologado con mis_solicitudes.php)
+// jefatura_controller.php - Lógica de Negocio (V5.0 - Homologado con mis_solicitudes.php y Multi-CC Paralelo)
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/flujos_helper.php';
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (!isset($_SESSION['user_id'])) { header("Location: login.php"); exit; }
@@ -27,16 +28,18 @@ $f_desde  = trim($_GET['f_desde'] ?? '');
 $f_hasta  = trim($_GET['f_hasta'] ?? '');
 
 // =====================================================================
-// MANEJO DE ACCIONES (POST) - MOTOR DE FLUJOS DINÁMICO
+// MANEJO DE ACCIONES (POST) - MOTOR DE FLUJOS DINÁMICO & PARALELO
 // =====================================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
         $id = isset($_POST['expediente_id']) ? (int)$_POST['expediente_id'] : null;
 
-        // Obtener estado y validar pertenencia
-        $sqlCheck = "SELECT id, estado_actual, codigo_interno FROM expedientes WHERE id = ?";
-        if ($rol !== 'ADMIN_MUNICIPAL') { $sqlCheck .= " AND unidad_origen_id = $unidad_id"; }
+        // Obtener estado y validar pertenencia (Unidad requirente o Centro de Costos cedente)
+        $sqlCheck = "SELECT id, estado_actual, codigo_interno, unidad_origen_id FROM expedientes WHERE id = ?";
+        if ($rol !== 'ADMIN_MUNICIPAL' && $rol !== 'SYSADMIN') { 
+            $sqlCheck .= " AND (unidad_origen_id = $unidad_id OR id IN (SELECT expediente_id FROM expedientes_autorizaciones_cc WHERE unidad_responsable_id = $unidad_id))"; 
+        }
         
         $stmtCheck = $pdo->prepare($sqlCheck);
         $stmtCheck->execute([$id]);
@@ -131,6 +134,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $tipo_mensaje = "success";
             $vista = 'pendientes';
 
+        } elseif ($stAct === 'EN_REVISION_JEFATURA') {
+            // B. VISACIÓN / AUTORIZACIÓN PARALELA DE JEFATURA (REQUIRENTE O CEDENTE DE FONDOS)
+            $motivo = trim($_POST['motivo_rechazo'] ?? $_POST['comentario'] ?? '');
+            
+            $accion_efectiva = 'aprobar';
+            if ($transicion_id) {
+                $stmtT = $pdo->prepare("SELECT * FROM flujos_definicion WHERE id = ?");
+                $stmtT->execute([$transicion_id]);
+                $trans = $stmtT->fetch();
+                if ($trans) {
+                    if ($trans['accion_codigo'] === 'DEVOLVER') $accion_efectiva = 'devolver';
+                    elseif ($trans['accion_codigo'] === 'RECHAZAR') $accion_efectiva = 'rechazar';
+                    else $accion_efectiva = 'aprobar';
+                }
+            } elseif ($accion === 'devolver') {
+                $accion_efectiva = 'devolver';
+            } elseif ($accion === 'rechazar') {
+                $accion_efectiva = 'rechazar';
+            }
+
+            if (($accion_efectiva === 'devolver' || $accion_efectiva === 'rechazar') && empty($motivo)) {
+                throw new Exception("Debe ingresar un motivo u observación para devolver o rechazar.");
+            }
+
+            $resParalelo = procesar_autorizacion_paralela_jefatura($pdo, $id, $user_id, $unidad_id, $rol, $accion_efectiva, $motivo);
+
+            if ($resParalelo === 'COMPLETADO_AVANZADO') {
+                $mensaje = "Autorización registrada. Todas las autorizaciones requeridas han sido completadas con éxito y la solicitud avanzó a Control Presupuestario.";
+                $tipo_mensaje = "success";
+            } elseif ($resParalelo === 'PARCIAL_PENDIENTE') {
+                $mensaje = "Su autorización ha sido registrada exitosamente. La solicitud permanece a la espera de las autorizaciones de las demás jefaturas involucradas.";
+                $tipo_mensaje = "success";
+            } elseif ($resParalelo === 'DEVUELTO') {
+                $mensaje = "Solicitud devuelta al creador para corrección.";
+                $tipo_mensaje = "warning";
+            } elseif ($resParalelo === 'RECHAZADO') {
+                $mensaje = "Solicitud rechazada y cerrada.";
+                $tipo_mensaje = "error";
+            }
+
         } elseif ($transicion_id) {
             $motivo = trim($_POST['motivo_rechazo'] ?? '');
             
@@ -186,16 +229,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // =====================================================================
 
 // CONTADORES PARA LAS PESTAÑAS HEADER
-$stmtCountPend = $pdo->prepare(($rol === 'ADMIN_MUNICIPAL') ? "SELECT COUNT(*) FROM expedientes WHERE estado_actual IN ('EN_REVISION_JEFATURA', 'EN_FIRMA_JEFATURA')" : "SELECT COUNT(*) FROM expedientes WHERE unidad_origen_id = ? AND estado_actual IN ('EN_REVISION_JEFATURA', 'EN_FIRMA_JEFATURA')");
-if ($rol === 'ADMIN_MUNICIPAL') { $stmtCountPend->execute(); } else { $stmtCountPend->execute([$unidad_id]); }
+if ($rol === 'ADMIN_MUNICIPAL' || $rol === 'SYSADMIN') {
+    $stmtCountPend = $pdo->prepare("SELECT COUNT(*) FROM expedientes WHERE estado_actual IN ('EN_REVISION_JEFATURA', 'EN_FIRMA_JEFATURA')");
+    $stmtCountPend->execute();
+} else {
+    $stmtCountPend = $pdo->prepare("
+        SELECT COUNT(DISTINCT e.id) 
+        FROM expedientes e 
+        LEFT JOIN expedientes_autorizaciones_cc ac ON e.id = ac.expediente_id
+        WHERE (e.estado_actual = 'EN_FIRMA_JEFATURA' AND e.unidad_origen_id = :uid)
+           OR (e.estado_actual = 'EN_REVISION_JEFATURA' AND ac.unidad_responsable_id = :uid AND ac.estado = 'PENDIENTE')
+    ");
+    $stmtCountPend->execute([':uid' => $unidad_id]);
+}
 $count_pendientes = $stmtCountPend->fetchColumn();
 
-$stmtCountProc = $pdo->prepare("SELECT COUNT(DISTINCT e.id) FROM expedientes e JOIN expedientes_historial eh ON e.id = eh.expediente_id WHERE eh.usuario_id = ? AND eh.accion IN ('APROBAR', 'RECHAZAR', 'DEVOLVER', 'FIRMAR_JEFATURA')");
-$stmtCountProc->execute([$user_id]);
+$stmtCountProc = $pdo->prepare("
+    SELECT COUNT(DISTINCT e.id) 
+    FROM expedientes e 
+    WHERE EXISTS (
+        SELECT 1 FROM expedientes_historial eh 
+        WHERE eh.expediente_id = e.id AND eh.usuario_id = :h_uid 
+          AND eh.accion IN ('APROBAR', 'RECHAZAR', 'DEVOLVER', 'FIRMAR_JEFATURA', 'FIRMA_ELECTRONICA', 'AUTORIZAR_CC')
+    ) OR EXISTS (
+        SELECT 1 FROM expedientes_autorizaciones_cc ac 
+        WHERE ac.expediente_id = e.id AND ac.visado_por_id = :a_uid
+    )
+");
+$stmtCountProc->execute([':h_uid' => $user_id, ':a_uid' => $user_id]);
 $count_procesadas = $stmtCountProc->fetchColumn();
 
-$stmtCountTodas = $pdo->prepare(($rol === 'ADMIN_MUNICIPAL') ? "SELECT COUNT(*) FROM expedientes" : "SELECT COUNT(*) FROM expedientes WHERE unidad_origen_id = ?");
-if ($rol === 'ADMIN_MUNICIPAL') { $stmtCountTodas->execute(); } else { $stmtCountTodas->execute([$unidad_id]); }
+if ($rol === 'ADMIN_MUNICIPAL' || $rol === 'SYSADMIN') {
+    $stmtCountTodas = $pdo->prepare("SELECT COUNT(*) FROM expedientes");
+    $stmtCountTodas->execute();
+} else {
+    $stmtCountTodas = $pdo->prepare("
+        SELECT COUNT(DISTINCT e.id) 
+        FROM expedientes e 
+        LEFT JOIN expedientes_autorizaciones_cc ac ON e.id = ac.expediente_id
+        WHERE e.unidad_origen_id = :uid OR ac.unidad_responsable_id = :uid
+    ");
+    $stmtCountTodas->execute([':uid' => $unidad_id]);
+}
 $count_todas = $stmtCountTodas->fetchColumn();
 
 if ($vista === 'revisar' && isset($_GET['id'])) {
@@ -212,23 +287,51 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
         LEFT JOIN proveedores prov ON e.proveedor_adjudicado_id = prov.id
         WHERE e.id = ?
     ";
-    if ($rol !== 'ADMIN_MUNICIPAL') { $sql .= " AND e.unidad_origen_id = $unidad_id"; }
+    if ($rol !== 'ADMIN_MUNICIPAL' && $rol !== 'SYSADMIN') { 
+        $sql .= " AND (e.unidad_origen_id = $unidad_id OR e.id IN (SELECT expediente_id FROM expedientes_autorizaciones_cc WHERE unidad_responsable_id = $unidad_id))"; 
+    }
     $stmt = $pdo->prepare($sql); 
     $stmt->execute([$_GET['id']]); 
     $exp = $stmt->fetch();
     $expediente = $exp;
     
-    $es_accionable = in_array($exp['estado_actual'], ['EN_REVISION_JEFATURA', 'EN_FIRMA_JEFATURA']);
+    if (!$exp) {
+        die("Acceso Denegado. No tiene permisos para revisar este requerimiento.");
+    }
+
+    // Autorizaciones inter-CC
+    $autorizaciones_cc = obtener_autorizaciones_expediente($pdo, $_GET['id']);
     
-    // Ítems con su cuenta presupuestaria
+    // Determinar si la acción está disponible para el usuario actual
+    $es_admin = in_array($rol, ['ADMIN_MUNICIPAL', 'SYSADMIN']);
+    $mi_autorizacion_pendiente = false;
+    if ($exp['estado_actual'] === 'EN_REVISION_JEFATURA') {
+        foreach ($autorizaciones_cc as $aut) {
+            if ($aut['estado'] === 'PENDIENTE' && ($es_admin || $aut['unidad_responsable_id'] == $unidad_id)) {
+                $mi_autorizacion_pendiente = true;
+                break;
+            }
+        }
+        $es_accionable = $mi_autorizacion_pendiente;
+    } elseif ($exp['estado_actual'] === 'EN_FIRMA_JEFATURA') {
+        $es_accionable = ($es_admin || $exp['unidad_origen_id'] == $unidad_id);
+    } else {
+        $es_accionable = false;
+    }
+    
+    // Ítems con su cuenta presupuestaria y Centro de Costos
     $stmtItems = $pdo->prepare("
-        SELECT ei.*, cm.codigo as cuenta_codigo 
+        SELECT ei.*, cm.codigo as cuenta_codigo, cm.nombre as cuenta_nombre, ag.codigo as ag_codigo,
+               cc.nombre as cc_nombre, cc.codigo_cuenta as cc_codigo,
+               (CASE WHEN pa.centro_costo_id = ? THEN 1 ELSE 0 END) as es_propia
         FROM expedientes_items ei 
         LEFT JOIN presupuestos_asignados pa ON ei.presupuesto_asignado_id = pa.id 
         LEFT JOIN cuentas_maestras cm ON pa.cuenta_maestra_id = cm.id 
+        LEFT JOIN areas_gestion ag ON pa.area_gestion_id = ag.id
+        LEFT JOIN centros_costo cc ON pa.centro_costo_id = cc.id
         WHERE ei.expediente_id = ?
     "); 
-    $stmtItems->execute([$_GET['id']]); 
+    $stmtItems->execute([$exp['centro_costo_id'], $_GET['id']]); 
     $items = $stmtItems->fetchAll();
 
     $stmtCrit = $pdo->prepare("SELECT * FROM expedientes_criterios WHERE expediente_id = ? ORDER BY numero_criterio ASC");
@@ -249,20 +352,25 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
     $where = [];
     $params = [];
 
-    if ($rol !== 'ADMIN_MUNICIPAL') {
-        $where[] = "e.unidad_origen_id = :uid_origen";
-        $params[':uid_origen'] = $unidad_id;
-    }
-
-    if ($vista === 'procesadas') {
-        $where[] = "EXISTS (SELECT 1 FROM expedientes_historial eh WHERE eh.expediente_id = e.id AND eh.usuario_id = :hist_uid AND eh.accion IN ('APROBAR', 'RECHAZAR', 'DEVOLVER', 'FIRMAR_JEFATURA', 'FIRMA_ELECTRONICA'))";
-        $params[':hist_uid'] = $user_id;
-    } elseif ($vista === 'todas') {
-        // Sin condición adicional de estado
+    if ($rol !== 'ADMIN_MUNICIPAL' && $rol !== 'SYSADMIN') {
+        if ($vista === 'pendientes') {
+            $where[] = "((e.estado_actual = 'EN_FIRMA_JEFATURA' AND e.unidad_origen_id = :uid_origen) OR (e.estado_actual = 'EN_REVISION_JEFATURA' AND EXISTS (SELECT 1 FROM expedientes_autorizaciones_cc ac WHERE ac.expediente_id = e.id AND ac.unidad_responsable_id = :uid_origen AND ac.estado = 'PENDIENTE')))";
+            $params[':uid_origen'] = $unidad_id;
+        } elseif ($vista === 'procesadas') {
+            $where[] = "(EXISTS (SELECT 1 FROM expedientes_historial eh WHERE eh.expediente_id = e.id AND eh.usuario_id = :hist_uid AND eh.accion IN ('APROBAR', 'RECHAZAR', 'DEVOLVER', 'FIRMAR_JEFATURA', 'FIRMA_ELECTRONICA', 'AUTORIZAR_CC')) OR EXISTS (SELECT 1 FROM expedientes_autorizaciones_cc ac WHERE ac.expediente_id = e.id AND ac.visado_por_id = :hist_uid))";
+            $params[':hist_uid'] = $user_id;
+        } else {
+            // todas
+            $where[] = "(e.unidad_origen_id = :uid_origen OR EXISTS (SELECT 1 FROM expedientes_autorizaciones_cc ac WHERE ac.expediente_id = e.id AND ac.unidad_responsable_id = :uid_origen))";
+            $params[':uid_origen'] = $unidad_id;
+        }
     } else {
-        // 'pendientes' por defecto (incluye tanto revisión inicial como firma electrónica)
-        $where[] = "e.estado_actual IN ('EN_REVISION_JEFATURA', 'EN_FIRMA_JEFATURA')";
-        $vista = 'pendientes';
+        if ($vista === 'pendientes') {
+            $where[] = "e.estado_actual IN ('EN_REVISION_JEFATURA', 'EN_FIRMA_JEFATURA')";
+        } elseif ($vista === 'procesadas') {
+            $where[] = "EXISTS (SELECT 1 FROM expedientes_historial eh WHERE eh.expediente_id = e.id AND eh.usuario_id = :hist_uid)";
+            $params[':hist_uid'] = $user_id;
+        }
     }
 
     if ($f_q) {
@@ -292,6 +400,7 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
             p.clase_css as prioridad_css,
             cc.nombre as cc_nombre,
             et.nombre as estado_nombre,
+            (SELECT COUNT(*) FROM expedientes_autorizaciones_cc ac WHERE ac.expediente_id = e.id AND ac.tipo_autorizacion = 'CENTRO_COSTO_EXTERNO') as count_cc_externos,
             (SELECT GROUP_CONCAT(CONCAT(ruta_archivo, '::', IFNULL(nombre_original, 'Adjunto'), '::', tipo_doc, '::', DATE_FORMAT(fecha_subida, '%d/%m/%Y %H:%i')) SEPARATOR '||') 
              FROM expedientes_documentos ed WHERE ed.expediente_id = e.id) as docs_adjuntos
         FROM expedientes e

@@ -219,6 +219,11 @@ $es_subrogante = isset($_SESSION['es_subrogante']) && $_SESSION['es_subrogante']
                                             <span class="d-flex align-items-center gap-1"><i class="bi bi-person-fill text-primary"></i> <?= htmlspecialchars($row['solicitante']) ?></span>
                                             <span>•</span>
                                             <span class="d-flex align-items-center gap-1"><i class="bi bi-tag-fill text-secondary"></i> CC: <?= htmlspecialchars($row['cc_nombre']) ?></span>
+                                            <?php if (!empty($row['count_cc_externos'])): ?>
+                                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" style="font-size: 10px;" title="Involucra fondos de otros Centros de Costos">
+                                                    <i class="bi bi-arrow-left-right me-1"></i>Multi-CC
+                                                </span>
+                                            <?php endif; ?>
                                         </div>
                                         
                                         <?php if($row['docs_adjuntos']): 
@@ -434,6 +439,78 @@ $es_subrogante = isset($_SESSION['es_subrogante']) && $_SESSION['es_subrogante']
                         </div>
                     </div>
 
+                    <!-- AUTORIZACIONES INTER-CC (V°B° PARALELO) -->
+                    <?php if (!empty($autorizaciones_cc)): ?>
+                    <div class="saas-card mb-4 border-primary-subtle">
+                        <div class="saas-card-header bg-primary-subtle">
+                            <h6 class="fw-bold mb-0 text-primary-emphasis d-flex align-items-center gap-2" style="font-size: 13px;">
+                                <i class="bi bi-shield-check text-primary"></i>
+                                Visación y Autorización de Fondos (Paralelo)
+                            </h6>
+                        </div>
+                        <div class="saas-card-body p-3">
+                            <p class="text-muted small mb-2.5" style="font-size: 11px;">
+                                Estado de autorizaciones requeridas para los Centros de Costos involucrados:
+                            </p>
+                            <div class="d-flex flex-column gap-2.5">
+                                <?php foreach($autorizaciones_cc as $aut): 
+                                    $es_orig = ($aut['tipo_autorizacion'] === 'UNIDAD_ORIGEN');
+                                    $stAut = $aut['estado'];
+                                    $badgeSt = 'bg-warning-subtle text-warning-emphasis border border-warning-subtle';
+                                    $iconSt = 'bi-hourglass-split';
+                                    if ($stAut === 'APROBADO') {
+                                        $badgeSt = 'bg-success-subtle text-success-emphasis border border-success-subtle';
+                                        $iconSt = 'bi-check-circle-fill';
+                                    } elseif ($stAut === 'DEVUELTO') {
+                                        $badgeSt = 'bg-danger-subtle text-danger-emphasis border border-danger-subtle';
+                                        $iconSt = 'bi-arrow-counterclockwise';
+                                    } elseif ($stAut === 'RECHAZADO') {
+                                        $badgeSt = 'bg-danger-subtle text-danger-emphasis border border-danger-subtle';
+                                        $iconSt = 'bi-x-circle-fill';
+                                    }
+                                    $es_mi_aut = ($aut['unidad_responsable_id'] == $unidad_id);
+                                ?>
+                                    <div class="p-2.5 rounded border bg-white shadow-sm <?= $es_mi_aut ? 'border-primary' : '' ?>">
+                                        <div class="d-flex justify-content-between align-items-start gap-2 mb-1.5">
+                                            <div>
+                                                <span class="badge <?= $es_orig ? 'bg-primary-subtle text-primary' : 'bg-warning-subtle text-warning-emphasis border border-warning-subtle' ?> mb-1" style="font-size: 9.5px;">
+                                                    <?= $es_orig ? 'JEFATURA REQUIRENTE' : 'CEDENTE DE FONDOS (CC EXTERNO)' ?>
+                                                </span>
+                                                <div class="fw-bold text-dark small">
+                                                    <?= htmlspecialchars($aut['cc_nombre']) ?> 
+                                                </div>
+                                                <div class="text-muted small" style="font-size: 10.5px;">
+                                                    Unidad: <?= htmlspecialchars($aut['unidad_nombre']) ?>
+                                                </div>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="badge <?= $badgeSt ?>" style="font-size: 10.5px;">
+                                                    <i class="bi <?= $iconSt ?> me-1"></i><?= $stAut ?>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center pt-1.5 border-top small text-muted" style="font-size: 11px;">
+                                            <div>
+                                                <span>Imputado: </span><strong class="text-dark"><?= money($aut['monto_imputado']) ?></strong>
+                                            </div>
+                                            <?php if($aut['visador_nombre']): ?>
+                                                <div class="text-truncate" style="max-width: 140px;" title="<?= htmlspecialchars($aut['visador_nombre']) ?>">
+                                                    <i class="bi bi-person-check text-success"></i> <?= htmlspecialchars($aut['visador_nombre']) ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php if($aut['comentario']): ?>
+                                            <div class="mt-1.5 p-1.5 bg-light rounded text-muted" style="font-size: 11px;">
+                                                <em>"<?= htmlspecialchars($aut['comentario']) ?>"</em>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
                     <!-- DOCUMENTOS DE RESPALDO -->
                     <div class="saas-card">
                         <div class="saas-card-header">
@@ -496,6 +573,9 @@ $es_subrogante = isset($_SESSION['es_subrogante']) && $_SESSION['es_subrogante']
                                                     <span class="badge bg-light text-dark border font-monospace fw-bold" style="font-size: 11.5px;"><?= $it['cuenta_codigo'] ?></span>
                                                     <?php if(!empty($it['ag_codigo'])): ?>
                                                         <span class="badge bg-secondary-subtle text-secondary-emphasis" style="font-size: 9px;">AG: <?= $it['ag_codigo'] ?></span>
+                                                    <?php endif; ?>
+                                                    <?php if(!empty($it['cc_nombre']) && isset($it['es_propia']) && $it['es_propia'] == 0): ?>
+                                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" style="font-size: 9.5px;"><i class="bi bi-arrow-left-right me-1"></i>CC Ext: <?= htmlspecialchars($it['cc_nombre']) ?></span>
                                                     <?php endif; ?>
                                                 </div>
                                             </div>
@@ -624,9 +704,14 @@ $es_subrogante = isset($_SESSION['es_subrogante']) && $_SESSION['es_subrogante']
                                              Firmar OPI con FirmaGob (1/3)
                                          </button>
                                      <?php elseif ($t_aprobar): ?>
-                                         <button type="submit" name="transicion_id" value="<?= $t_aprobar['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t_aprobar['accion_label']) ?>?')" class="btn-saas btn-saas-primary py-2.5 w-100 mb-4 justify-content-center fw-bold shadow-sm" style="font-size: 14px;">
+                                         <button type="submit" name="transicion_id" value="<?= $t_aprobar['id'] ?>" onclick="return confirm('¿Confirma la visación y autorización de este requerimiento?')" class="btn-saas btn-saas-primary py-2.5 w-100 mb-4 justify-content-center fw-bold shadow-sm" style="font-size: 14px;">
                                              <i class="bi bi-check-circle-fill"></i>
                                              <?= htmlspecialchars($t_aprobar['accion_label']) ?>
+                                         </button>
+                                     <?php elseif ($exp['estado_actual'] === 'EN_REVISION_JEFATURA'): ?>
+                                         <button type="submit" name="accion" value="aprobar" onclick="return confirm('¿Confirma la visación y autorización de este requerimiento?')" class="btn-saas btn-saas-primary py-2.5 w-100 mb-4 justify-content-center fw-bold shadow-sm" style="font-size: 14px;">
+                                             <i class="bi bi-check-circle-fill"></i>
+                                             Aprobar V°B° / Autorizar Fondos
                                          </button>
                                      <?php else: ?>
                                          <div class="alert alert-secondary text-center small py-2 mb-4">No hay transiciones de aprobación disponibles.</div>
@@ -639,8 +724,11 @@ $es_subrogante = isset($_SESSION['es_subrogante']) && $_SESSION['es_subrogante']
                                         
                                         <div class="row g-2">
                                             <!-- BOTONES DE DEVOLUCIÓN -->
-                                            <?php foreach ($transiciones as $t): 
+                                            <?php 
+                                            $hay_devolver = false;
+                                            foreach ($transiciones as $t): 
                                                 if ($t['accion_codigo'] === 'DEVOLVER'):
+                                                    $hay_devolver = true;
                                             ?>
                                                 <div class="col-sm-6">
                                                     <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn-saas btn-saas-secondary w-100 justify-content-center py-2">
@@ -650,11 +738,22 @@ $es_subrogante = isset($_SESSION['es_subrogante']) && $_SESSION['es_subrogante']
                                                 </div>
                                             <?php 
                                                 endif;
-                                            endforeach; ?>
+                                            endforeach; 
+                                            if (!$hay_devolver && $exp['estado_actual'] === 'EN_REVISION_JEFATURA'): ?>
+                                                <div class="col-sm-6">
+                                                    <button type="submit" name="accion" value="devolver" onclick="return confirm('¿Confirma devolver para corrección?')" class="btn-saas btn-saas-secondary w-100 justify-content-center py-2">
+                                                        <i class="bi bi-arrow-counterclockwise text-warning"></i>
+                                                        Devolver Solicitud
+                                                    </button>
+                                                </div>
+                                            <?php endif; ?>
 
                                             <!-- BOTONES DE RECHAZO -->
-                                            <?php foreach ($transiciones as $t): 
+                                            <?php 
+                                            $hay_rechazar = false;
+                                            foreach ($transiciones as $t): 
                                                 if ($t['accion_codigo'] === 'RECHAZAR'):
+                                                    $hay_rechazar = true;
                                             ?>
                                                 <div class="col-sm-6">
                                                     <button type="submit" name="transicion_id" value="<?= $t['id'] ?>" onclick="return confirm('¿Confirma la acción de <?= htmlspecialchars($t['accion_label']) ?>?')" class="btn-saas btn-saas-danger w-100 justify-content-center py-2">
@@ -664,7 +763,15 @@ $es_subrogante = isset($_SESSION['es_subrogante']) && $_SESSION['es_subrogante']
                                                 </div>
                                             <?php 
                                                 endif;
-                                            endforeach; ?>
+                                            endforeach; 
+                                            if (!$hay_rechazar && $exp['estado_actual'] === 'EN_REVISION_JEFATURA'): ?>
+                                                <div class="col-sm-6">
+                                                    <button type="submit" name="accion" value="rechazar" onclick="return confirm('¿Confirma el rechazo definitivo?')" class="btn-saas btn-saas-danger w-100 justify-content-center py-2">
+                                                        <i class="bi bi-x-circle text-danger"></i>
+                                                        Rechazar Solicitud
+                                                    </button>
+                                                </div>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </form>

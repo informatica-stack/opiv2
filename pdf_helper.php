@@ -293,11 +293,25 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
     $pdf->SetFont('Arial', '', 7);
     $pdf->Cell(22, 4, $utf($cc_str), 0, 1, 'L');
 
+    // Chequeo de autorizaciones inter-CC
+    $aut_txt = "N° -";
+    if (function_exists('obtener_autorizaciones_expediente')) {
+        $auts = obtener_autorizaciones_expediente($pdo, $expediente_id);
+        $ext_auts = array_filter($auts, function($a) { return $a['tipo_autorizacion'] === 'CENTRO_COSTO_EXTERNO'; });
+        if (!empty($ext_auts)) {
+            $parts = [];
+            foreach ($ext_auts as $ea) {
+                $parts[] = ($ea['cc_nombre'] ?: $ea['cc_codigo']) . " ($ " . number_format($ea['monto_imputado'], 0, ',', '.') . " - " . $ea['estado'] . ")";
+            }
+            $aut_txt = "AUT. CC EXT: " . implode(" | ", $parts);
+        }
+    }
+
     $pdf->SetXY(54, $y_caja2 + 6);
     $pdf->SetFont('Arial', 'B', 7);
     $pdf->Cell(32, 4, $utf("COMPLEMENTARIA:"), 0, 0, 'L');
-    $pdf->SetFont('Arial', '', 7);
-    $pdf->Cell(95, 4, $utf("N° -"), 0, 1, 'L');
+    $pdf->SetFont('Arial', '', 6.5);
+    $pdf->Cell(95, 4, $utf(substr($aut_txt, 0, 75)), 0, 1, 'L');
 
     // 3. RECUADRO PLAN DE COMPRAS Y MODALIDADES
     $y_caja3 = $y_caja2 + 14;

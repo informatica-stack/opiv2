@@ -181,4 +181,198 @@ function liberar_presupuesto_si_aplica($pdo, $expediente_id, $estado_destino) {
     // Funcionalidad de cruce de saldos deshabilitada - el control se maneja externamente
     return;
 }
+
+/**
+ * =====================================================================
+ * GESTIÓN DE MULTI-AUTORIZACIÓN PARALELA INTER-CENTROS DE COSTO
+ * =====================================================================
+ */
+
+/**
+ * Obtiene la unidad municipal responsable/titular de un Centro de Costo.
+ */
+function obtener_unidad_responsable_cc($pdo, $centro_costo_id) {
+    if (!$centro_costo_id) return 1;
+    $stmt = $pdo->prepare("SELECT id FROM unidades WHERE centro_costo_id = ? ORDER BY padre_id ASC LIMIT 1");
+    $stmt->execute([$centro_costo_id]);
+    $uid = $stmt->fetchColumn();
+    return $uid ? (int)$uid : 1; // Fallback a unidad principal si no está asignada
+}
+
+/**
+ * Genera o actualiza los registros de autorización requeridos (Unidad de Origen y CCs Externos).
+ * Retorna true si todas las autorizaciones requeridas están aprobadas (ej: creador es jefe sin CCs externos).
+ */
+function generar_autorizaciones_cc_expediente($pdo, $expediente_id, $unidad_origen_id, $centro_costo_origen_id, $items, $es_jefe_creador = false, $creador_id = null) {
+    // 1. Agrupar montos totales por centro de costo a partir de los ítems
+    $montos_por_cc = [];
+    if (!empty($items)) {
+        foreach ($items as $it) {
+            $pa_id = $it['presupuesto_asignado_id'] ?? ($it['cuenta_id'] ?? null);
+            $cant = floatval($it['cantidad'] ?? ($it['cant'] ?? 1));
+            $prec = floatval($it['precio_unitario'] ?? ($it['prec'] ?? 0));
+            $total_linea = $cant * $prec;
+            
+            $cc_id = $centro_costo_origen_id;
+            if ($pa_id) {
+                $stmtPA = $pdo->prepare("SELECT centro_costo_id FROM presupuestos_asignados WHERE id = ?");
+                $stmtPA->execute([$pa_id]);
+                $found_cc = $stmtPA->fetchColumn();
+                if ($found_cc) $cc_id = (int)$found_cc;
+            }
+            if (!isset($montos_por_cc[$cc_id])) $montos_por_cc[$cc_id] = 0;
+            $montos_por_cc[$cc_id] += $total_linea;
+        }
+    }
+
+    // 2. Limpiar autorizaciones previas para re-evaluación limpia
+    $pdo->prepare("DELETE FROM expedientes_autorizaciones_cc WHERE expediente_id = ?")->execute([$expediente_id]);
+
+    $stmtIns = $pdo->prepare("
+        INSERT INTO expedientes_autorizaciones_cc 
+        (expediente_id, tipo_autorizacion, centro_costo_id, unidad_responsable_id, monto_imputado, estado, visado_por_id, fecha_visacion, comentario) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ");
+
+    // 3. Autorización de la Unidad de Origen (Jefatura Requirente)
+    $monto_origen = $montos_por_cc[$centro_costo_origen_id] ?? 0;
+    $estado_origen = $es_jefe_creador ? 'APROBADO' : 'PENDIENTE';
+    $visado_por = $es_jefe_creador ? $creador_id : null;
+    $fecha_visacion = $es_jefe_creador ? date('Y-m-d H:i:s') : null;
+    $comentario_origen = $es_jefe_creador ? 'Aprobado automáticamente al crear la solicitud como Jefatura de Unidad.' : null;
+
+    $stmtIns->execute([
+        $expediente_id,
+        'UNIDAD_ORIGEN',
+        $centro_costo_origen_id,
+        $unidad_origen_id,
+        $monto_origen,
+        $estado_origen,
+        $visado_por,
+        $fecha_visacion,
+        $comentario_origen
+    ]);
+
+    // 4. Autorizaciones de Centros de Costos Externos
+    $tiene_externos_pendientes = false;
+    foreach ($montos_por_cc as $cc_id => $monto) {
+        if ($cc_id != $centro_costo_origen_id) {
+            $unidad_ext = obtener_unidad_responsable_cc($pdo, $cc_id);
+            $stmtIns->execute([
+                $expediente_id,
+                'CENTRO_COSTO_EXTERNO',
+                $cc_id,
+                $unidad_ext,
+                $monto,
+                'PENDIENTE',
+                null,
+                null,
+                null
+            ]);
+            $tiene_externos_pendientes = true;
+        }
+    }
+
+    return ($es_jefe_creador && !$tiene_externos_pendientes);
+}
+
+/**
+ * Obtiene todas las autorizaciones inter-CC configuradas para un expediente.
+ */
+function obtener_autorizaciones_expediente($pdo, $expediente_id) {
+    $stmt = $pdo->prepare("
+        SELECT 
+            ac.*,
+            COALESCE(cc.codigo_cuenta, '') as cc_codigo,
+            COALESCE(cc.nombre, 'Centro de Costos') as cc_nombre,
+            COALESCE(un.nombre, 'Unidad Responsable') as unidad_nombre,
+            u.nombre_completo as visador_nombre,
+            u.cargo as visador_cargo
+        FROM expedientes_autorizaciones_cc ac
+        LEFT JOIN centros_costo cc ON ac.centro_costo_id = cc.id
+        LEFT JOIN unidades un ON ac.unidad_responsable_id = un.id
+        LEFT JOIN usuarios u ON ac.visado_por_id = u.id
+        WHERE ac.expediente_id = ?
+        ORDER BY ac.tipo_autorizacion DESC, ac.id ASC
+    ");
+    $stmt->execute([$expediente_id]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Procesa la acción de una Jefatura (Requirente o Cedente de Fondos) en el esquema paralelo.
+ */
+function procesar_autorizacion_paralela_jefatura($pdo, $expediente_id, $usuario_id, $unidad_usuario_id, $rol_usuario, $accion, $comentario = '') {
+    $stmtExp = $pdo->prepare("SELECT e.*, un.nombre as unidad_origen_nombre FROM expedientes e JOIN unidades un ON e.unidad_origen_id = un.id WHERE e.id = ?");
+    $stmtExp->execute([$expediente_id]);
+    $exp = $stmtExp->fetch();
+    if (!$exp) throw new Exception("Expediente no encontrado.");
+
+    $autorizaciones = obtener_autorizaciones_expediente($pdo, $expediente_id);
+    
+    // Identificar qué autorizaciones le corresponden visar a este usuario
+    $matching_ids = [];
+    $es_admin = in_array($rol_usuario, ['ADMIN_MUNICIPAL', 'SYSADMIN']);
+
+    foreach ($autorizaciones as $aut) {
+        if ($aut['estado'] === 'PENDIENTE') {
+            if ($es_admin || $aut['unidad_responsable_id'] == $unidad_usuario_id) {
+                $matching_ids[] = $aut['id'];
+            }
+        }
+    }
+
+    if (empty($matching_ids) && !$es_admin) {
+        throw new Exception("No tiene autorizaciones pendientes asignadas para este expediente.");
+    }
+
+    // A. DEVOLVER A CORRECCIÓN
+    if ($accion === 'devolver') {
+        $pdo->prepare("UPDATE expedientes_autorizaciones_cc SET estado = 'DEVUELTO', visado_por_id = ?, fecha_visacion = NOW(), comentario = ? WHERE id IN (" . implode(',', $matching_ids) . ")")
+            ->execute([$usuario_id, $comentario]);
+        
+        devolver_flujo($pdo, $expediente_id, $usuario_id, $comentario);
+        return 'DEVUELTO';
+    }
+
+    // B. RECHAZAR DEFINITIVAMENTE
+    if ($accion === 'rechazar') {
+        $pdo->prepare("UPDATE expedientes_autorizaciones_cc SET estado = 'RECHAZADO', visado_por_id = ?, fecha_visacion = NOW(), comentario = ? WHERE id IN (" . implode(',', $matching_ids) . ")")
+            ->execute([$usuario_id, $comentario]);
+        
+        rechazar_flujo($pdo, $expediente_id, $usuario_id, $comentario);
+        return 'RECHAZADO';
+    }
+
+    // C. APROBAR AUTORIZACIÓN
+    if ($accion === 'aprobar' || $accion === 'visar') {
+        $pdo->prepare("UPDATE expedientes_autorizaciones_cc SET estado = 'APROBADO', visado_por_id = ?, fecha_visacion = NOW(), comentario = ? WHERE id IN (" . implode(',', $matching_ids) . ")")
+            ->execute([$usuario_id, $comentario ?: 'Autorización de fondos visada correctamente.']);
+
+        // Registrar en historial el V°B° específico
+        foreach ($matching_ids as $mid) {
+            $rowAut = null;
+            foreach ($autorizaciones as $a) { if ($a['id'] == $mid) { $rowAut = $a; break; } }
+            $tipo_label = ($rowAut && $rowAut['tipo_autorizacion'] === 'UNIDAD_ORIGEN') ? 'V°B° Jefatura Requirente' : "Autorización Fondos CC ({$rowAut['cc_nombre']})";
+            $pdo->prepare("INSERT INTO expedientes_historial (expediente_id, usuario_id, accion, estado_anterior, estado_nuevo, comentario) VALUES (?, ?, 'AUTORIZAR_CC', 'EN_REVISION_JEFATURA', 'EN_REVISION_JEFATURA', ?)")
+                ->execute([$expediente_id, $usuario_id, "$tipo_label aprobada. " . ($comentario ? "Observación: $comentario" : '')]);
+        }
+
+        // Verificar si TODAS las autorizaciones del expediente están APROBADAS
+        $stmtCheckAll = $pdo->prepare("SELECT COUNT(*) FROM expedientes_autorizaciones_cc WHERE expediente_id = ? AND estado != 'APROBADO'");
+        $stmtCheckAll->execute([$expediente_id]);
+        $pendientes_restantes = (int)$stmtCheckAll->fetchColumn();
+
+        if ($pendientes_restantes === 0) {
+            // Todas las autorizaciones paralelas están listas -> Avanzar a Presupuesto
+            avanzar_flujo($pdo, $expediente_id, $usuario_id, "Todas las autorizaciones de Jefatura y Centros de Costos completadas. Enviado a Control Presupuestario.");
+            return 'COMPLETADO_AVANZADO';
+        } else {
+            // Aún quedan otras jefaturas pendientes
+            return 'PARCIAL_PENDIENTE';
+        }
+    }
+
+    throw new Exception("Acción no reconocida.");
+}
 ?>

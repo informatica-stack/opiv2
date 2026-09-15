@@ -96,18 +96,16 @@ define('ESTADO_ANULADO', 'ANULADO');
 define('ESTADO_RECHAZADO', 'RECHAZADO');
 
 // 5. Configuración de Firma Digital FirmaGob (Gobierno Digital)
-// Variables de entorno de Dockploy con fallback a SIMULADO para pruebas locales inmediatas
-define('FIRMAGOB_AMBIENTE', getenv('FIRMAGOB_AMBIENTE') ?: ($_ENV['FIRMAGOB_AMBIENTE'] ?? 'SIMULADO'));
-define('FIRMAGOB_API_URL', getenv('FIRMAGOB_API_URL') ?: ($_ENV['FIRMAGOB_API_URL'] ?? (
-    FIRMAGOB_AMBIENTE === 'PRODUCCION' 
-    ? 'https://api.firma.digital.gob.cl/firma/v2/files/tickets'
-    : 'https://api.firma.cert.digital.gob.cl/firma/v2/files/tickets'
-)));
-define('FIRMAGOB_API_TOKEN_KEY', getenv('FIRMAGOB_API_TOKEN_KEY') ?: ($_ENV['FIRMAGOB_API_TOKEN_KEY'] ?? 'sandbox'));
-define('FIRMAGOB_SECRET', getenv('FIRMAGOB_SECRET') ?: ($_ENV['FIRMAGOB_SECRET'] ?? '27a216342c744f89b7b82fa290519ba0'));
-define('FIRMAGOB_ENTITY', getenv('FIRMAGOB_ENTITY') ?: ($_ENV['FIRMAGOB_ENTITY'] ?? 'Subsecretaría General de la Presidencia'));
-define('FIRMAGOB_PURPOSE', getenv('FIRMAGOB_PURPOSE') ?: ($_ENV['FIRMAGOB_PURPOSE'] ?? 'Propósito General'));
-define('FIRMAGOB_MODO', getenv('FIRMAGOB_MODO') ?: ($_ENV['FIRMAGOB_MODO'] ?? 'ATENDIDA'));
+// Inyección directa desde Variables de Entorno de Dokploy / Docker
+define('FIRMAGOB_AMBIENTE', getenv('FIRMAGOB_AMBIENTE') ?: ($_ENV['FIRMAGOB_AMBIENTE'] ?? ($_SERVER['FIRMAGOB_AMBIENTE'] ?? 'PRODUCCION')));
+define('FIRMAGOB_API_URL', getenv('FIRMAGOB_API_URL') ?: ($_ENV['FIRMAGOB_API_URL'] ?? ($_SERVER['FIRMAGOB_API_URL'] ?? 'https://api.firma.digital.gob.cl/firma/v2/files/tickets')));
+define('FIRMAGOB_ENTITY', getenv('FIRMAGOB_ENTITY') ?: ($_ENV['FIRMAGOB_ENTITY'] ?? ($_SERVER['FIRMAGOB_ENTITY'] ?? 'Ilustre Municipalidad de Lebu')));
+define('FIRMAGOB_PURPOSE', getenv('FIRMAGOB_PURPOSE') ?: ($_ENV['FIRMAGOB_PURPOSE'] ?? ($_SERVER['FIRMAGOB_PURPOSE'] ?? 'Propósito General')));
+define('FIRMAGOB_MODO', getenv('FIRMAGOB_MODO') ?: ($_ENV['FIRMAGOB_MODO'] ?? ($_SERVER['FIRMAGOB_MODO'] ?? 'ATENDIDA')));
+
+// Credenciales secretas leídas desde Dokploy (sin datos sensibles en el código fuente)
+define('FIRMAGOB_API_TOKEN_KEY', getenv('FIRMAGOB_API_TOKEN_KEY') ?: ($_ENV['FIRMAGOB_API_TOKEN_KEY'] ?? ($_SERVER['FIRMAGOB_API_TOKEN_KEY'] ?? '')));
+define('FIRMAGOB_SECRET', getenv('FIRMAGOB_SECRET') ?: ($_ENV['FIRMAGOB_SECRET'] ?? ($_SERVER['FIRMAGOB_SECRET'] ?? '')));
 
 // 6. Función helper para URLs (opcional)
 function base_url($path = '') {

@@ -1,6 +1,7 @@
 <?php
 // editar_solicitud_controller.php - Lógica de Negocio (V5.0 - Sincronizado con Nueva Solicitud y Plan Compras)
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/flujos_helper.php';
 
 // 1. SEGURIDAD
 if (session_status() === PHP_SESSION_NONE) session_start();
@@ -53,14 +54,24 @@ if ($id) {
     $stmtHist->execute([$id]);
     $historial = $stmtHist->fetchAll();
 
-    // Cargar Cuentas del Centro de Costo de la solicitud
+    // Cargar Cuentas Presupuestarias (Propias y de otros Centros de Costo)
     $stmtC = $pdo->prepare("
-        SELECT pa.id, cm.codigo, cm.nombre, ag.codigo as ag_codigo 
+        SELECT 
+            pa.id, 
+            pa.centro_costo_id,
+            COALESCE(cc.codigo_cuenta, '') as cc_codigo,
+            COALESCE(cc.nombre, 'Centro de Costos') as cc_nombre,
+            cm.codigo, 
+            cm.nombre, 
+            COALESCE(cm.tipo_cuenta, 'PRESUPUESTARIA') as tipo_cuenta, 
+            ag.codigo as ag_codigo,
+            (CASE WHEN pa.centro_costo_id = ? THEN 1 ELSE 0 END) as es_propia
         FROM presupuestos_asignados pa
         JOIN cuentas_maestras cm ON pa.cuenta_maestra_id = cm.id
+        LEFT JOIN centros_costo cc ON pa.centro_costo_id = cc.id
         LEFT JOIN areas_gestion ag ON pa.area_gestion_id = ag.id
-        WHERE pa.centro_costo_id = ?
-        ORDER BY cm.codigo ASC
+        WHERE cc.activo = 1 AND cm.activo = 1
+        ORDER BY es_propia DESC, cc.nombre ASC, cm.codigo ASC
     ");
     $stmtC->execute([$exp['centro_costo_id']]);
     $cuentas_disponibles = $stmtC->fetchAll(PDO::FETCH_ASSOC);
@@ -310,6 +321,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
                 $val_cm = null;
             }
             $stmtItem->execute([$id, $d, $val_cm, $uni[$i], floatval($cant[$i]), $p_final, $cuenta_ids[$i]]);
+        }
+
+        // GENERAR O ACTUALIZAR AUTORIZACIONES PARALELAS INTER-CENTROS DE COSTO
+        $items_para_aut = [];
+        foreach ($desc as $i => $d) {
+            $p_ingresado = floatval($prec[$i] ?? 0);
+            $p_calc = ($post_tipo_impuesto === 'NETO') ? round($p_ingresado * $iva_pct, 2) : round($p_ingresado, 2);
+            $items_para_aut[] = [
+                'presupuesto_asignado_id' => $cuenta_ids[$i] ?? null,
+                'cantidad' => floatval($cant[$i] ?? 1),
+                'precio_unitario' => $p_calc
+            ];
+        }
+
+        $todas_aprobadas = generar_autorizaciones_cc_expediente(
+            $pdo, 
+            $id, 
+            $exp['unidad_origen_id'], 
+            $exp['centro_costo_id'], 
+            $items_para_aut, 
+            ($es_jefe == 1), 
+            $user_id
+        );
+
+        if ($todas_aprobadas && $estado_destino === 'EN_REVISION_JEFATURA') {
+            $stmtF2 = $pdo->prepare("SELECT estado_destino FROM flujos_definicion WHERE tipo_compra_id = ? AND estado_actual = ?");
+            $stmtF2->execute([$tipo_compra_id, $estado_destino]);
+            if ($sig = $stmtF2->fetchColumn()) {
+                $estado_destino = $sig;
+                $pdo->prepare("UPDATE expedientes SET estado_actual = ? WHERE id = ?")->execute([$estado_destino, $id]);
+            }
+        } elseif (!$todas_aprobadas && $es_jefe == 1) {
+            $pdo->prepare("UPDATE expedientes SET estado_actual = 'EN_REVISION_JEFATURA' WHERE id = ?")->execute([$id]);
+            $estado_destino = 'EN_REVISION_JEFATURA';
         }
 
         // --- RE-INSERTAR CRITERIOS ---
