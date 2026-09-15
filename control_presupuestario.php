@@ -15,66 +15,7 @@ $user_depto = $_SESSION['user_depto_nombre'] ?? 'Control Presupuestario';
 </head>
 <body>
 
-    <!-- TOPBAR SAAS UNIFICADA -->
-    <header class="saas-topbar">
-        <a href="index.php" class="brand-box">
-            <div class="brand-logo-icon">O</div>
-            <div class="brand-text">
-                <h1>Sistema OPI</h1>
-                <p>Órdenes de Pedido Interno</p>
-            </div>
-        </a>
-
-        <!-- Accesos directos rápidos -->
-        <nav class="saas-nav-links d-none d-lg-flex">
-            <a href="mis_solicitudes.php" class="saas-nav-item"><i class="bi bi-journal-text"></i> Mis Solicitudes</a>
-            <a href="nueva_solicitud.php" class="saas-nav-item"><i class="bi bi-plus-circle"></i> Nueva Solicitud</a>
-            <?php if(isset($_SESSION['es_jefe']) && $_SESSION['es_jefe'] == 1 || $user_rol === 'JEFE_UNIDAD' || $user_rol === 'ADMIN_MUNICIPAL' || $user_rol === 'SYSADMIN'): ?>
-                <a href="jefatura.php" class="saas-nav-item"><i class="bi bi-shield-check"></i> V°B° Jefatura</a>
-            <?php endif; ?>
-            <a href="control_presupuestario.php" class="saas-nav-item active"><i class="bi bi-calculator"></i> Presupuesto</a>
-            <a href="centros_de_costo.php" class="saas-nav-item"><i class="bi bi-wallet2"></i> Centros Costo</a>
-            <?php if($user_rol === 'ADQUISICIONES' || $user_rol === 'SYSADMIN'): ?>
-                <a href="adquisiciones.php" class="saas-nav-item"><i class="bi bi-cart3"></i> Adquisiciones</a>
-            <?php endif; ?>
-        </nav>
-
-        <!-- Menú desplegable y Perfil -->
-        <div class="d-flex align-items-center gap-2">
-            <div class="dropdown">
-                <button class="btn-saas btn-saas-secondary btn-saas-sm dropdown-toggle d-flex align-items-center gap-1.5" type="button" id="dropdownGlobalNav" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-grid-fill text-primary"></i>
-                    <span class="d-none d-sm-inline">Módulos</span>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-light mt-2 p-2" aria-labelledby="dropdownGlobalNav" style="min-width: 250px;">
-                    <li><span class="dropdown-header text-uppercase text-secondary fw-bold" style="font-size: 9px;">Panel Principal</span></li>
-                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard OPIs</a></li>
-                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="mis_solicitudes.php"><i class="bi bi-journal-text"></i> Mis Solicitudes</a></li>
-                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="nueva_solicitud.php"><i class="bi bi-plus-circle"></i> Nueva Solicitud</a></li>
-                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="subrogancia.php"><i class="bi bi-person-gear"></i> Configurar Suplente</a></li>
-                    
-                    <li><hr class="dropdown-divider"></li>
-                    <li><span class="dropdown-header text-uppercase text-secondary fw-bold" style="font-size: 9px;">Presupuesto y Finanzas</span></li>
-                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2 active bg-primary text-white" href="control_presupuestario.php"><i class="bi bi-calculator"></i> VB Presupuestario</a></li>
-                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="centros_de_costo.php"><i class="bi bi-wallet2"></i> Centros de Costo</a></li>
-                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="mantenedor_cuentas.php"><i class="bi bi-list-columns-reverse"></i> Cuentas Presupuestarias</a></li>
-                    <li><a class="dropdown-item rounded-3 py-1.5 small d-flex align-items-center gap-2" href="finanzas.php"><i class="bi bi-file-earmark-check"></i> Firma de CDP</a></li>
-                </ul>
-            </div>
-
-            <div class="user-pill d-none d-sm-flex">
-                <div class="user-avatar-circle"><?= strtoupper(substr($user_name, 0, 2)) ?></div>
-                <div class="d-none d-md-block text-start pe-2">
-                    <div class="fw-bold text-dark text-truncate" style="max-width: 140px; font-size: 12px;"><?= htmlspecialchars($user_name) ?></div>
-                    <div class="text-muted text-truncate" style="max-width: 140px; font-size: 10.5px;"><?= htmlspecialchars($user_depto) ?></div>
-                </div>
-            </div>
-
-            <a href="logout.php" class="btn-saas btn-saas-secondary btn-saas-sm" title="Cerrar Sesión">
-                <i class="bi bi-box-arrow-right"></i>
-            </a>
-        </div>
-    </header>
+    <?php include __DIR__ . '/nav.php'; ?>
 
     <div class="saas-container">
 

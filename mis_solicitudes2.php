@@ -604,39 +604,7 @@ $user_depto = $_SESSION['user_depto_nombre'] ?? 'Municipalidad';
 </head>
 <body>
 
-    <!-- TOPBAR SAAS -->
-    <header class="saas-topbar">
-        <a href="mis_solicitudes2.php" class="brand-box">
-            <div class="brand-logo-icon">O</div>
-            <div class="brand-text">
-                <h1>Sistema OPI</h1>
-                <p>Órdenes de Pedido Interno</p>
-            </div>
-        </a>
-
-        <nav class="saas-nav-links d-none d-md-flex">
-            <a href="mis_solicitudes2.php" class="saas-nav-item active"><i class="bi bi-file-earmark-text"></i> Mis Solicitudes</a>
-            <a href="nueva_solicitud.php" class="saas-nav-item"><i class="bi bi-plus-circle"></i> Nueva Solicitud</a>
-            <?php if($user_rol === 'PRESUPUESTO' || $user_rol === 'ADMIN_MUNICIPAL' || $user_rol === 'SYSADMIN'): ?>
-                <a href="control_presupuestario.php" class="saas-nav-item"><i class="bi bi-calculator"></i> Presupuesto</a>
-                <a href="centros_de_costo.php" class="saas-nav-item"><i class="bi bi-pie-chart"></i> Centros de Costo</a>
-            <?php endif; ?>
-            <?php if($user_rol === 'JEFE_UNIDAD' || $user_rol === 'ADMIN_MUNICIPAL' || $user_rol === 'SYSADMIN'): ?>
-                <a href="jefatura.php" class="saas-nav-item"><i class="bi bi-shield-check"></i> V°B° Jefatura</a>
-            <?php endif; ?>
-        </nav>
-
-        <div class="d-flex align-items-center gap-3">
-            <div class="user-pill">
-                <div class="user-avatar-circle"><?= strtoupper(substr($user_name, 0, 2)) ?></div>
-                <div class="d-none d-sm-block text-start pe-2">
-                    <div style="font-weight: 700; font-size: 12px; line-height: 1.1;"><?= htmlspecialchars($user_name) ?></div>
-                    <div style="font-size: 10.5px; color: var(--text-muted);"><?= htmlspecialchars($user_rol ?: 'Usuario') ?></div>
-                </div>
-            </div>
-            <a href="logout.php" class="btn-saas btn-saas-secondary btn-saas-sm" title="Cerrar Sesión"><i class="bi bi-box-arrow-right"></i></a>
-        </div>
-    </header>
+    <?php include __DIR__ . '/nav.php'; ?>
 
     <!-- WRAPPER -->
     <main class="saas-container">
