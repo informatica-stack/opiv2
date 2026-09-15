@@ -64,13 +64,13 @@ $user_name = $_SESSION['user_name'] ?? 'Usuario';
                     </li>
                     <li>
                         <a class="dropdown-item rounded-2 py-2 small d-flex align-items-center gap-2 <?= ($pagina_actual === 'subrogancia.php') ? 'active bg-primary text-white' : 'text-dark' ?>" href="subrogancia.php">
-                            <i class="bi bi-person-gear fs-6"></i> Configurar Suplente
+                            <i class="bi bi-person-gear fs-6"></i> Configurar suplente
                         </a>
                     </li>
                     <li><hr class="dropdown-divider my-1"></li>
                     <li>
                         <a class="dropdown-item rounded-2 py-2 small text-danger fw-bold d-flex align-items-center gap-2" href="logout.php">
-                            <i class="bi bi-box-arrow-right fs-6"></i> Cerrar Sesión
+                            <i class="bi bi-box-arrow-right fs-6"></i> Cerrar sesión
                         </a>
                     </li>
                 </ul>
@@ -91,7 +91,7 @@ $user_name = $_SESSION['user_name'] ?? 'Usuario';
         <div class="d-flex align-items-center gap-3">
             <img src="logo.png" alt="Logo" class="brand-logo-img" style="height: 34px; max-height: 34px; width: auto; object-fit: contain;">
             <div>
-                <h6 class="offcanvas-title fw-bold text-dark mb-0 fs-6" id="offcanvasNavLabel">Menú del Sistema</h6>
+                <h6 class="offcanvas-title fw-bold text-dark mb-0 fs-6" id="offcanvasNavLabel">Menú</h6>
                 <span class="brand-subtitle">Municipalidad de Lebu</span>
             </div>
         </div>
@@ -111,10 +111,10 @@ $user_name = $_SESSION['user_name'] ?? 'Usuario';
                     </a>
                 <?php endif; ?>
                 <a class="offcanvas-link <?= ($pagina_actual === 'mis_solicitudes.php') ? 'active' : '' ?>" href="mis_solicitudes.php">
-                    <i class="bi bi-journal-text text-primary"></i> Mis Solicitudes
+                    <i class="bi bi-journal-text text-primary"></i> Mis solicitudes
                 </a>
                 <a class="offcanvas-link highlight <?= ($pagina_actual === 'nueva_solicitud.php') ? 'active' : '' ?>" href="nueva_solicitud.php">
-                    <i class="bi bi-plus-circle-fill text-primary"></i> Nueva Solicitud
+                    <i class="bi bi-plus-circle-fill text-primary"></i> Nueva solicitud
                 </a>
             </div>
         </div>
@@ -125,11 +125,11 @@ $user_name = $_SESSION['user_name'] ?? 'Usuario';
                 <div class="text-uppercase text-secondary fw-bold px-2 mb-2" style="font-size: 9.5px; letter-spacing: 0.6px;">Visaciones y Firmas</div>
                 <div class="d-flex flex-column gap-1">
                     <a class="offcanvas-link <?= ($pagina_actual === 'jefatura.php') ? 'active' : '' ?>" href="jefatura.php">
-                        <i class="bi bi-shield-check text-primary"></i> V°B° Jefatura (1/3)
+                        <i class="bi bi-shield-check text-primary"></i> V°B° Jefatura
                     </a>
                     <?php if($rol === 'ADMIN_MUNICIPAL' || $rol === 'SYSADMIN'): ?>
                         <a class="offcanvas-link <?= ($pagina_actual === 'administrador.php') ? 'active' : '' ?>" href="administrador.php">
-                            <i class="bi bi-pencil-square text-primary"></i> Firma OPI Administrador (3/3)
+                            <i class="bi bi-pencil-square text-primary"></i> Administrador
                         </a>
                     <?php endif; ?>
                 </div>
@@ -143,15 +143,15 @@ $user_name = $_SESSION['user_name'] ?? 'Usuario';
                 <div class="d-flex flex-column gap-1">
                     <?php if($rol === 'PRESUPUESTO' || $rol === 'ADMIN_MUNICIPAL' || $rol === 'SYSADMIN'): ?>
                         <a class="offcanvas-link <?= ($pagina_actual === 'control_presupuestario.php') ? 'active' : '' ?>" href="control_presupuestario.php">
-                            <i class="bi bi-calculator text-primary"></i> VB Presupuestario (2/3)
+                            <i class="bi bi-calculator text-primary"></i> VB Presupuestario
                         </a>
                         <a class="offcanvas-link <?= ($pagina_actual === 'cuentas_centros_costo.php' || $pagina_actual === 'centros_de_costo.php' || $pagina_actual === 'mantenedor_cuentas.php') ? 'active' : '' ?>" href="cuentas_centros_costo.php">
-                            <i class="bi bi-wallet2 text-primary"></i> Cuentas y Centros de Costo
+                            <i class="bi bi-wallet2 text-primary"></i> Cuentas y centros de costo
                         </a>
                     <?php endif; ?>
                     <?php if($rol === 'FINANZAS' || $rol === 'SYSADMIN'): ?>
                         <a class="offcanvas-link <?= ($pagina_actual === 'finanzas.php') ? 'active' : '' ?>" href="finanzas.php">
-                            <i class="bi bi-file-earmark-check text-primary"></i> Firma CDP Oficial (DAF)
+                            <i class="bi bi-file-earmark-check text-primary"></i> Firma CDP (DAF)
                         </a>
                     <?php endif; ?>
                 </div>
@@ -164,7 +164,7 @@ $user_name = $_SESSION['user_name'] ?? 'Usuario';
                 <div class="text-uppercase text-secondary fw-bold px-2 mb-2" style="font-size: 9.5px; letter-spacing: 0.6px;">Adquisiciones</div>
                 <div class="d-flex flex-column gap-1">
                     <a class="offcanvas-link <?= ($pagina_actual === 'adquisiciones.php') ? 'active' : '' ?>" href="adquisiciones.php">
-                        <i class="bi bi-cart3 text-primary"></i> Bandeja Adquisiciones
+                        <i class="bi bi-cart3 text-primary"></i> Adquisiciones
                     </a>
                 </div>
             </div>
@@ -176,22 +176,22 @@ $user_name = $_SESSION['user_name'] ?? 'Usuario';
                 <div class="text-uppercase text-secondary fw-bold px-2 mb-2" style="font-size: 9.5px; letter-spacing: 0.6px;">Administración Global</div>
                 <div class="d-flex flex-column gap-1">
                     <a class="offcanvas-link <?= ($pagina_actual === 'usuarios.php') ? 'active' : '' ?>" href="usuarios.php">
-                        <i class="bi bi-people text-primary"></i> Gestión de Usuarios
+                        <i class="bi bi-people text-primary"></i> Gestión de usuarios
                     </a>
                     <a class="offcanvas-link <?= ($pagina_actual === 'unidades.php') ? 'active' : '' ?>" href="unidades.php">
-                        <i class="bi bi-diagram-3 text-primary"></i> Direcciones y Unidades
+                        <i class="bi bi-diagram-3 text-primary"></i> Unidades
                     </a>
                     <a class="offcanvas-link <?= ($pagina_actual === 'firmantes.php') ? 'active' : '' ?>" href="firmantes.php">
-                        <i class="bi bi-vector-pen text-primary"></i> Firmantes Suplentes
+                        <i class="bi bi-vector-pen text-primary"></i> Firmantes suplentes
                     </a>
                     <a class="offcanvas-link <?= ($pagina_actual === 'configuracion_sistema.php') ? 'active' : '' ?>" href="configuracion_sistema.php">
-                        <i class="bi bi-sliders text-primary"></i> Parámetros del Sistema
+                        <i class="bi bi-sliders text-primary"></i> Parámetros del sistema
                     </a>
                     <a class="offcanvas-link <?= ($pagina_actual === 'mantenedor_flujos.php') ? 'active' : '' ?>" href="mantenedor_flujos.php">
-                        <i class="bi bi-gear-wide-connected text-primary"></i> Diseñador de Flujos
+                        <i class="bi bi-gear-wide-connected text-primary"></i> Diseñador de flujos
                     </a>
                     <a class="offcanvas-link text-danger fw-semibold <?= ($pagina_actual === 'limpiar_datos_pruebas.php') ? 'active bg-danger text-white' : '' ?>" href="limpiar_datos_pruebas.php">
-                        <i class="bi bi-trash3-fill"></i> Limpieza de Pruebas
+                        <i class="bi bi-trash3-fill"></i> Limpieza de pruebas
                     </a>
                 </div>
             </div>
@@ -202,10 +202,10 @@ $user_name = $_SESSION['user_name'] ?? 'Usuario';
             <div class="text-uppercase text-secondary fw-bold px-2 mb-2" style="font-size: 9.5px; letter-spacing: 0.6px;">Mi Cuenta</div>
             <div class="d-flex flex-column gap-1">
                 <a class="offcanvas-link <?= ($pagina_actual === 'subrogancia.php') ? 'active' : '' ?>" href="subrogancia.php">
-                    <i class="bi bi-person-gear text-secondary"></i> Configurar Suplente
+                    <i class="bi bi-person-gear text-secondary"></i> Configurar suplente
                 </a>
                 <a class="offcanvas-link text-danger fw-bold" href="logout.php">
-                    <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                    <i class="bi bi-box-arrow-right"></i> Cerrar sesión
                 </a>
             </div>
         </div>
