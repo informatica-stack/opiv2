@@ -610,5 +610,32 @@ CREATE TABLE `expedientes_criterios` (
   CONSTRAINT `fk_criterios_exp` FOREIGN KEY (`expediente_id`) REFERENCES `expedientes` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `expedientes_autorizaciones_cc`;
+CREATE TABLE `expedientes_autorizaciones_cc` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `expediente_id` int NOT NULL,
+  `tipo_autorizacion` enum('UNIDAD_ORIGEN','CENTRO_COSTO_EXTERNO') DEFAULT 'CENTRO_COSTO_EXTERNO',
+  `centro_costo_id` int NOT NULL,
+  `unidad_responsable_id` int NOT NULL,
+  `monto_imputado` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `estado` enum('PENDIENTE','APROBADO','RECHAZADO','DEVUELTO') DEFAULT 'PENDIENTE',
+  `visado_por_id` int DEFAULT NULL,
+  `fecha_visacion` datetime DEFAULT NULL,
+  `comentario` text,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_exp_aut_exp` (`expediente_id`),
+  KEY `idx_exp_aut_cc` (`centro_costo_id`),
+  KEY `idx_exp_aut_un` (`unidad_responsable_id`),
+  KEY `idx_exp_aut_estado` (`estado`),
+  CONSTRAINT `fk_aut_exp` FOREIGN KEY (`expediente_id`) REFERENCES `expedientes` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_aut_cc` FOREIGN KEY (`centro_costo_id`) REFERENCES `centros_costo` (`id`),
+  CONSTRAINT `fk_aut_un` FOREIGN KEY (`unidad_responsable_id`) REFERENCES `unidades` (`id`),
+  CONSTRAINT `fk_aut_usr` FOREIGN KEY (`visado_por_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
 COMMIT;
