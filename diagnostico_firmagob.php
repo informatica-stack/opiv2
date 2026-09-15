@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
             if (!file_exists($test_dir)) @mkdir($test_dir, 0777, true);
             $test_pdf_path = $test_dir . '/test_' . time() . '.pdf';
 
-            require_once __DIR__ . '/fpdf/fpdf.php';
+            require_once __DIR__ . '/fpdf.php';
             $pdf = new FPDF();
             $pdf->AddPage();
             $pdf->SetFont('Arial', 'B', 16);
