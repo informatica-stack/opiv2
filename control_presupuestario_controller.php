@@ -428,7 +428,7 @@ if ($vista === 'revisar' && isset($_GET['id'])) {
     $es_fase_inicial = !$es_fase_final;
 
     $stmtItems = $pdo->prepare("
-        SELECT ei.*, cm.codigo as cuenta_codigo, cm.nombre as cuenta_nombre, ag.codigo as ag_codigo
+        SELECT ei.*, cm.codigo as cuenta_codigo, cm.nombre as cuenta_nombre, COALESCE(cm.tipo_cuenta, 'PRESUPUESTARIA') as cuenta_tipo, ag.codigo as ag_codigo
         FROM expedientes_items ei
         JOIN presupuestos_asignados pa ON ei.presupuesto_asignado_id = pa.id
         JOIN cuentas_maestras cm ON pa.cuenta_maestra_id = cm.id

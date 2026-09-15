@@ -66,17 +66,18 @@ CREATE TABLE `cuentas_maestras` (
   `id` int NOT NULL AUTO_INCREMENT,
   `codigo` varchar(50) NOT NULL,
   `nombre` varchar(150) NOT NULL,
+  `tipo_cuenta` enum('PRESUPUESTARIA','COMPLEMENTARIA') NOT NULL DEFAULT 'PRESUPUESTARIA',
   `presupuesto_global_total` decimal(15,2) DEFAULT '0.00',
   `activo` tinyint(1) DEFAULT '1',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `cuentas_maestras` (`id`, `codigo`, `nombre`, `presupuesto_global_total`, `activo`) VALUES
-(1, '2152204001001', 'Por propuesta pública', 0.00, 1),
-(3, '2152906001', 'Equipos computacionales y periféricos', 0.00, 1),
-(4, '2152401007001', 'Canastas', 0.00, 1),
-(5, '2152201001001', 'Actividades propias', 0.00, 1),
-(6, '2152907001', 'Programas Computacionales', 0.00, 1);
+INSERT INTO `cuentas_maestras` (`id`, `codigo`, `nombre`, `tipo_cuenta`, `presupuesto_global_total`, `activo`) VALUES
+(1, '2152204001001', 'Por propuesta pública', 'PRESUPUESTARIA', 0.00, 1),
+(3, '2152906001', 'Equipos computacionales y periféricos', 'PRESUPUESTARIA', 0.00, 1),
+(4, '2152401007001', 'Canastas', 'PRESUPUESTARIA', 0.00, 1),
+(5, '2152201001001', 'Actividades propias', 'PRESUPUESTARIA', 0.00, 1),
+(6, '2152907001', 'Programas Computacionales', 'PRESUPUESTARIA', 0.00, 1);
 
 -- --------------------------------------------------------
 

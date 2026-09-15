@@ -47,7 +47,7 @@ try {
     $cuentas_disponibles = [];
     if ($centro_costo) {
         $stmtC = $pdo->prepare("
-            SELECT pa.id, cm.codigo, cm.nombre, ag.codigo as ag_codigo 
+            SELECT pa.id, cm.codigo, cm.nombre, COALESCE(cm.tipo_cuenta, 'PRESUPUESTARIA') as tipo_cuenta, ag.codigo as ag_codigo 
             FROM presupuestos_asignados pa
             JOIN cuentas_maestras cm ON pa.cuenta_maestra_id = cm.id
             LEFT JOIN areas_gestion ag ON pa.area_gestion_id = ag.id

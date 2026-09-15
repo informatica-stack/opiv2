@@ -584,6 +584,9 @@ $user_depto = $_SESSION['user_depto_nombre'] ?? 'Control Presupuestario';
                                             <div>
                                                 <div class="d-flex align-items-center gap-2 flex-wrap">
                                                     <span class="badge bg-light text-dark border font-monospace fw-bold" style="font-size: 11.5px;"><?= $it['cuenta_codigo'] ?></span>
+                                                    <?php if(!empty($it['cuenta_tipo']) && $it['cuenta_tipo'] === 'COMPLEMENTARIA'): ?>
+                                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" style="font-size: 9px;">Complementaria</span>
+                                                    <?php endif; ?>
                                                     <?php if($it['ag_codigo']): ?>
                                                         <span class="badge bg-secondary-subtle text-secondary-emphasis" style="font-size: 9px;">AG: <?= $it['ag_codigo'] ?></span>
                                                     <?php endif; ?>
