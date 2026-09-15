@@ -123,6 +123,74 @@ body {
     color: var(--primary);
 }
 
+.nav-link-saas {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+}
+.nav-link-saas:hover {
+    color: #0f172a;
+    background-color: #f1f5f9;
+}
+.nav-link-saas.active {
+    color: #2563eb;
+    background-color: #eff6ff;
+    border-color: #dbeafe;
+}
+.nav-link-saas.highlight {
+    color: #2563eb;
+    font-weight: 700;
+}
+.nav-link-saas.highlight:hover {
+    background-color: #eff6ff;
+}
+
+/* Offcanvas Drawer Links */
+.offcanvas-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+.offcanvas-link:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+}
+.offcanvas-link.active {
+    background-color: #eff6ff;
+    color: #2563eb;
+    font-weight: 700;
+}
+.offcanvas-link.highlight {
+    background-color: #ecfdf5;
+    color: #059669;
+}
+
+/* Dropdown Menu Global Scrolling Guard (Elimina desbordes y bloqueos) */
+.navbar .dropdown-menu {
+    max-height: calc(100vh - 75px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    border-radius: 12px;
+    border-color: var(--border-color);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+}
+
 .user-pill {
     display: flex;
     align-items: center;
