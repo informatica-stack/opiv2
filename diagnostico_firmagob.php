@@ -32,6 +32,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
         $otp_probar = trim($_POST['otp_probar'] ?? '');
         $purpose_probar = trim($_POST['purpose_probar'] ?? FIRMAGOB_PURPOSE);
         $entity_probar = trim($_POST['entity_probar'] ?? FIRMAGOB_ENTITY);
+        $url_probar = trim($_POST['url_probar'] ?? FIRMAGOB_API_URL);
+        $token_key_probar = trim($_POST['token_key_probar'] ?? FIRMAGOB_API_TOKEN_KEY);
+        $secret_probar = trim($_POST['secret_probar'] ?? FIRMAGOB_SECRET);
 
         try {
             // 1. Crear un PDF mínimo de prueba
@@ -50,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
             $pdf->Output('F', $test_pdf_path);
 
             // 2. Generar JWT y payload
-            $jwt = firmagob_generar_jwt($rut_probar, $entity_probar, $purpose_probar, FIRMAGOB_SECRET);
+            $jwt = firmagob_generar_jwt($rut_probar, $entity_probar, $purpose_probar, $secret_probar);
             $pdf_content = file_get_contents($test_pdf_path);
             $pdf_base64 = base64_encode($pdf_content);
             $checksum = hash('sha256', $pdf_content);
@@ -58,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
 
             $payload = [
                 'token'         => $jwt,
-                'api_token_key' => FIRMAGOB_API_TOKEN_KEY,
+                'api_token_key' => $token_key_probar,
                 'files'         => [
                     [
                         'content-type' => 'application/pdf',
@@ -79,15 +82,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
             }
 
             $raw_request = [
-                'url'     => FIRMAGOB_API_URL,
+                'url'     => $url_probar,
                 'headers' => $headers,
                 'jwt_payload_decoded' => json_decode(base64_decode(strtr(explode('.', $jwt)[1], '-_', '+/')), true),
-                'api_token_key' => FIRMAGOB_API_TOKEN_KEY ? (substr(FIRMAGOB_API_TOKEN_KEY, 0, 8) . '...' . substr(FIRMAGOB_API_TOKEN_KEY, -4)) : 'VACÍO'
+                'api_token_key' => $token_key_probar ? (substr($token_key_probar, 0, 8) . '...' . substr($token_key_probar, -4)) : 'VACÍO'
             ];
 
             // 3. Ejecutar cURL
             $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, FIRMAGOB_API_URL);
+            curl_setopt($ch, CURLOPT_URL, $url_probar);
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
@@ -246,15 +249,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
                         </div>
                     </div>
 
-                    <div class="row g-3 mb-4">
+                    <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label fw-bold small">Entidad (JWT Entity):</label>
-                            <input type="text" name="entity_probar" class="form-control" value="<?= htmlspecialchars(FIRMAGOB_ENTITY) ?>">
+                            <input type="text" name="entity_probar" class="form-control" value="<?= htmlspecialchars($_POST['entity_probar'] ?? FIRMAGOB_ENTITY) ?>">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold small">Propósito (JWT Purpose):</label>
-                            <input type="text" name="purpose_probar" class="form-control" value="<?= htmlspecialchars(FIRMAGOB_PURPOSE) ?>">
+                            <input type="text" name="purpose_probar" class="form-control" value="<?= htmlspecialchars($_POST['purpose_probar'] ?? FIRMAGOB_PURPOSE) ?>">
                         </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small">URL del Endpoint FirmaGob:</label>
+                        <select name="url_probar" class="form-select font-monospace small">
+                            <option value="https://api.firma.digital.gob.cl/firma/v2/files/tickets" <?= (($_POST['url_probar'] ?? FIRMAGOB_API_URL) === 'https://api.firma.digital.gob.cl/firma/v2/files/tickets') ? 'selected' : '' ?>>Producción: https://api.firma.digital.gob.cl/firma/v2/files/tickets</option>
+                            <option value="https://api.firma.cert.digital.gob.cl/firma/v2/files/tickets" <?= (($_POST['url_probar'] ?? FIRMAGOB_API_URL) === 'https://api.firma.cert.digital.gob.cl/firma/v2/files/tickets') ? 'selected' : '' ?>>Certificación/QA: https://api.firma.cert.digital.gob.cl/firma/v2/files/tickets</option>
+                        </select>
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold shadow d-flex align-items-center justify-content-center gap-2">
