@@ -371,7 +371,11 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
     $pdf->Cell(58, 4, $utf("1. V°B° TÉCNICO JEFATURA"), 0, 1, 'C');
     $pdf->SetFont('Arial', '', 6.5);
     $pdf->SetXY(14, $y_firmas + 5.5);
-    $pdf->Cell(58, 3, $utf($exp['solicitante'] ?? 'Jefe de Unidad Solicitante'), 0, 1, 'C');
+    $nombre_jefe_sub = 'Jefatura Unidad Solicitante';
+    if (!empty($exp['unidad'])) {
+        $nombre_jefe_sub = 'Jefatura ' . $exp['unidad'];
+    }
+    $pdf->Cell(58, 3, $utf($nombre_jefe_sub), 0, 1, 'C');
     $pdf->SetFont('Arial', 'I', 6.5);
     $pdf->SetTextColor(120, 120, 120);
     $pdf->SetXY(14, $y_firmas + 34);

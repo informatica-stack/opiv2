@@ -25,12 +25,40 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     }
 }
 
+// 1.3 Carga opcional de archivo .env si existe en la raíz
+if (file_exists(__DIR__ . '/.env')) {
+    $env_lines = file(__DIR__ . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($env_lines as $line) {
+        $line = trim($line);
+        if (empty($line) || strpos($line, '#') === 0) continue;
+        if (strpos($line, '=') !== false) {
+            list($env_k, $env_v) = explode('=', $line, 2);
+            $env_k = trim($env_k);
+            $env_v = trim($env_v, " \t\n\r\0\x0B\"'");
+            if (!empty($env_k)) {
+                putenv("$env_k=$env_v");
+                $_ENV[$env_k] = $env_v;
+                $_SERVER[$env_k] = $env_v;
+            }
+        }
+    }
+}
+
+// Función helper para obtener variable de entorno limpia de espacios o comillas
+function obtener_env($clave, $defecto = '') {
+    $val = getenv($clave);
+    if ($val === false || $val === null || $val === '') {
+        $val = $_ENV[$clave] ?? ($_SERVER[$clave] ?? $defecto);
+    }
+    return is_string($val) ? trim($val, " \t\n\r\0\x0B\"'") : $val;
+}
+
 // 2. Credenciales de Base de Datos (Variables de Entorno Dockploy con Fallback Local)
-define('DB_HOST', getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? ($_SERVER['DB_HOST'] ?? 'localhost')));
-define('DB_NAME', getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? ($_SERVER['DB_NAME'] ?? 'db_municipal_opi')));
-define('DB_USER', getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? ($_SERVER['DB_USER'] ?? 'root')));
-define('DB_PASS', getenv('DB_PASS') !== false ? getenv('DB_PASS') : ($_ENV['DB_PASS'] ?? ($_SERVER['DB_PASS'] ?? '')));
-define('DB_CHARSET', getenv('DB_CHARSET') ?: ($_ENV['DB_CHARSET'] ?? ($_SERVER['DB_CHARSET'] ?? 'utf8mb4')));
+define('DB_HOST', obtener_env('DB_HOST', 'localhost'));
+define('DB_NAME', obtener_env('DB_NAME', 'db_municipal_opi'));
+define('DB_USER', obtener_env('DB_USER', 'root'));
+define('DB_PASS', obtener_env('DB_PASS', ''));
+define('DB_CHARSET', obtener_env('DB_CHARSET', 'utf8mb4'));
 
 // 3. Conexión PDO (Segura)
 try {
@@ -96,16 +124,16 @@ define('ESTADO_ANULADO', 'ANULADO');
 define('ESTADO_RECHAZADO', 'RECHAZADO');
 
 // 5. Configuración de Firma Digital FirmaGob (Gobierno Digital)
-// Inyección directa desde Variables de Entorno de Dokploy / Docker
-define('FIRMAGOB_AMBIENTE', getenv('FIRMAGOB_AMBIENTE') ?: ($_ENV['FIRMAGOB_AMBIENTE'] ?? ($_SERVER['FIRMAGOB_AMBIENTE'] ?? 'PRODUCCION')));
-define('FIRMAGOB_API_URL', getenv('FIRMAGOB_API_URL') ?: ($_ENV['FIRMAGOB_API_URL'] ?? ($_SERVER['FIRMAGOB_API_URL'] ?? 'https://api.firma.digital.gob.cl/firma/v2/files/tickets')));
-define('FIRMAGOB_ENTITY', getenv('FIRMAGOB_ENTITY') ?: ($_ENV['FIRMAGOB_ENTITY'] ?? ($_SERVER['FIRMAGOB_ENTITY'] ?? 'Ilustre Municipalidad de Lebu')));
-define('FIRMAGOB_PURPOSE', getenv('FIRMAGOB_PURPOSE') ?: ($_ENV['FIRMAGOB_PURPOSE'] ?? ($_SERVER['FIRMAGOB_PURPOSE'] ?? 'Propósito General')));
-define('FIRMAGOB_MODO', getenv('FIRMAGOB_MODO') ?: ($_ENV['FIRMAGOB_MODO'] ?? ($_SERVER['FIRMAGOB_MODO'] ?? 'ATENDIDA')));
+// Inyección directa desde Variables de Entorno de Dokploy / Docker o archivo .env
+define('FIRMAGOB_AMBIENTE', obtener_env('FIRMAGOB_AMBIENTE', 'PRODUCCION'));
+define('FIRMAGOB_API_URL', obtener_env('FIRMAGOB_API_URL', 'https://api.firma.digital.gob.cl/firma/v2/files/tickets'));
+define('FIRMAGOB_ENTITY', obtener_env('FIRMAGOB_ENTITY', 'Ilustre Municipalidad de Lebu'));
+define('FIRMAGOB_PURPOSE', obtener_env('FIRMAGOB_PURPOSE', 'Propósito General'));
+define('FIRMAGOB_MODO', obtener_env('FIRMAGOB_MODO', 'ATENDIDA'));
 
-// Credenciales secretas leídas desde Dokploy (sin datos sensibles en el código fuente)
-define('FIRMAGOB_API_TOKEN_KEY', getenv('FIRMAGOB_API_TOKEN_KEY') ?: ($_ENV['FIRMAGOB_API_TOKEN_KEY'] ?? ($_SERVER['FIRMAGOB_API_TOKEN_KEY'] ?? '')));
-define('FIRMAGOB_SECRET', getenv('FIRMAGOB_SECRET') ?: ($_ENV['FIRMAGOB_SECRET'] ?? ($_SERVER['FIRMAGOB_SECRET'] ?? '')));
+// Credenciales secretas leídas desde Dokploy / .env (sin datos sensibles en el código fuente)
+define('FIRMAGOB_API_TOKEN_KEY', obtener_env('FIRMAGOB_API_TOKEN_KEY', ''));
+define('FIRMAGOB_SECRET', obtener_env('FIRMAGOB_SECRET', ''));
 
 // 6. Función helper para URLs (opcional)
 function base_url($path = '') {
