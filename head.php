@@ -25,9 +25,9 @@ if (!isset($titulo_pagina)) {
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 
 <!-- 3. Sistema de Diseño Global Custom -->
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=<?= file_exists(__DIR__ . '/css/style.css') ? filemtime(__DIR__ . '/css/style.css') : '2.0' ?>">
 <!-- 4. Sistema de Diseño SaaS Clean Minimalist Unificado -->
-<link rel="stylesheet" href="css/saas-theme.css">
+<link rel="stylesheet" href="css/saas-theme.css?v=<?= file_exists(__DIR__ . '/css/saas-theme.css') ? filemtime(__DIR__ . '/css/saas-theme.css') : '2.0' ?>">
 
 <!-- 5. Bootstrap 5.3.3 JS Bundle (Carga Centralizada) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>

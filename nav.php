@@ -11,7 +11,7 @@ $user_name = $_SESSION['user_name'] ?? 'Usuario';
         
         <!-- 1. Marca y Logotipo -->
         <a class="brand-wrapper" href="index.php">
-            <img src="logo.png" alt="Logo Municipalidad" class="brand-logo-img">
+            <img src="logo.png" alt="Logo Municipalidad" class="brand-logo-img" style="height: 38px; max-height: 38px; width: auto; object-fit: contain;">
             <div class="lh-1 d-none d-sm-block text-start">
                 <span class="brand-title">Sistema OPI</span>
                 <span class="brand-subtitle">Municipalidad de Lebu</span>
@@ -24,7 +24,7 @@ $user_name = $_SESSION['user_name'] ?? 'Usuario';
             <!-- Botón Desplegable del Menú del Sistema -->
             <button class="btn-nav-menu" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNav" aria-controls="offcanvasNav" title="Abrir Menú de Módulos">
                 <i class="bi bi-grid-3x3-gap-fill"></i>
-                <span class="d-none d-xs-inline">Menú del Sistema</span>
+                <span>Menú del Sistema</span>
             </button>
 
             <!-- Separador Vertical Visual -->
@@ -89,7 +89,7 @@ $user_name = $_SESSION['user_name'] ?? 'Usuario';
     <!-- Cabecera del Menú -->
     <div class="offcanvas-header border-bottom py-3 px-4 bg-light">
         <div class="d-flex align-items-center gap-3">
-            <img src="logo.png" alt="Logo" class="brand-logo-img" style="height: 36px;">
+            <img src="logo.png" alt="Logo" class="brand-logo-img" style="height: 34px; max-height: 34px; width: auto; object-fit: contain;">
             <div>
                 <h6 class="offcanvas-title fw-bold text-dark mb-0 fs-6" id="offcanvasNavLabel">Menú del Sistema</h6>
                 <span class="brand-subtitle">Municipalidad de Lebu</span>
