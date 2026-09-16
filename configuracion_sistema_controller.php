@@ -95,4 +95,11 @@ try {
 } catch (Exception $e) {
     // Usar valores predeterminados en caso de error
 }
+
+// Sincronizar las variables de FirmaGob con las constantes activas (que priorizan Dokploy / .env)
+$configs['firmagob_modo']     = FIRMAGOB_MODO;
+$configs['firmagob_entity']   = FIRMAGOB_ENTITY;
+$configs['firmagob_purpose']  = FIRMAGOB_PURPOSE;
+$configs['firmagob_ambiente'] = FIRMAGOB_AMBIENTE;
+$configs['firmagob_api_url']  = FIRMAGOB_API_URL;
 ?>
