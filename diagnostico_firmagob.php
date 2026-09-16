@@ -81,18 +81,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
                 $headers[] = 'OTP: ' . $otp_probar;
             }
 
+            $json_body_enviado = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+            // Para visualización limpia: versión truncando el base64 del PDF para que sea legible
+            $payload_preview = $payload;
+            if (isset($payload_preview['files'][0]['content'])) {
+                $len = strlen($payload_preview['files'][0]['content']);
+                $payload_preview['files'][0]['content'] = substr($payload_preview['files'][0]['content'], 0, 45) . "... [Base64 de $len caracteres]";
+            }
+            $json_body_preview = json_encode($payload_preview, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+            $jwt_parts = explode('.', $jwt);
+            $jwt_header_decoded = json_decode(base64_decode(strtr($jwt_parts[0] ?? '', '-_', '+/')), true);
+            $jwt_payload_decoded = json_decode(base64_decode(strtr($jwt_parts[1] ?? '', '-_', '+/')), true);
+
             $raw_request = [
-                'url'     => $url_probar,
-                'headers' => $headers,
-                'jwt_payload_decoded' => json_decode(base64_decode(strtr(explode('.', $jwt)[1], '-_', '+/')), true),
-                'api_token_key' => $token_key_probar ? (substr($token_key_probar, 0, 8) . '...' . substr($token_key_probar, -4)) : 'VACÍO'
+                'metodo'               => 'POST',
+                'url'                  => $url_probar,
+                'headers'              => $headers,
+                'json_body_completo'   => $json_body_preview,
+                'jwt_token_string'     => $jwt,
+                'jwt_header_decoded'   => $jwt_header_decoded,
+                'jwt_payload_decoded'  => $jwt_payload_decoded
             ];
 
             // 3. Ejecutar cURL
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url_probar);
             curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $json_body_enviado);
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_TIMEOUT, 30);
@@ -106,9 +123,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
             @unlink($test_pdf_path);
 
             $raw_response = [
-                'http_code' => $http_code,
+                'http_code'  => $http_code,
                 'curl_error' => $curl_err ?: 'Ninguno',
-                'body' => json_decode($response_body, true) ?: $response_body
+                'raw_body'   => json_decode($response_body, true) ?: $response_body
             ];
 
             if ($http_code === 200) {
@@ -276,16 +293,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
 
                 <?php if ($raw_request || $raw_response): ?>
                     <div class="mt-4">
-                        <h6 class="fw-bold text-uppercase text-secondary small mb-2">Detalles Técnicos de la Petición</h6>
+                        <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                            <i class="bi bi-terminal-fill me-1 text-primary"></i> Volcado Técnico Real (Raw Wire Traffic)
+                        </h5>
                         
-                        <div class="card bg-dark text-light p-3 mb-3 font-monospace small" style="max-height: 250px; overflow-y: auto;">
-                            <strong class="text-warning">=== PAYLOAD JWT GENERADO ===</strong><br>
-                            <?= htmlspecialchars(json_encode($raw_request, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) ?>
+                        <!-- 1. Petición HTTP Enviada -->
+                        <div class="card bg-dark text-light p-3 mb-3 font-monospace small shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-1">
+                                <span class="text-warning fw-bold">1. PETICIÓN HTTP REAL ENVIADA A FIRMAGOB (JSON BODY)</span>
+                                <span class="badge bg-secondary"><?= htmlspecialchars($raw_request['metodo'] ?? 'POST') ?> <?= htmlspecialchars($raw_request['url'] ?? '') ?></span>
+                            </div>
+                            <div class="mb-2 text-info">
+                                <strong>Headers:</strong><br>
+                                <?php foreach (($raw_request['headers'] ?? []) as $h): ?>
+                                    &nbsp;&nbsp;<?= htmlspecialchars($h) ?><br>
+                                <?php endforeach; ?>
+                            </div>
+                            <strong class="text-white">Body JSON Transmitido por cURL:</strong>
+                            <pre class="text-success-emphasis bg-black p-2 rounded mt-1 mb-0" style="white-space: pre-wrap; word-break: break-all; max-height: 250px; overflow-y: auto;"><?= htmlspecialchars($raw_request['json_body_completo'] ?? '') ?></pre>
                         </div>
 
-                        <div class="card bg-dark text-light p-3 font-monospace small" style="max-height: 250px; overflow-y: auto;">
-                            <strong class="text-info">=== RESPUESTA RAW RECIBIDA DE FIRMAGOB ===</strong><br>
-                            <?= htmlspecialchars(json_encode($raw_response, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) ?>
+                        <!-- 2. Inspección del JWT -->
+                        <div class="card bg-dark text-light p-3 mb-3 font-monospace small shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-1">
+                                <span class="text-info fw-bold">2. DETALLE DECODIFICADO DEL TOKEN JWT (CLAIMS)</span>
+                                <span class="badge bg-primary">Algoritmo HS256</span>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <strong class="text-secondary">Header:</strong>
+                                    <pre class="text-light bg-black p-2 rounded mt-1 mb-0"><?= htmlspecialchars(json_encode($raw_request['jwt_header_decoded'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) ?></pre>
+                                </div>
+                                <div class="col-md-8">
+                                    <strong class="text-secondary">Payload (Claims):</strong>
+                                    <pre class="text-light bg-black p-2 rounded mt-1 mb-0"><?= htmlspecialchars(json_encode($raw_request['jwt_payload_decoded'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) ?></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Respuesta HTTP Recibida -->
+                        <div class="card bg-dark text-light p-3 font-monospace small shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-1">
+                                <span class="text-warning fw-bold">3. RESPUESTA HTTP REAL RECIBIDA DE FIRMAGOB</span>
+                                <span class="badge <?= ($raw_response['http_code'] === 200) ? 'bg-success' : 'bg-danger' ?>">
+                                    HTTP <?= htmlspecialchars($raw_response['http_code'] ?? '0') ?>
+                                </span>
+                            </div>
+                            <strong class="text-white">Body JSON de Respuesta:</strong>
+                            <pre class="text-warning bg-black p-2 rounded mt-1 mb-0" style="white-space: pre-wrap; word-break: break-all; max-height: 250px; overflow-y: auto;"><?= htmlspecialchars(json_encode($raw_response['raw_body'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) ?></pre>
                         </div>
                     </div>
                 <?php endif; ?>
