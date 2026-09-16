@@ -124,23 +124,25 @@ define('ESTADO_ANULADO', 'ANULADO');
 define('ESTADO_RECHAZADO', 'RECHAZADO');
 
 // 5. Configuración de Firma Digital FirmaGob (Gobierno Digital)
-// Prioridad: Variables de Entorno (Dokploy / .env) -> Base de Datos (configuraciones_sistema) -> Valor por Defecto
-$env_modo = obtener_env('FIRMAGOB_MODO', '');
-$modo_cfg = ($env_modo !== '') ? $env_modo : ($config_sistema['firmagob_modo'] ?? 'ATENDIDA');
+// Prioridad: Base de Datos (guardada desde Configuración del Sistema) -> Variables de Entorno (Dokploy / .env) -> Valor por Defecto
+$modo_cfg = !empty($config_sistema['firmagob_modo']) ? $config_sistema['firmagob_modo'] : obtener_env('FIRMAGOB_MODO', 'ATENDIDA');
 define('FIRMAGOB_MODO', strtoupper(trim((string)$modo_cfg)) === 'DESATENDIDA' ? 'DESATENDIDA' : 'ATENDIDA');
 
-$env_ambiente = obtener_env('FIRMAGOB_AMBIENTE', '');
-define('FIRMAGOB_AMBIENTE', ($env_ambiente !== '') ? $env_ambiente : ($config_sistema['firmagob_ambiente'] ?? 'PRODUCCION'));
+$ambiente_cfg = !empty($config_sistema['firmagob_ambiente']) ? $config_sistema['firmagob_ambiente'] : obtener_env('FIRMAGOB_AMBIENTE', 'PRODUCCION');
+define('FIRMAGOB_AMBIENTE', $ambiente_cfg);
 
-$env_api_url = obtener_env('FIRMAGOB_API_URL', '');
-define('FIRMAGOB_API_URL', ($env_api_url !== '') ? $env_api_url : ($config_sistema['firmagob_api_url'] ?? 'https://api.firma.digital.gob.cl/firma/v2/files/tickets'));
+$api_url_cfg = !empty($config_sistema['firmagob_api_url']) ? $config_sistema['firmagob_api_url'] : obtener_env('FIRMAGOB_API_URL', 'https://api.firma.digital.gob.cl/firma/v2/files/tickets');
+define('FIRMAGOB_API_URL', $api_url_cfg);
 
-$env_entity = obtener_env('FIRMAGOB_ENTITY', '');
-define('FIRMAGOB_ENTITY', ($env_entity !== '') ? $env_entity : ($config_sistema['firmagob_entity'] ?? 'Ilustre Municipalidad de Lebu'));
+$entity_cfg = !empty($config_sistema['firmagob_entity']) ? $config_sistema['firmagob_entity'] : obtener_env('FIRMAGOB_ENTITY', 'Ilustre Municipalidad de Lebu');
+define('FIRMAGOB_ENTITY', $entity_cfg);
 
 // En modo desatendido el propósito siempre es 'Desatendido'; en atendida es 'Propósito General' o el configurado
-$env_purpose = obtener_env('FIRMAGOB_PURPOSE', '');
-$purpose_cfg = (FIRMAGOB_MODO === 'DESATENDIDA') ? 'Desatendido' : (($env_purpose !== '') ? $env_purpose : ($config_sistema['firmagob_purpose'] ?? 'Propósito General'));
+if (FIRMAGOB_MODO === 'DESATENDIDA') {
+    $purpose_cfg = 'Desatendido';
+} else {
+    $purpose_cfg = !empty($config_sistema['firmagob_purpose']) ? $config_sistema['firmagob_purpose'] : obtener_env('FIRMAGOB_PURPOSE', 'Propósito General');
+}
 define('FIRMAGOB_PURPOSE', $purpose_cfg);
 
 // Credenciales secretas leídas desde Dokploy / .env (sin datos sensibles en el código fuente)

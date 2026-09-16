@@ -80,26 +80,21 @@ $configs = [
     'valor_utm'              => '66000',
     'modo_mantenimiento'     => '0',
     'extensiones_permitidas' => 'pdf,zip,rar,doc,docx,xls,xlsx,jpg,jpeg,png',
-    'firmagob_modo'          => FIRMAGOB_MODO,
-    'firmagob_entity'        => FIRMAGOB_ENTITY,
-    'firmagob_purpose'       => FIRMAGOB_PURPOSE,
-    'firmagob_ambiente'      => FIRMAGOB_AMBIENTE,
-    'firmagob_api_url'       => FIRMAGOB_API_URL
+    'firmagob_modo'          => 'ATENDIDA',
+    'firmagob_entity'        => 'Ilustre Municipalidad de Lebu',
+    'firmagob_purpose'       => 'Propósito General',
+    'firmagob_ambiente'      => 'PRODUCCION',
+    'firmagob_api_url'       => 'https://api.firma.digital.gob.cl/firma/v2/files/tickets'
 ];
 
 try {
     $stmt = $pdo->query("SELECT clave, valor FROM configuraciones_sistema");
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $configs[$row['clave']] = $row['valor'];
+        if ($row['valor'] !== null && $row['valor'] !== '') {
+            $configs[$row['clave']] = $row['valor'];
+        }
     }
 } catch (Exception $e) {
     // Usar valores predeterminados en caso de error
 }
-
-// Sincronizar las variables de FirmaGob con las constantes activas (que priorizan Dokploy / .env)
-$configs['firmagob_modo']     = FIRMAGOB_MODO;
-$configs['firmagob_entity']   = FIRMAGOB_ENTITY;
-$configs['firmagob_purpose']  = FIRMAGOB_PURPOSE;
-$configs['firmagob_ambiente'] = FIRMAGOB_AMBIENTE;
-$configs['firmagob_api_url']  = FIRMAGOB_API_URL;
 ?>
