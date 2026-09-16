@@ -58,20 +58,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
             $pdf_content = file_get_contents($test_pdf_path);
             $pdf_base64 = base64_encode($pdf_content);
             $checksum = hash('sha256', $pdf_content);
-            $layout_xml = firmagob_obtener_layout_xml('JEFATURA');
+            $incluir_layout = isset($_POST['incluir_layout']) ? ($_POST['incluir_layout'] === '1') : false;
+            $layout_xml = $incluir_layout ? firmagob_obtener_layout_xml('JEFATURA') : null;
+
+            $file_item = [
+                'content-type' => 'application/pdf',
+                'content'      => $pdf_base64,
+                'description'  => 'Documento de Prueba Diagnostico',
+                'checksum'     => $checksum
+            ];
+            if ($layout_xml !== null) {
+                $file_item['layout'] = $layout_xml;
+            }
 
             $payload = [
                 'token'         => $jwt,
                 'api_token_key' => $token_key_probar,
-                'files'         => [
-                    [
-                        'content-type' => 'application/pdf',
-                        'content'      => $pdf_base64,
-                        'description'  => 'Documento de Prueba Diagnostico',
-                        'checksum'     => $checksum,
-                        'layout'       => $layout_xml
-                    ]
-                ]
+                'files'         => [ $file_item ]
             ];
 
             $headers = [
@@ -298,10 +301,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
 
                     <div class="mb-4">
                         <label class="form-label fw-bold small">URL del Endpoint FirmaGob:</label>
-                        <select name="url_probar" class="form-select font-monospace small">
+                        <select name="url_probar" class="form-select font-monospace small mb-3">
                             <option value="https://api.firma.digital.gob.cl/firma/v2/files/tickets" <?= (($_POST['url_probar'] ?? FIRMAGOB_API_URL) === 'https://api.firma.digital.gob.cl/firma/v2/files/tickets') ? 'selected' : '' ?>>Producción: https://api.firma.digital.gob.cl/firma/v2/files/tickets</option>
                             <option value="https://api.firma.cert.digital.gob.cl/firma/v2/files/tickets" <?= (($_POST['url_probar'] ?? FIRMAGOB_API_URL) === 'https://api.firma.cert.digital.gob.cl/firma/v2/files/tickets') ? 'selected' : '' ?>>Certificación/QA: https://api.firma.cert.digital.gob.cl/firma/v2/files/tickets</option>
                         </select>
+
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" name="incluir_layout" id="chkLayout" value="1" <?= (!empty($_POST['incluir_layout'])) ? 'checked' : '' ?>>
+                            <label class="form-check-label small text-muted" for="chkLayout">
+                                Incluir parámetro <code class="fw-bold">layout</code> (estampa visual en PDF). <em>(Recomendado desactivar para firma digital pura).</em>
+                            </label>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold shadow d-flex align-items-center justify-content-center gap-2">

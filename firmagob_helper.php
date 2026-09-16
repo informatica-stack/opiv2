@@ -54,8 +54,16 @@ if (!function_exists('firmagob_generar_jwt')) {
 
 /**
  * Genera la configuración de layout XML de AgileSignerConfig para estampar la firma visible en el PDF.
+ * @param string $etapa
+ * @param string|null $imagen_base64 Imagen en base64 para la estampa (si es null se usa PNG transparente 1x1)
+ * @return string
  */
-function firmagob_obtener_layout_xml($etapa = 'JEFATURA') {
+function firmagob_obtener_layout_xml($etapa = 'JEFATURA', $imagen_base64 = null) {
+    // Si no se provee imagen, usamos un pixel PNG transparente válido (1x1) para evitar que FirmaGob rechace el tag vacío
+    if (empty($imagen_base64)) {
+        $imagen_base64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+    }
+
     // Coordenadas según la etapa en la OPI
     switch (strtoupper($etapa)) {
         case 'JEFATURA':
@@ -90,7 +98,7 @@ function firmagob_obtener_layout_xml($etapa = 'JEFATURA') {
            "<ury>{$ury}</ury>" .
            '<page>LAST</page>' .
            '<image>BASE64</image>' .
-           '<BASE64VALUE></BASE64VALUE>' .
+           "<BASE64VALUE>{$imagen_base64}</BASE64VALUE>" .
            '</Visible>' .
            '</Signature>' .
            '</Application>' .
