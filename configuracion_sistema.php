@@ -114,6 +114,74 @@ require_once __DIR__ . '/configuracion_sistema_controller.php';
                     </div>
                 </div>
 
+                <!-- TARJETA 3: INTEGRACIÓN FIRMAGOB (MODO ATENDIDO / DESATENDIDO) -->
+                <div class="col-12">
+                    <div class="card shadow-sm border-light">
+                        <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="p-2 bg-indigo-subtle text-indigo rounded-3" style="background-color: #e0e7ff; color: #4338ca;">
+                                    <i class="bi bi-shield-lock-fill fs-5"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold mb-0 text-dark">Integración FirmaGob (Secretaría de Gobierno Digital)</h5>
+                                    <p class="text-muted small mb-0">Seleccione el modo de operación de la firma electrónica avanzada (Atendida con OTP o Desatendida automática).</p>
+                                </div>
+                            </div>
+                            <span class="badge <?= ($configs['firmagob_modo'] === 'DESATENDIDA') ? 'bg-success' : 'bg-primary' ?> px-3 py-2 fw-bold">
+                                Modo Actual: <?= htmlspecialchars($configs['firmagob_modo']) ?>
+                            </span>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row g-4">
+                                
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-bold text-secondary small">Modo de Firma Digital <span class="text-danger">*</span></label>
+                                    <div class="p-3 bg-light rounded-3 border">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="radio" name="firmagob_modo" id="modoAtendida" value="ATENDIDA" <?= ($configs['firmagob_modo'] !== 'DESATENDIDA') ? 'checked' : '' ?>>
+                                            <label class="form-check-label fw-bold text-dark" for="modoAtendida">
+                                                Firma Atendida (Requiere Código OTP)
+                                            </label>
+                                            <div class="text-muted small">El funcionario debe ingresar el código de 6 dígitos desde Google Authenticator o FreeOTP en cada firma.</div>
+                                        </div>
+                                        <hr class="my-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="firmagob_modo" id="modoDesatendida" value="DESATENDIDA" <?= ($configs['firmagob_modo'] === 'DESATENDIDA') ? 'checked' : '' ?>>
+                                            <label class="form-check-label fw-bold text-success" for="modoDesatendida">
+                                                Firma Desatendida (Automática / 1-Clic Sin OTP)
+                                            </label>
+                                            <div class="text-muted small">Firma directa e instantánea utilizando el certificado desatendido autorizado en la RA de FirmaGob.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-secondary small">Nombre de la Entidad (JWT Entity)</label>
+                                        <input type="text" name="firmagob_entity" class="form-control" value="<?= htmlspecialchars($configs['firmagob_entity'] ?? 'Ilustre Municipalidad de Lebu') ?>" required>
+                                        <div class="form-text small">Debe coincidir exactamente con el nombre institucional registrado en la RA de FirmaGob.</div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-secondary small">Propósito para Firma Atendida (JWT Purpose)</label>
+                                        <input type="text" name="firmagob_purpose" class="form-control" value="<?= htmlspecialchars($configs['firmagob_purpose'] ?? 'Propósito General') ?>">
+                                        <div class="form-text small">Para modo desatendido se asigna automáticamente "Desatendido".</div>
+                                    </div>
+
+                                    <div>
+                                        <label class="form-label fw-bold text-secondary small">Ambiente de Operación</label>
+                                        <select name="firmagob_ambiente" class="form-select">
+                                            <option value="PRODUCCION" <?= ($configs['firmagob_ambiente'] !== 'CERTIFICACION') ? 'selected' : '' ?>>Producción (api.firma.digital.gob.cl)</option>
+                                            <option value="CERTIFICACION" <?= ($configs['firmagob_ambiente'] === 'CERTIFICACION') ? 'selected' : '' ?>>Certificación / Sandbox (api.firma.cert.digital.gob.cl)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- BOTÓN GUARDAR -->

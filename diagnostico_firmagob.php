@@ -28,9 +28,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
     if (!$is_cli && (empty($token_csrf) || $token_csrf !== ($_SESSION['csrf_token'] ?? ''))) {
         $error_test = "Error CSRF: Token inválido. Recargue la página.";
     } else {
+        $modo_probar = strtoupper(trim($_POST['modo_probar'] ?? FIRMAGOB_MODO));
         $rut_probar = trim($_POST['rut_probar'] ?? $rut_probar);
         $otp_probar = trim($_POST['otp_probar'] ?? '');
-        $purpose_probar = trim($_POST['purpose_probar'] ?? FIRMAGOB_PURPOSE);
+        $purpose_probar = ($modo_probar === 'DESATENDIDA') ? 'Desatendido' : trim($_POST['purpose_probar'] ?? FIRMAGOB_PURPOSE);
         $entity_probar = trim($_POST['entity_probar'] ?? FIRMAGOB_ENTITY);
         $url_probar = trim($_POST['url_probar'] ?? FIRMAGOB_API_URL);
         $token_key_probar = trim($_POST['token_key_probar'] ?? FIRMAGOB_API_TOKEN_KEY);
@@ -49,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
             $pdf->Cell(190, 10, 'Prueba de Firma Digital FirmaGob - Municipalidad de Lebu', 0, 1, 'C');
             $pdf->SetFont('Arial', '', 12);
             $pdf->Cell(190, 10, 'Fecha: ' . date('Y-m-d H:i:s'), 0, 1, 'C');
-            $pdf->Cell(190, 10, 'RUN: ' . $rut_probar, 0, 1, 'C');
+            $pdf->Cell(190, 10, 'RUN: ' . $rut_probar . ' (Modo: ' . $modo_probar . ')', 0, 1, 'C');
             $pdf->Output('F', $test_pdf_path);
 
             // 2. Generar JWT y payload
@@ -77,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
                 'Content-Type: application/json',
                 'Accept: application/json'
             ];
-            if (!empty($otp_probar)) {
+            if (!empty($otp_probar) && $modo_probar !== 'DESATENDIDA') {
                 $headers[] = 'OTP: ' . $otp_probar;
             }
 
@@ -253,16 +254,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
                     <input type="hidden" name="ejecutar_prueba" value="1">
 
+                    <div class="mb-3 p-3 bg-light rounded-3 border">
+                        <label class="form-label fw-bold text-secondary small mb-2">Modo de Firma a Probar:</label>
+                        <div class="d-flex gap-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="modo_probar" id="diagModoAtendida" value="ATENDIDA" <?= (($_POST['modo_probar'] ?? FIRMAGOB_MODO) !== 'DESATENDIDA') ? 'checked' : '' ?> onchange="toggleOtpInput(this.value)">
+                                <label class="form-check-label fw-bold text-dark" for="diagModoAtendida">
+                                    Firma Atendida (Con OTP)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="modo_probar" id="diagModoDesatendida" value="DESATENDIDA" <?= (($_POST['modo_probar'] ?? FIRMAGOB_MODO) === 'DESATENDIDA') ? 'checked' : '' ?> onchange="toggleOtpInput(this.value)">
+                                <label class="form-check-label fw-bold text-success" for="diagModoDesatendida">
+                                    Firma Desatendida (Sin OTP, Propósito: "Desatendido")
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label fw-bold small">RUT Titular del Certificado:</label>
                             <input type="text" name="rut_probar" class="form-control font-monospace" value="<?= htmlspecialchars($rut_probar) ?>" required>
                             <div class="form-text small">RUT con guión o solo números.</div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6" id="contOtp">
                             <label class="form-label fw-bold small">Código OTP de tu Teléfono:</label>
-                            <input type="text" name="otp_probar" class="form-control font-monospace text-center fs-5 tracking-widest" placeholder="123456" maxlength="6" autocomplete="off" required>
-                            <div class="form-text small">Código de 6 dígitos de Google Authenticator / FreeOTP.</div>
+                            <input type="text" name="otp_probar" id="diagOtpInp" class="form-control font-monospace text-center fs-5 tracking-widest" placeholder="123456" maxlength="6" autocomplete="off">
+                            <div class="form-text small">Obligatorio solo en modo Atendido.</div>
                         </div>
                     </div>
 
@@ -350,5 +369,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
     </div>
 
     <?php include __DIR__ . '/footer.php'; ?>
+    <script>
+    function toggleOtpInput(modo) {
+        const cont = document.getElementById('contOtp');
+        const inp = document.getElementById('diagOtpInp');
+        if (modo === 'DESATENDIDA') {
+            if (cont) cont.classList.add('opacity-50');
+            if (inp) {
+                inp.disabled = true;
+                inp.value = '';
+                inp.placeholder = 'No requerido en modo desatendido';
+            }
+        } else {
+            if (cont) cont.classList.remove('opacity-50');
+            if (inp) {
+                inp.disabled = false;
+                inp.placeholder = '123456';
+            }
+        }
+    }
+    // Inicializar estado según selección actual
+    const checkedModo = document.querySelector('input[name="modo_probar"]:checked');
+    if (checkedModo) toggleOtpInput(checkedModo.value);
+    </script>
 </body>
 </html>

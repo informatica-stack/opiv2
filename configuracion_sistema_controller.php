@@ -40,11 +40,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }, explode(',', $ext_input)));
         $ext_clean = implode(',', array_unique($ext_array));
 
+        $modo_firmagob = (strtoupper(trim($_POST['firmagob_modo'] ?? 'ATENDIDA')) === 'DESATENDIDA') ? 'DESATENDIDA' : 'ATENDIDA';
+        $entity_firmagob = trim($_POST['firmagob_entity'] ?? 'Ilustre Municipalidad de Lebu');
+        $purpose_firmagob = trim($_POST['firmagob_purpose'] ?? 'Propósito General');
+        $ambiente_firmagob = (strtoupper(trim($_POST['firmagob_ambiente'] ?? 'PRODUCCION')) === 'CERTIFICACION') ? 'CERTIFICACION' : 'PRODUCCION';
+        $api_url_firmagob = ($ambiente_firmagob === 'CERTIFICACION') 
+            ? 'https://api.firma.cert.digital.gob.cl/firma/v2/files/tickets' 
+            : 'https://api.firma.digital.gob.cl/firma/v2/files/tickets';
+
         $params = [
             'limite_peso_adjunto_mb' => (string)$limite_peso,
-            'valor_utm' => (string)$valor_utm,
-            'modo_mantenimiento' => $modo_mant,
-            'extensiones_permitidas' => $ext_clean
+            'valor_utm'              => (string)$valor_utm,
+            'modo_mantenimiento'     => $modo_mant,
+            'extensiones_permitidas' => $ext_clean,
+            'firmagob_modo'          => $modo_firmagob,
+            'firmagob_entity'        => $entity_firmagob,
+            'firmagob_purpose'       => $purpose_firmagob,
+            'firmagob_ambiente'      => $ambiente_firmagob,
+            'firmagob_api_url'       => $api_url_firmagob
         ];
 
         $stmtSave = $pdo->prepare("INSERT INTO configuraciones_sistema (clave, valor) VALUES (?, ?) ON DUPLICATE KEY UPDATE valor = VALUES(valor)");
@@ -52,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmtSave->execute([$k, $v]);
         }
 
-        $mensaje = "Configuraciones del sistema actualizadas exitosamente.";
+        $mensaje = "Configuraciones del sistema y parámetros de FirmaGob actualizados exitosamente.";
         $tipo_mensaje = "success";
 
     } catch (Exception $e) {
@@ -64,9 +77,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Cargar configuraciones actuales
 $configs = [
     'limite_peso_adjunto_mb' => '10',
-    'valor_utm' => '66000',
-    'modo_mantenimiento' => '0',
-    'extensiones_permitidas' => 'pdf,zip,rar,doc,docx,xls,xlsx,jpg,jpeg,png'
+    'valor_utm'              => '66000',
+    'modo_mantenimiento'     => '0',
+    'extensiones_permitidas' => 'pdf,zip,rar,doc,docx,xls,xlsx,jpg,jpeg,png',
+    'firmagob_modo'          => FIRMAGOB_MODO,
+    'firmagob_entity'        => FIRMAGOB_ENTITY,
+    'firmagob_purpose'       => FIRMAGOB_PURPOSE,
+    'firmagob_ambiente'      => FIRMAGOB_AMBIENTE,
+    'firmagob_api_url'       => FIRMAGOB_API_URL
 ];
 
 try {

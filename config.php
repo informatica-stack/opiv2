@@ -124,12 +124,17 @@ define('ESTADO_ANULADO', 'ANULADO');
 define('ESTADO_RECHAZADO', 'RECHAZADO');
 
 // 5. Configuración de Firma Digital FirmaGob (Gobierno Digital)
-// Inyección directa desde Variables de Entorno de Dokploy / Docker o archivo .env
-define('FIRMAGOB_AMBIENTE', obtener_env('FIRMAGOB_AMBIENTE', 'PRODUCCION'));
-define('FIRMAGOB_API_URL', obtener_env('FIRMAGOB_API_URL', 'https://api.firma.digital.gob.cl/firma/v2/files/tickets'));
-define('FIRMAGOB_ENTITY', obtener_env('FIRMAGOB_ENTITY', 'Ilustre Municipalidad de Lebu'));
-define('FIRMAGOB_PURPOSE', obtener_env('FIRMAGOB_PURPOSE', 'Propósito General'));
-define('FIRMAGOB_MODO', obtener_env('FIRMAGOB_MODO', 'ATENDIDA'));
+// Inyección dinámica desde Base de Datos (configuraciones_sistema) o Variables de Entorno (.env / Dokploy)
+$modo_cfg = $config_sistema['firmagob_modo'] ?? obtener_env('FIRMAGOB_MODO', 'ATENDIDA');
+define('FIRMAGOB_MODO', strtoupper(trim((string)$modo_cfg)) === 'DESATENDIDA' ? 'DESATENDIDA' : 'ATENDIDA');
+
+define('FIRMAGOB_AMBIENTE', $config_sistema['firmagob_ambiente'] ?? obtener_env('FIRMAGOB_AMBIENTE', 'PRODUCCION'));
+define('FIRMAGOB_API_URL', $config_sistema['firmagob_api_url'] ?? obtener_env('FIRMAGOB_API_URL', 'https://api.firma.digital.gob.cl/firma/v2/files/tickets'));
+define('FIRMAGOB_ENTITY', $config_sistema['firmagob_entity'] ?? obtener_env('FIRMAGOB_ENTITY', 'Ilustre Municipalidad de Lebu'));
+
+// En modo desatendido el propósito siempre es 'Desatendido'; en atendida es 'Propósito General' o el configurado
+$purpose_cfg = (FIRMAGOB_MODO === 'DESATENDIDA') ? 'Desatendido' : ($config_sistema['firmagob_purpose'] ?? obtener_env('FIRMAGOB_PURPOSE', 'Propósito General'));
+define('FIRMAGOB_PURPOSE', $purpose_cfg);
 
 // Credenciales secretas leídas desde Dokploy / .env (sin datos sensibles en el código fuente)
 define('FIRMAGOB_API_TOKEN_KEY', obtener_env('FIRMAGOB_API_TOKEN_KEY', ''));

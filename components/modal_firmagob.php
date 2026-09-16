@@ -85,26 +85,39 @@
                         
                         <!-- PESTAÑA A: FIRMA NATIVA FIRMAGOB -->
                         <div class="tab-pane fade show active" id="pills-firmagob" role="tabpanel">
-                            <div class="p-3 bg-blue-50 border border-blue-200 rounded-3 mb-3 text-blue-900" style="background-color: #eff6ff; border-color: #bfdbfe;">
-                                <div class="d-flex align-items-center gap-2 mb-1.5">
-                                    <i class="bi bi-phone text-primary fs-5"></i>
-                                    <span class="fw-bold small">Ingrese su código de seguridad OTP</span>
+                            <?php if (defined('FIRMAGOB_MODO') && FIRMAGOB_MODO === 'DESATENDIDA'): ?>
+                                <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-3 mb-3 text-emerald-950 text-center" style="background-color: #ecfdf5; border-color: #a7f3d0;">
+                                    <div class="d-inline-flex p-3 bg-success bg-opacity-10 rounded-circle text-success mb-2">
+                                        <i class="bi bi-shield-check fs-2"></i>
+                                    </div>
+                                    <h6 class="fw-bold text-success mb-1">Modo de Firma Desatendida Activo</h6>
+                                    <p class="small mb-0 text-secondary" style="font-size: 12px; max-width: 480px; margin: 0 auto;">
+                                        El documento será firmado digitalmente de forma <strong>automática e instantánea (1-Clic)</strong> utilizando el certificado electrónico institucional custodiado en FirmaGob. No se requiere código OTP.
+                                    </p>
                                 </div>
-                                <p class="small mb-0 text-secondary" style="font-size: 11.5px;">
-                                    Abra su aplicación móvil autenticadora (Google Authenticator, FreeOTP o similar) e ingrese los 6 dígitos generados.
-                                </p>
-                            </div>
+                                <input type="hidden" name="otp_code" id="inpOtpCode" value="">
+                            <?php else: ?>
+                                <div class="p-3 bg-blue-50 border border-blue-200 rounded-3 mb-3 text-blue-900" style="background-color: #eff6ff; border-color: #bfdbfe;">
+                                    <div class="d-flex align-items-center gap-2 mb-1.5">
+                                        <i class="bi bi-phone text-primary fs-5"></i>
+                                        <span class="fw-bold small">Ingrese su código de seguridad OTP</span>
+                                    </div>
+                                    <p class="small mb-0 text-secondary" style="font-size: 11.5px;">
+                                        Abra su aplicación móvil autenticadora (Google Authenticator, FreeOTP o similar) e ingrese los 6 dígitos generados.
+                                    </p>
+                                </div>
 
-                            <!-- INPUT DE OTP -->
-                            <div class="text-center py-2">
-                                <label class="form-label fw-bold text-secondary text-uppercase small" style="font-size: 10px; letter-spacing: 0.5px;">Código OTP (6 Dígitos)</label>
-                                <div class="d-flex justify-content-center gap-2 mb-2">
-                                    <input type="text" name="otp_code" id="inpOtpCode" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" placeholder="000000" class="form-control text-center font-monospace fw-bold fs-3 shadow-sm" style="max-width: 220px; letter-spacing: 6px;" autofocus>
+                                <!-- INPUT DE OTP -->
+                                <div class="text-center py-2">
+                                    <label class="form-label fw-bold text-secondary text-uppercase small" style="font-size: 10px; letter-spacing: 0.5px;">Código OTP (6 Dígitos)</label>
+                                    <div class="d-flex justify-content-center gap-2 mb-2">
+                                        <input type="text" name="otp_code" id="inpOtpCode" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" placeholder="000000" class="form-control text-center font-monospace fw-bold fs-3 shadow-sm" style="max-width: 220px; letter-spacing: 6px;" autofocus>
+                                    </div>
+                                    <div class="form-text text-muted small" style="font-size: 10.5px;">
+                                        <i class="bi bi-info-circle me-1"></i> Por seguridad estatal, tras 5 intentos erróneos su acceso se bloqueará temporalmente.
+                                    </div>
                                 </div>
-                                <div class="form-text text-muted small" style="font-size: 10.5px;">
-                                    <i class="bi bi-info-circle me-1"></i> Por seguridad estatal, tras 5 intentos erróneos su acceso se bloqueará temporalmente.
-                                </div>
-                            </div>
+                            <?php endif; ?>
                         </div>
 
                         <!-- PESTAÑA B: CONTINGENCIA MANUAL DOCDIGITAL -->
@@ -199,15 +212,18 @@ function abrirModalFirmaGob(data) {
 
 function submitFirmaGob(e) {
     const activeTab = document.querySelector('#pills-tab-firma .nav-link.active').id;
+    const esDesatendida = <?= (defined('FIRMAGOB_MODO') && FIRMAGOB_MODO === 'DESATENDIDA') ? 'true' : 'false' ?>;
     
     if (activeTab === 'pills-firmagob-tab') {
-        const otp = document.getElementById('inpOtpCode').value.trim();
-        if (otp.length !== 6 || !/^\d+$/.test(otp)) {
-            e.preventDefault();
-            const errDiv = document.getElementById('fgAlertaError');
-            document.getElementById('fgMsgError').innerText = 'Debe ingresar un código OTP válido de 6 dígitos numéricos.';
-            errDiv.classList.remove('d-none');
-            return false;
+        if (!esDesatendida) {
+            const otp = document.getElementById('inpOtpCode').value.trim();
+            if (otp.length !== 6 || !/^\d+$/.test(otp)) {
+                e.preventDefault();
+                const errDiv = document.getElementById('fgAlertaError');
+                document.getElementById('fgMsgError').innerText = 'Debe ingresar un código OTP válido de 6 dígitos numéricos.';
+                errDiv.classList.remove('d-none');
+                return false;
+            }
         }
     } else {
         const file = document.getElementById('inpPdfManual').files[0];

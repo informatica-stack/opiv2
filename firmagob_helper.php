@@ -1,61 +1,54 @@
-<?php
-// firmagob_helper.php - Motor de Integración Nativa con FirmaGob (Secretaría de Gobierno Digital)
-
-/**
- * Codifica una cadena en formato Base64URL (RFC 7515) sin padding.
- */
-function firmagob_base64url_encode($data) {
-    return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
-}
-
-/**
- * Limpia y formatea un RUN chileno para FirmaGob (sin puntos, sin guión, sin DV).
- * Ejemplo: "12.345.678-9" -> "12345678"
- */
-function firmagob_limpiar_run($run) {
-    $run_limpio = preg_replace('/[^0-9kK]/', '', (string)$run);
-    // Si incluye dígito verificador, remover el último caracter
-    if (strlen($run_limpio) > 1 && strpos((string)$run, '-') !== false) {
-        $run_limpio = substr($run_limpio, 0, -1);
+if (!function_exists('firmagob_base64url_encode')) {
+    function firmagob_base64url_encode($data) {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
-    // Si aún tiene letras (ej K), limpiar
-    $run_limpio = preg_replace('/[^0-9]/', '', $run_limpio);
-    return $run_limpio;
 }
 
-/**
- * Genera un token JWT firmado con algoritmo HS256 para FirmaGob.
- */
-function firmagob_generar_jwt($run, $entity = null, $purpose = null, $secret = null, $minutos_expiracion = 15) {
-    $entity = $entity ?: FIRMAGOB_ENTITY;
-    $purpose = $purpose ?: FIRMAGOB_PURPOSE;
-    $secret = $secret ?: FIRMAGOB_SECRET;
-    $run_limpio = firmagob_limpiar_run($run);
+if (!function_exists('firmagob_limpiar_run')) {
+    function firmagob_limpiar_run($run) {
+        $run_limpio = preg_replace('/[^0-9kK]/', '', (string)$run);
+        // Si incluye dígito verificador, remover el último caracter
+        if (strlen($run_limpio) > 1 && strpos((string)$run, '-') !== false) {
+            $run_limpio = substr($run_limpio, 0, -1);
+        }
+        // Si aún tiene letras (ej K), limpiar
+        $run_limpio = preg_replace('/[^0-9]/', '', $run_limpio);
+        return $run_limpio;
+    }
+}
 
-    // Fecha en hora chilena formato ISODate YYYY-MM-DDTHH:MM:SS
-    $fecha_exp = new DateTime('now', new DateTimeZone('America/Santiago'));
-    $fecha_exp->modify("+{$minutos_expiracion} minutes");
-    $expiration = $fecha_exp->format('Y-m-d\TH:i:s');
+if (!function_exists('firmagob_generar_jwt')) {
+    function firmagob_generar_jwt($run, $entity = null, $purpose = null, $secret = null, $minutos_expiracion = 15) {
+        $entity = $entity ?: FIRMAGOB_ENTITY;
+        $purpose = $purpose ?: FIRMAGOB_PURPOSE;
+        $secret = $secret ?: FIRMAGOB_SECRET;
+        $run_limpio = firmagob_limpiar_run($run);
 
-    $header = [
-        'alg' => 'HS256',
-        'typ' => 'JWT'
-    ];
+        // Fecha en hora chilena formato ISODate YYYY-MM-DDTHH:MM:SS
+        $fecha_exp = new DateTime('now', new DateTimeZone('America/Santiago'));
+        $fecha_exp->modify("+{$minutos_expiracion} minutes");
+        $expiration = $fecha_exp->format('Y-m-d\TH:i:s');
 
-    $payload = [
-        'entity'     => $entity,
-        'run'        => (string)$run_limpio,
-        'expiration' => $expiration,
-        'purpose'    => $purpose
-    ];
+        $header = [
+            'alg' => 'HS256',
+            'typ' => 'JWT'
+        ];
 
-    $header_encoded = firmagob_base64url_encode(json_encode($header, JSON_UNESCAPED_SLASHES));
-    $payload_encoded = firmagob_base64url_encode(json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        $payload = [
+            'entity'     => $entity,
+            'run'        => (string)$run_limpio,
+            'expiration' => $expiration,
+            'purpose'    => $purpose
+        ];
 
-    $signature = hash_hmac('sha256', "$header_encoded.$payload_encoded", $secret, true);
-    $signature_encoded = firmagob_base64url_encode($signature);
+        $header_encoded = firmagob_base64url_encode(json_encode($header, JSON_UNESCAPED_SLASHES));
+        $payload_encoded = firmagob_base64url_encode(json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
-    return "$header_encoded.$payload_encoded.$signature_encoded";
+        $signature = hash_hmac('sha256', "$header_encoded.$payload_encoded", $secret, true);
+        $signature_encoded = firmagob_base64url_encode($signature);
+
+        return "$header_encoded.$payload_encoded.$signature_encoded";
+    }
 }
 
 /**
