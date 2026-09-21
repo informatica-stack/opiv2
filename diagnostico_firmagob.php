@@ -233,6 +233,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
                                 </td>
                             </tr>
                             <tr>
+                                <td class="font-monospace fw-bold">Librería Gráfica PHP GD (Estampa Visual)</td>
+                                <td><?= extension_loaded('gd') ? '<span class="text-success fw-bold">Habilitada (GD2 Activo)</span>' : '<span class="text-danger fw-bold">No habilitada en el contenedor PHP actual</span>' ?></td>
+                                <td><?= extension_loaded('gd') ? '<span class="badge bg-success">OK</span>' : '<span class="badge bg-warning text-dark">Requiere Redeploy</span>' ?></td>
+                            </tr>
+                            <tr>
                                 <td class="font-monospace fw-bold">Archivo .env Local</td>
                                 <td><?= file_exists(__DIR__ . '/.env') ? '<span class="text-success fw-bold">Detectado en raíz</span>' : '<span class="text-muted">No usado (Leyendo de Dokploy)</span>' ?></td>
                                 <td>-</td>

@@ -1,11 +1,15 @@
 FROM php:8.2-apache
 
-# 1. Instalar dependencias del sistema y extensiones de PHP (MySQL, Zip, GD, etc.)
+# 1. Instalar dependencias del sistema y extensiones de PHP (MySQL, Zip, GD gráfica, etc.)
 RUN apt-get update && apt-get install -y \
     libzip-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
     zip \
     unzip \
-    && docker-php-ext-install mysqli pdo pdo_mysql zip \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install mysqli pdo pdo_mysql zip gd \
     && rm -rf /var/lib/apt/lists/*
 
 # 2. Copiar los archivos de la aplicación al directorio web
