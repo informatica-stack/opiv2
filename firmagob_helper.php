@@ -62,13 +62,19 @@ if (!function_exists('firmagob_generar_jwt')) {
 /**
  * Genera la configuración de layout XML de AgileSignerConfig para estampar la firma visible en el PDF.
  * @param string $etapa
- * @param string|null $imagen_base64 Imagen en base64 para la estampa (si es null se usa PNG transparente 1x1)
+ * @param string|null $imagen_base64 Imagen en base64 para la estampa (si es null se usa logo.png institucional)
  * @return string
  */
 function firmagob_obtener_layout_xml($etapa = 'JEFATURA', $imagen_base64 = null) {
-    // Si no se provee imagen, usamos un pixel PNG transparente válido (1x1) para evitar que FirmaGob rechace el tag vacío
+    // Si no se provee imagen personalizada, usar el logo institucional logo.png
     if (empty($imagen_base64)) {
-        $imagen_base64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+        $ruta_logo = __DIR__ . '/logo.png';
+        if (file_exists($ruta_logo)) {
+            $imagen_base64 = base64_encode(file_get_contents($ruta_logo));
+        } else {
+            // PNG transparente 1x1 de respaldo
+            $imagen_base64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+        }
     }
 
     // Coordenadas según la etapa en la OPI

@@ -134,7 +134,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
             ];
 
             if ($http_code === 200) {
-                $resultado_test = "¡ÉXITO TOTAL! FirmaGob respondió con HTTP 200 y el documento fue firmado correctamente.";
+                $resultado_test = "¡ÉXITO TOTAL! FirmaGob respondió con HTTP 200 y el documento fue firmado digitalmente.";
+                $resp_decoded = json_decode($response_body, true);
+                if (!empty($resp_decoded['files'][0]['content'])) {
+                    $pdf_firmado_bin = base64_decode($resp_decoded['files'][0]['content']);
+                    $ruta_salida = $test_dir . '/firmado_' . time() . '.pdf';
+                    file_put_contents($ruta_salida, $pdf_firmado_bin);
+                    $link_pdf_firmado = 'uploads/test/' . basename($ruta_salida);
+                }
             } else {
                 $error_test = "FirmaGob respondió con HTTP $http_code. Ver detalles técnicos abajo.";
             }
@@ -235,12 +242,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
                 <h6 class="fw-bold text-uppercase text-secondary small mb-3">2. Ejecutar Prueba de Firma Directa con FirmaGob</h6>
 
                 <?php if ($resultado_test): ?>
-                    <div class="alert alert-success d-flex align-items-center gap-2 mb-3">
-                        <i class="bi bi-check-circle-fill fs-3 shrink-0"></i>
-                        <div>
-                            <h6 class="fw-bold mb-0">¡Firma Completada con Éxito!</h6>
-                            <span><?= htmlspecialchars($resultado_test) ?></span>
+                    <div class="alert alert-success d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-3 p-3 shadow-sm">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-check-circle-fill fs-2 text-success shrink-0"></i>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-success">¡Documento Firmado Exitosamente por FirmaGob!</h6>
+                                <span class="small text-dark"><?= htmlspecialchars($resultado_test) ?></span>
+                            </div>
                         </div>
+                        <?php if (!empty($link_pdf_firmado)): ?>
+                            <a href="<?= htmlspecialchars($link_pdf_firmado) ?>" target="_blank" class="btn btn-success fw-bold text-nowrap d-inline-flex align-items-center gap-2 shadow-sm">
+                                <i class="bi bi-file-earmark-pdf-fill fs-5"></i>
+                                <span>Abrir / Descargar PDF Firmado</span>
+                            </a>
+                        <?php endif; ?>
                     </div>
                 <?php endif; ?>
 
