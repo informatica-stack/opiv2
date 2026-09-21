@@ -177,6 +177,24 @@ require_once __DIR__ . '/configuracion_sistema_controller.php';
                                     </div>
                                 </div>
 
+                <!-- TARJETA 4: ACCESO DIRECTO AL DISEÑADOR DE PLANTILLA OPI -->
+                <div class="col-12">
+                    <div class="card shadow-sm border-primary-subtle bg-primary-subtle bg-opacity-10">
+                        <div class="card-body p-3 p-md-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="p-3 bg-primary text-white rounded-3 shadow-sm">
+                                    <i class="bi bi-file-earmark-pdf-fill fs-3"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold mb-1 text-dark">Diseñador y Calibrador de Plantilla OPI (PDF)</h5>
+                                    <p class="text-muted small mb-0">Personalice los títulos oficiales, textos de cláusulas, pie legal y calibre la posición de las líneas base de firma electrónica con vista previa en vivo.</p>
+                                </div>
+                            </div>
+                            <div>
+                                <a href="diseno_opi.php" class="btn btn-primary px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2 text-nowrap">
+                                    <i class="bi bi-pencil-square fs-5"></i>
+                                    <span>Abrir Diseñador de OPI</span>
+                                </a>
                             </div>
                         </div>
                     </div>

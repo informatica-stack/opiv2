@@ -72,6 +72,9 @@ try {
 
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['user_name'] = $user['nombre_completo'];
+        $_SESSION['user_nombre'] = $user['nombre_completo'];
+        $_SESSION['user_rut'] = $user['rut'];
+        $_SESSION['user_cargo'] = $user['cargo'] ?: $user['rol_nombre'];
         $_SESSION['user_rol'] = $user['rol_nombre'];
         $_SESSION['user_unidad'] = $user['unidad_id'];
         $_SESSION['login_via'] = 'claveunica';

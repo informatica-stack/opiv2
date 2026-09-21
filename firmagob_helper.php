@@ -257,16 +257,30 @@ if (!function_exists('firmagob_firmar_archivo')) {
         );
 
         // Resolver metadatos para la estampa si no vienen provistos
-        if (empty($nombre_firmante) && isset($_SESSION['user_nombre'])) {
-            $nombre_firmante = $_SESSION['user_nombre'];
+        if (empty($nombre_firmante)) {
+            $nombre_firmante = $_SESSION['user_nombre'] ?? ($_SESSION['user_name'] ?? 'Funcionario Autorizado');
         }
         if (empty($cargo_firmante)) {
-            if (isset($_SESSION['user_cargo'])) {
+            if (!empty($_SESSION['user_cargo'])) {
                 $cargo_firmante = $_SESSION['user_cargo'];
-            } elseif (isset($_SESSION['user_rol'])) {
-                $cargo_firmante = 'Rol: ' . $_SESSION['user_rol'];
+            } elseif (!empty($_SESSION['user_rol'])) {
+                $cargo_firmante = match ($_SESSION['user_rol']) {
+                    'ADMIN_MUNICIPAL' => 'Administrador Municipal',
+                    'PRESUPUESTO'     => 'Control Presupuestario',
+                    'JEFE_UNIDAD'     => 'Jefatura de Unidad',
+                    'FINANZAS'        => 'Dirección de Finanzas',
+                    'ADQUISICIONES'   => 'Encargado de Adquisiciones',
+                    'SYSADMIN'        => 'Administrador del Sistema',
+                    default           => $_SESSION['user_rol']
+                };
             } else {
-                $cargo_firmante = 'Etapa: ' . $etapa;
+                $cargo_firmante = match (strtoupper($etapa)) {
+                    'JEFATURA'        => 'Jefatura Unidad Solicitante',
+                    'PRESUPUESTO'     => 'Control Presupuestario',
+                    'ADMIN_MUNICIPAL', 'ADMINISTRADOR' => 'Administrador Municipal',
+                    'CDP_FINANZAS', 'FINANZAS' => 'Dirección de Finanzas',
+                    default           => 'Funcionario Autorizado'
+                };
             }
         }
 

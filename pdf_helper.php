@@ -112,6 +112,23 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
         return iconv('UTF-8', 'windows-1252//TRANSLIT', (string)$text);
     };
 
+    // --- CONFIGURACIÓN DINÁMICA DE PLANTILLA (Base de Datos o Valores Predeterminados) ---
+    global $config_sistema;
+    if (!isset($config_sistema) || empty($config_sistema)) {
+        try {
+            $stmtCfg = $pdo->query("SELECT clave, valor FROM configuraciones_sistema");
+            $config_sistema = $stmtCfg->fetchAll(PDO::FETCH_KEY_PAIR);
+        } catch (Exception $e) {
+            $config_sistema = [];
+        }
+    }
+
+    $cfg_titulo_doc     = !empty($config_sistema['opi_titulo_documento']) ? $config_sistema['opi_titulo_documento'] : 'ORDEN DE PEDIDO INTERNO';
+    $cfg_clausula1_txt  = !empty($config_sistema['opi_clausula1_texto']) ? $config_sistema['opi_clausula1_texto'] : '1. Agradeceré a Usted, tenga a bien efectuar la adquisición de los siguientes bienes y/o servicios:';
+    $cfg_clausula2_txt  = !empty($config_sistema['opi_clausula2_texto']) ? $config_sistema['opi_clausula2_texto'] : '2. Los presentes bienes/servicios serán destinados a:';
+    $cfg_pie_legal_txt  = !empty($config_sistema['opi_pie_legal']) ? $config_sistema['opi_pie_legal'] : 'Documento Oficial emitido por el Sistema Institucional OPI - Validez legal bajo Ley N° 19.799 de Firma Electrónica';
+    $cfg_firmas_linea_y = !empty($config_sistema['opi_firmas_linea_y']) ? floatval($config_sistema['opi_firmas_linea_y']) : 256.0;
+
     // --- ENCABEZADO INSTITUCIONAL OFICIAL (Modelo N° 758) ---
     if (file_exists(__DIR__ . '/logo.png')) {
         $pdf->Image(__DIR__ . '/logo.png', 14, 8, 22);
@@ -131,7 +148,7 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
     // Columna Centro: Título Oficial
     $pdf->SetXY(98, 10);
     $pdf->SetFont('Arial', 'B', 11);
-    $pdf->Cell(60, 5, $utf("ORDEN DE PEDIDO INTERNO"), 0, 1, 'C');
+    $pdf->Cell(60, 5, $utf($cfg_titulo_doc), 0, 1, 'C');
 
     // Columna Derecha: Folio y Fecha
     $pdf->SetXY(158, 8);
@@ -162,7 +179,7 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
     // --- CLÁUSULA 1: TEXTO INTRODUCTORIO ---
     $pdf->SetXY(14, 34);
     $pdf->SetFont('Arial', '', 7.5);
-    $pdf->Cell(188, 4, $utf("1. Agradeceré a Usted, tenga a bien efectuar la adquisición de los siguientes bienes y/o servicios:"), 0, 1, 'L');
+    $pdf->Cell(188, 4, $utf($cfg_clausula1_txt), 0, 1, 'L');
 
     // --- TABLA PRINCIPAL DE PRODUCTOS / SERVICIOS ---
     $y_tabla = 39;
@@ -354,67 +371,33 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
     $y_clausula2 = $y_caja3 + 19;
     $pdf->SetXY(14, $y_clausula2);
     $pdf->SetFont('Arial', 'B', 7.5);
-    $pdf->Cell(188, 4, $utf("2. Los presentes bienes/servicios serán destinados a:"), 0, 1, 'L');
+    $pdf->Cell(188, 4, $utf($cfg_clausula2_txt), 0, 1, 'L');
     $pdf->SetFont('Arial', '', 7.5);
     $pdf->SetXY(14, $y_clausula2 + 4);
     $motivo = $exp['motivo_compra'] ?: ($exp['titulo_compra'] ?? '-');
     $pdf->MultiCell(188, 3.5, $utf($motivo), 1, 'L');
 
-    // --- CUADRANTES DE LAS 3 FIRMAS DIGITALES (FIRMAGOB) ---
-    // Posicionamiento inferior exacto para calibración con FirmaGob (Letter: Y=216 a 256 mm)
-    $y_firmas = 216;
-    
-    // Cuadrante 1: Jefatura (Izquierda: X=14, W=58)
-    $pdf->Rect(14, $y_firmas, 58, 40);
-    $pdf->SetXY(14, $y_firmas + 1.5);
-    $pdf->SetFont('Arial', 'B', 7.5);
-    $pdf->Cell(58, 4, $utf("1. V°B° TÉCNICO JEFATURA"), 0, 1, 'C');
-    $pdf->SetFont('Arial', '', 6.5);
-    $pdf->SetXY(14, $y_firmas + 5.5);
-    $nombre_jefe_sub = 'Jefatura Unidad Solicitante';
-    if (!empty($exp['unidad'])) {
-        $nombre_jefe_sub = 'Jefatura ' . $exp['unidad'];
-    }
-    $pdf->Cell(58, 3, $utf($nombre_jefe_sub), 0, 1, 'C');
-    $pdf->SetFont('Arial', 'I', 6.5);
-    $pdf->SetTextColor(120, 120, 120);
-    $pdf->SetXY(14, $y_firmas + 34);
-    $pdf->Cell(58, 4, $utf("(Estampa Firma Digital FirmaGob 1/3)"), 0, 1, 'C');
-    $pdf->SetTextColor(0, 0, 0);
+    // --- LÍNEAS DE BASE PARA LAS 3 FIRMAS DIGITALES (FIRMAGOB) ---
+    // Diseño limpio: Sin cajas cerradas ni texto redundante interno.
+    // La estampa oficial de FirmaGob se estampa directamente sobre cada línea base horizontal.
+    $y_firmas_line = $cfg_firmas_linea_y;
+    $pdf->SetDrawColor(120, 120, 120);
+    $pdf->SetLineWidth(0.3);
 
-    // Cuadrante 2: Presupuesto (Centro: X=79, W=58)
-    $pdf->Rect(79, $y_firmas, 58, 40);
-    $pdf->SetXY(79, $y_firmas + 1.5);
-    $pdf->SetFont('Arial', 'B', 7.5);
-    $pdf->Cell(58, 4, $utf("2. V°B° PRESUPUESTARIO"), 0, 1, 'C');
-    $pdf->SetFont('Arial', '', 6.5);
-    $pdf->SetXY(79, $y_firmas + 5.5);
-    $pdf->Cell(58, 3, $utf("Dirección de Finanzas / Presupuesto"), 0, 1, 'C');
-    $pdf->SetFont('Arial', 'I', 6.5);
-    $pdf->SetTextColor(120, 120, 120);
-    $pdf->SetXY(79, $y_firmas + 34);
-    $pdf->Cell(58, 4, $utf("(Estampa Firma Digital FirmaGob 2/3)"), 0, 1, 'C');
-    $pdf->SetTextColor(0, 0, 0);
+    // Línea 1: Jefatura Unidad Solicitante (Izquierda: X=14 a 72, Ancho=58mm)
+    $pdf->Line(14, $y_firmas_line, 72, $y_firmas_line);
 
-    // Cuadrante 3: Administrador Municipal (Derecha: X=144, W=58)
-    $pdf->Rect(144, $y_firmas, 58, 40);
-    $pdf->SetXY(144, $y_firmas + 1.5);
-    $pdf->SetFont('Arial', 'B', 7.5);
-    $pdf->Cell(58, 4, $utf("3. AUTORIZACIÓN FINAL"), 0, 1, 'C');
-    $pdf->SetFont('Arial', '', 6.5);
-    $pdf->SetXY(144, $y_firmas + 5.5);
-    $pdf->Cell(58, 3, $utf("Administrador Municipal"), 0, 1, 'C');
-    $pdf->SetFont('Arial', 'I', 6.5);
-    $pdf->SetTextColor(120, 120, 120);
-    $pdf->SetXY(144, $y_firmas + 34);
-    $pdf->Cell(58, 4, $utf("(Estampa Firma Digital FirmaGob 3/3)"), 0, 1, 'C');
-    $pdf->SetTextColor(0, 0, 0);
+    // Línea 2: Dirección de Finanzas / Presupuesto (Centro: X=79 a 137, Ancho=58mm)
+    $pdf->Line(79, $y_firmas_line, 137, $y_firmas_line);
+
+    // Línea 3: Administrador Municipal (Derecha: X=144 a 202, Ancho=58mm)
+    $pdf->Line(144, $y_firmas_line, 202, $y_firmas_line);
 
     // Pie de página oficial
-    $pdf->SetXY(14, 259);
+    $pdf->SetXY(14, $y_firmas_line + 4);
     $pdf->SetFont('Arial', '', 6.5);
     $pdf->SetTextColor(110, 110, 110);
-    $pdf->Cell(188, 3, $utf("Documento Oficial emitido por el Sistema Institucional OPI - Validez legal bajo Ley N° 19.799 de Firma Electrónica"), 0, 1, 'C');
+    $pdf->Cell(188, 3, $utf($cfg_pie_legal_txt), 0, 1, 'C');
 
     // Guardar archivo binario
     $pdf->Output('F', $ruta_absoluta);

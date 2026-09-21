@@ -187,6 +187,9 @@ $user_name = $_SESSION['user_name'] ?? 'Usuario';
                     <a class="offcanvas-link <?= ($pagina_actual === 'configuracion_sistema.php') ? 'active' : '' ?>" href="configuracion_sistema.php">
                         <i class="bi bi-sliders text-primary"></i> Parámetros del sistema
                     </a>
+                    <a class="offcanvas-link <?= ($pagina_actual === 'diseno_opi.php') ? 'active' : '' ?>" href="diseno_opi.php">
+                        <i class="bi bi-file-earmark-pdf text-primary"></i> Diseñador de plantilla OPI
+                    </a>
                     <a class="offcanvas-link <?= ($pagina_actual === 'mantenedor_flujos.php') ? 'active' : '' ?>" href="mantenedor_flujos.php">
                         <i class="bi bi-gear-wide-connected text-primary"></i> Diseñador de flujos
                     </a>
