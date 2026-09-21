@@ -22,7 +22,7 @@ if (!function_exists('firmagob_generar_jwt')) {
     function firmagob_generar_jwt($run, $entity = null, $purpose = null, $secret = null, $minutos_expiracion = 15) {
         $entity = $entity ?: FIRMAGOB_ENTITY;
         $purpose = $purpose ?: FIRMAGOB_PURPOSE;
-        $secret = $secret ?: FIRMAGOB_SECRET;
+        $secret = trim((string)($secret ?: FIRMAGOB_SECRET));
         $run_limpio = firmagob_limpiar_run($run);
 
         // Fecha en hora chilena formato ISODate YYYY-MM-DDTHH:MM:SS
@@ -45,7 +45,13 @@ if (!function_exists('firmagob_generar_jwt')) {
         $header_encoded = firmagob_base64url_encode(json_encode($header, JSON_UNESCAPED_SLASHES));
         $payload_encoded = firmagob_base64url_encode(json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
-        $signature = hash_hmac('sha256', "$header_encoded.$payload_encoded", $secret, true);
+        // Decodificar el Secret desde Base64 antes de firmar con HMAC-SHA256 (Requisito Oficial FirmaGob)
+        $secret_binario = base64_decode($secret, true);
+        if ($secret_binario === false || $secret_binario === '') {
+            $secret_binario = $secret;
+        }
+
+        $signature = hash_hmac('sha256', "$header_encoded.$payload_encoded", $secret_binario, true);
         $signature_encoded = firmagob_base64url_encode($signature);
 
         return "$header_encoded.$payload_encoded.$signature_encoded";
