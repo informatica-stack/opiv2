@@ -54,7 +54,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
             $pdf->Output('F', $test_pdf_path);
 
             // 2. Generar JWT y payload
-            $jwt = firmagob_generar_jwt($rut_probar, $entity_probar, $purpose_probar, $secret_probar);
+            $decodificar_secret = !empty($_POST['decodificar_secret']);
+            $jwt = firmagob_generar_jwt($rut_probar, $entity_probar, $purpose_probar, $secret_probar, 15, $decodificar_secret);
             $pdf_content = file_get_contents($test_pdf_path);
             $pdf_base64 = base64_encode($pdf_content);
             $checksum = hash('sha256', $pdf_content);
@@ -306,10 +307,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
                             <option value="https://api.firma.cert.digital.gob.cl/firma/v2/files/tickets" <?= (($_POST['url_probar'] ?? FIRMAGOB_API_URL) === 'https://api.firma.cert.digital.gob.cl/firma/v2/files/tickets') ? 'selected' : '' ?>>Certificación/QA: https://api.firma.cert.digital.gob.cl/firma/v2/files/tickets</option>
                         </select>
 
-                        <div class="form-check form-switch">
+                        <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" role="switch" name="incluir_layout" id="chkLayout" value="1" <?= (!empty($_POST['incluir_layout'])) ? 'checked' : '' ?>>
                             <label class="form-check-label small text-muted" for="chkLayout">
                                 Incluir parámetro <code class="fw-bold">layout</code> (estampa visual en PDF). <em>(Recomendado desactivar para firma digital pura).</em>
+                            </label>
+                        </div>
+
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" name="decodificar_secret" id="chkSecretB64" value="1" <?= (!empty($_POST['decodificar_secret'])) ? 'checked' : '' ?>>
+                            <label class="form-check-label small text-muted" for="chkSecretB64">
+                                Decodificar Secret en Base64 antes de firmar JWT. <em>(Dejar desactivado para usar clave UTF-8 directa).</em>
                             </label>
                         </div>
                     </div>

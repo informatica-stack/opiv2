@@ -19,7 +19,7 @@ if (!function_exists('firmagob_limpiar_run')) {
 }
 
 if (!function_exists('firmagob_generar_jwt')) {
-    function firmagob_generar_jwt($run, $entity = null, $purpose = null, $secret = null, $minutos_expiracion = 15) {
+    function firmagob_generar_jwt($run, $entity = null, $purpose = null, $secret = null, $minutos_expiracion = 15, $decodificar_base64 = false) {
         $entity = $entity ?: FIRMAGOB_ENTITY;
         $purpose = $purpose ?: FIRMAGOB_PURPOSE;
         $secret = trim((string)($secret ?: FIRMAGOB_SECRET));
@@ -45,13 +45,14 @@ if (!function_exists('firmagob_generar_jwt')) {
         $header_encoded = firmagob_base64url_encode(json_encode($header, JSON_UNESCAPED_SLASHES));
         $payload_encoded = firmagob_base64url_encode(json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
-        // Decodificar el Secret desde Base64 antes de firmar con HMAC-SHA256 (Requisito Oficial FirmaGob)
-        $secret_binario = base64_decode($secret, true);
-        if ($secret_binario === false || $secret_binario === '') {
-            $secret_binario = $secret;
+        // Clave HMAC: Por defecto FirmaGob utiliza la clave en string UTF-8 directo.
+        if ($decodificar_base64) {
+            $secret_key = base64_decode($secret, true) ?: $secret;
+        } else {
+            $secret_key = $secret;
         }
 
-        $signature = hash_hmac('sha256', "$header_encoded.$payload_encoded", $secret_binario, true);
+        $signature = hash_hmac('sha256', "$header_encoded.$payload_encoded", $secret_key, true);
         $signature_encoded = firmagob_base64url_encode($signature);
 
         return "$header_encoded.$payload_encoded.$signature_encoded";
