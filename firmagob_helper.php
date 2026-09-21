@@ -59,137 +59,241 @@ if (!function_exists('firmagob_generar_jwt')) {
     }
 }
 
-/**
- * Genera la configuración de layout XML de AgileSignerConfig para estampar la firma visible en el PDF.
- * @param string $etapa
- * @param string|null $imagen_base64 Imagen en base64 para la estampa (si es null se usa logo.png institucional)
- * @return string
- */
-function firmagob_obtener_layout_xml($etapa = 'JEFATURA', $imagen_base64 = null) {
-    // Si no se provee imagen personalizada, usar el logo institucional logo.png
-    if (empty($imagen_base64)) {
-        $ruta_logo = __DIR__ . '/logo.png';
-        if (file_exists($ruta_logo)) {
-            $imagen_base64 = base64_encode(file_get_contents($ruta_logo));
-        } else {
-            // PNG transparente 1x1 de respaldo
-            $imagen_base64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-        }
+if (!function_exists('firmagob_formatear_run')) {
+    /**
+     * Formatea un RUN chileno con puntos y guion (ej: 17.439.829-1)
+     */
+    function firmagob_formatear_run($run) {
+        $run_limpio = preg_replace('/[^0-9kK]/', '', (string)$run);
+        if (strlen($run_limpio) < 2) return (string)$run;
+        $dv = strtoupper(substr($run_limpio, -1));
+        $cuerpo = substr($run_limpio, 0, -1);
+        return number_format((int)$cuerpo, 0, '', '.') . '-' . $dv;
     }
-
-    // Coordenadas según la etapa en la OPI
-    switch (strtoupper($etapa)) {
-        case 'JEFATURA':
-            // Cuadrante inferior izquierdo
-            $llx = 40;  $lly = 50;  $urx = 210; $ury = 130;
-            break;
-        case 'PRESUPUESTO':
-            // Cuadrante inferior central
-            $llx = 220; $lly = 50;  $urx = 390; $ury = 130;
-            break;
-        case 'ADMIN_MUNICIPAL':
-        case 'ADMINISTRADOR':
-            // Cuadrante inferior derecho
-            $llx = 400; $lly = 50;  $urx = 570; $ury = 130;
-            break;
-        case 'CDP_FINANZAS':
-        case 'FINANZAS':
-        default:
-            // Posición estándar para CDP u otros documentos
-            $llx = 350; $lly = 60;  $urx = 550; $ury = 140;
-            break;
-    }
-
-    $xml = '<AgileSignerConfig>' .
-           '<Application id="THIS-CONFIG">' .
-           '<pdfPassword/>' .
-           '<Signature>' .
-           '<Visible active="true" layer2="false" label="true" pos="1">' .
-           "<llx>{$llx}</llx>" .
-           "<lly>{$lly}</lly>" .
-           "<urx>{$urx}</urx>" .
-           "<ury>{$ury}</ury>" .
-           '<page>LAST</page>' .
-           '<image>BASE64</image>' .
-           "<BASE64VALUE>{$imagen_base64}</BASE64VALUE>" .
-           '</Visible>' .
-           '</Signature>' .
-           '</Application>' .
-           '</AgileSignerConfig>';
-
-    return $xml;
 }
 
-/**
- * Realiza la llamada HTTP POST a la API FirmaGob para firmar un documento PDF.
- *
- * @param string $ruta_pdf_entrada Ruta absoluta al archivo PDF que se va a firmar.
- * @param string $run_firmante RUN del firmante habilitado en la RA.
- * @param string $descripcion Descripción del documento.
- * @param string|null $otp Código OTP de 6 dígitos (requerido para Firma Atendida).
- * @param string $etapa Etapa de firma ('JEFATURA', 'PRESUPUESTO', 'ADMIN_MUNICIPAL', 'CDP_FINANZAS').
- * @param string|null $purpose Propósito específico si difiere del global.
- * @return array Metadatos y contenido binario firmado.
- * @throws Exception
- */
-function firmagob_firmar_archivo($ruta_pdf_entrada, $run_firmante, $descripcion, $otp = null, $etapa = 'JEFATURA', $purpose = null) {
-    if (!file_exists($ruta_pdf_entrada)) {
-        throw new Exception("El archivo PDF a firmar no existe en la ruta: $ruta_pdf_entrada");
+if (!function_exists('firmagob_generar_estampa_dinamica_base64')) {
+    /**
+     * Genera una estampa visual compacta e institucional en memoria RAM usando PHP GD.
+     * Sin logo municipal, optimizada para ocupar poco espacio y mostrar metadatos legibles.
+     *
+     * @param string $nombre Nombre del firmante
+     * @param string $run RUN del firmante
+     * @param string $cargo Cargo o rol del firmante
+     * @param string|null $fecha_hora Fecha y hora en formato string (opcional)
+     * @return string Imagen PNG codificada en Base64
+     */
+    function firmagob_generar_estampa_dinamica_base64($nombre, $run, $cargo = '', $fecha_hora = null) {
+        if (!extension_loaded('gd')) {
+            // Fallback transparente si GD no estuviese disponible
+            return 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+        }
+
+        $width = 380;
+        $height = 110;
+        $im = imagecreatetruecolor($width, $height);
+
+        // Paleta de colores sobria e institucional
+        $bg_color     = imagecolorallocate($im, 255, 255, 255); // Fondo blanco
+        $border_color = imagecolorallocate($im, 30, 64, 175);   // Azul institucional #1e40af
+        $hdr_bg       = imagecolorallocate($im, 239, 246, 255); // Fondo cabecera azul suave #eff6ff
+        $text_blue    = imagecolorallocate($im, 29, 78, 216);   // Azul texto #1d4ed8
+        $text_dark    = imagecolorallocate($im, 15, 23, 42);    // Texto principal oscuro #0f172a
+        $text_muted   = imagecolorallocate($im, 100, 116, 139); // Texto secundario gris #64748b
+
+        // Rellenar fondo y dibujar marco
+        imagefilledrectangle($im, 0, 0, $width, $height, $bg_color);
+        imagefilledrectangle($im, 2, 2, $width - 3, 22, $hdr_bg); // Barra superior
+        imagerectangle($im, 0, 0, $width - 1, $height - 1, $border_color);
+        imagerectangle($im, 1, 1, $width - 2, $height - 2, $border_color);
+
+        // Datos formateados
+        $run_formateado = firmagob_formatear_run($run);
+        if (empty($fecha_hora)) {
+            $dt = new DateTime('now', new DateTimeZone('America/Santiago'));
+            $fecha_hora = $dt->format('d/m/Y H:i:s') . ' CLT';
+        }
+
+        $nombre_limpio = mb_strtoupper(trim((string)$nombre), 'UTF-8');
+        if (empty($nombre_limpio)) {
+            $nombre_limpio = 'FUNCIONARIO AUTORIZADO';
+        }
+        if (mb_strlen($nombre_limpio) > 36) {
+            $nombre_limpio = mb_substr($nombre_limpio, 0, 33) . '...';
+        }
+
+        $cargo_limpio = trim((string)$cargo);
+        if (empty($cargo_limpio)) {
+            $cargo_limpio = 'Funcionario Autorizado';
+        }
+        if (mb_strlen($cargo_limpio) > 36) {
+            $cargo_limpio = mb_substr($cargo_limpio, 0, 33) . '...';
+        }
+
+        // Renderizado con fuentes bitmap estándar de GD
+        imagestring($im, 3, 10, 4, 'FIRMADO ELECTRONICAMENTE (FEA)', $text_blue);
+        imagestring($im, 2, 10, 28, 'Firmante: ' . $nombre_limpio, $text_dark);
+        imagestring($im, 2, 10, 46, 'RUN: ' . $run_formateado . ' | Cargo: ' . $cargo_limpio, $text_dark);
+        imagestring($im, 2, 10, 64, 'Fecha: ' . $fecha_hora, $text_muted);
+        imagestring($im, 2, 10, 80, 'Entidad: ' . FIRMAGOB_ENTITY, $text_muted);
+        imagestring($im, 1, 10, 96, 'Validez Legal: Ley No 19.799 sobre Firma Electronica', $text_muted);
+
+        ob_start();
+        imagepng($im);
+        $raw_png = ob_get_clean();
+        imagedestroy($im);
+
+        return base64_encode($raw_png);
     }
+}
 
-    $filesize = filesize($ruta_pdf_entrada);
-    if ($filesize > 5 * 1024 * 1024) {
-        throw new Exception("El archivo excede el tamaño máximo permitido por FirmaGob (5 MB). Tamaño actual: " . round($filesize / 1024 / 1024, 2) . " MB");
+if (!function_exists('firmagob_obtener_layout_xml')) {
+    /**
+     * Genera la configuración de layout XML de AgileSignerConfig para estampar la firma visible en el PDF.
+     * @param string $etapa
+     * @param string|null $imagen_base64 Imagen personalizada en Base64 (si es null se genera la estampa dinámica con metadatos)
+     * @param string $nombre
+     * @param string $run
+     * @param string $cargo
+     * @return string
+     */
+    function firmagob_obtener_layout_xml($etapa = 'JEFATURA', $imagen_base64 = null, $nombre = '', $run = '', $cargo = '') {
+        // Si no se provee imagen fija, generar la estampa dinámica en memoria
+        if (empty($imagen_base64)) {
+            $imagen_base64 = firmagob_generar_estampa_dinamica_base64($nombre, $run, $cargo);
+        }
+
+        // Coordenadas según la etapa en la OPI
+        switch (strtoupper($etapa)) {
+            case 'JEFATURA':
+                // Cuadrante inferior izquierdo
+                $llx = 40;  $lly = 50;  $urx = 210; $ury = 130;
+                break;
+            case 'PRESUPUESTO':
+                // Cuadrante inferior central
+                $llx = 220; $lly = 50;  $urx = 390; $ury = 130;
+                break;
+            case 'ADMIN_MUNICIPAL':
+            case 'ADMINISTRADOR':
+                // Cuadrante inferior derecho
+                $llx = 400; $lly = 50;  $urx = 570; $ury = 130;
+                break;
+            case 'CDP_FINANZAS':
+            case 'FINANZAS':
+            default:
+                // Posición estándar para CDP u otros documentos
+                $llx = 350; $lly = 60;  $urx = 550; $ury = 140;
+                break;
+        }
+
+        $xml = '<AgileSignerConfig>' .
+               '<Application id="THIS-CONFIG">' .
+               '<pdfPassword/>' .
+               '<Signature>' .
+               '<Visible active="true" layer2="false" label="true" pos="1">' .
+               "<llx>{$llx}</llx>" .
+               "<lly>{$lly}</lly>" .
+               "<urx>{$urx}</urx>" .
+               "<ury>{$ury}</ury>" .
+               '<page>LAST</page>' .
+               '<image>BASE64</image>' .
+               "<BASE64VALUE>{$imagen_base64}</BASE64VALUE>" .
+               '</Visible>' .
+               '</Signature>' .
+               '</Application>' .
+               '</AgileSignerConfig>';
+
+        return $xml;
     }
+}
 
-    $pdf_content = file_get_contents($ruta_pdf_entrada);
-    $pdf_base64 = base64_encode($pdf_content);
-    $checksum_sha256 = hash('sha256', $pdf_content);
+if (!function_exists('firmagob_firmar_archivo')) {
+    /**
+     * Realiza la llamada HTTP POST a la API FirmaGob para firmar un documento PDF.
+     *
+     * @param string $ruta_pdf_entrada Ruta absoluta al archivo PDF que se va a firmar.
+     * @param string $run_firmante RUN del firmante habilitado en la RA.
+     * @param string $descripcion Descripción del documento.
+     * @param string|null $otp Código OTP de 6 dígitos (requerido para Firma Atendida).
+     * @param string $etapa Etapa de firma ('JEFATURA', 'PRESUPUESTO', 'ADMIN_MUNICIPAL', 'CDP_FINANZAS').
+     * @param string|null $purpose Propósito específico si difiere del global.
+     * @param string|null $nombre_firmante Nombre completo del firmante para la estampa.
+     * @param string|null $cargo_firmante Cargo del firmante para la estampa.
+     * @return array Metadatos y contenido binario firmado.
+     * @throws Exception
+     */
+    function firmagob_firmar_archivo($ruta_pdf_entrada, $run_firmante, $descripcion, $otp = null, $etapa = 'JEFATURA', $purpose = null, $nombre_firmante = null, $cargo_firmante = null) {
+        if (!file_exists($ruta_pdf_entrada)) {
+            throw new Exception("El archivo PDF a firmar no existe en la ruta: $ruta_pdf_entrada");
+        }
 
-    // MODO SIMULACIÓN LOCAL: Permite pruebas completas mientras se esperan credenciales de Cerfrías
-    if (defined('FIRMAGOB_AMBIENTE') && FIRMAGOB_AMBIENTE === 'SIMULADO') {
-        return [
-            'success'           => true,
-            'content_binary'    => $pdf_content,
-            'id_solicitud'      => 'SIM_' . strtoupper(uniqid()),
-            'checksum_original' => $checksum_sha256,
-            'checksum_signed'   => hash('sha256', $pdf_content . microtime()),
-            'otp_expired'       => false
-        ];
-    }
+        $filesize = filesize($ruta_pdf_entrada);
+        if ($filesize > 5 * 1024 * 1024) {
+            throw new Exception("El archivo excede el tamaño máximo permitido por FirmaGob (5 MB). Tamaño actual: " . round($filesize / 1024 / 1024, 2) . " MB");
+        }
 
-    if (empty(FIRMAGOB_API_TOKEN_KEY) || empty(FIRMAGOB_SECRET)) {
-        throw new Exception("FirmaGob no configurado: Por favor configure las variables de entorno FIRMAGOB_API_TOKEN_KEY y FIRMAGOB_SECRET en Dokploy.");
-    }
+        $pdf_content = file_get_contents($ruta_pdf_entrada);
+        $pdf_base64 = base64_encode($pdf_content);
+        $checksum_sha256 = hash('sha256', $pdf_content);
 
-    $purpose_usar = $purpose ?: (
-        (FIRMAGOB_MODO === 'DESATENDIDA') ? 'Desatendido' : FIRMAGOB_PURPOSE
-    );
+        // MODO SIMULACIÓN LOCAL: Permite pruebas completas mientras se esperan credenciales
+        if (defined('FIRMAGOB_AMBIENTE') && FIRMAGOB_AMBIENTE === 'SIMULADO') {
+            return [
+                'success'           => true,
+                'content_binary'    => $pdf_content,
+                'id_solicitud'      => 'SIM_' . strtoupper(uniqid()),
+                'checksum_original' => $checksum_sha256,
+                'checksum_signed'   => hash('sha256', $pdf_content . microtime()),
+                'otp_expired'       => false
+            ];
+        }
 
-    // Generar JWT
-    $jwt = firmagob_generar_jwt($run_firmante, FIRMAGOB_ENTITY, $purpose_usar, FIRMAGOB_SECRET);
+        if (empty(FIRMAGOB_API_TOKEN_KEY) || empty(FIRMAGOB_SECRET)) {
+            throw new Exception("FirmaGob no configurado: Por favor configure las variables de entorno FIRMAGOB_API_TOKEN_KEY y FIRMAGOB_SECRET en Dokploy.");
+        }
 
-    // Layout visual de estampa
-    $layout_xml = firmagob_obtener_layout_xml($etapa);
+        $purpose_usar = $purpose ?: (
+            (FIRMAGOB_MODO === 'DESATENDIDA') ? 'Desatendido' : FIRMAGOB_PURPOSE
+        );
 
-    $payload = [
-        'token'         => $jwt,
-        'api_token_key' => FIRMAGOB_API_TOKEN_KEY,
-        'files'         => [
-            [
-                'content-type' => 'application/pdf',
-                'content'      => $pdf_base64,
-                'description'  => $descripcion,
-                'checksum'     => $checksum_sha256,
-                'layout'       => $layout_xml
+        // Resolver metadatos para la estampa si no vienen provistos
+        if (empty($nombre_firmante) && isset($_SESSION['user_nombre'])) {
+            $nombre_firmante = $_SESSION['user_nombre'];
+        }
+        if (empty($cargo_firmante)) {
+            if (isset($_SESSION['user_cargo'])) {
+                $cargo_firmante = $_SESSION['user_cargo'];
+            } elseif (isset($_SESSION['user_rol'])) {
+                $cargo_firmante = 'Rol: ' . $_SESSION['user_rol'];
+            } else {
+                $cargo_firmante = 'Etapa: ' . $etapa;
+            }
+        }
+
+        // Generar JWT
+        $jwt = firmagob_generar_jwt($run_firmante, FIRMAGOB_ENTITY, $purpose_usar, FIRMAGOB_SECRET);
+
+        // Layout visual de estampa dinámica
+        $layout_xml = firmagob_obtener_layout_xml($etapa, null, $nombre_firmante, $run_firmante, $cargo_firmante);
+
+        $payload = [
+            'token'         => $jwt,
+            'api_token_key' => FIRMAGOB_API_TOKEN_KEY,
+            'files'         => [
+                [
+                    'content-type' => 'application/pdf',
+                    'content'      => $pdf_base64,
+                    'description'  => $descripcion,
+                    'checksum'     => $checksum_sha256,
+                    'layout'       => $layout_xml
+                ]
             ]
-        ]
-    ];
+        ];
 
-    $headers = [
-        'Content-Type: application/json',
-        'Accept: application/json'
-    ];
+        $headers = [
+            'Content-Type: application/json',
+            'Accept: application/json'
+        ];
 
     // Si es firma atendida y se proveyó OTP, agregar header
     if (!empty($otp) && FIRMAGOB_MODO !== 'DESATENDIDA') {
@@ -260,62 +364,65 @@ function firmagob_firmar_archivo($ruta_pdf_entrada, $run_firmante, $descripcion,
         throw new Exception("FirmaGob ($http_code): $msg_error");
     }
 }
+}
 
-/**
- * Obtiene los datos del firmante en ejercicio considerando subrogancias activas si aplica.
- */
-function firmagob_obtener_firmante_activo($pdo, $rol_codigo, $usuario_sesion_id = null) {
-    $hoy = date('Y-m-d');
+if (!function_exists('firmagob_obtener_firmante_activo')) {
+    /**
+     * Obtiene los datos del firmante en ejercicio considerando subrogancias activas si aplica.
+     */
+    function firmagob_obtener_firmante_activo($pdo, $rol_codigo, $usuario_sesion_id = null) {
+        $hoy = date('Y-m-d');
 
-    // 1. Caso Administrador Municipal (Soporta subrogancia formal)
-    if ($rol_codigo === 'ADMIN_MUNICIPAL') {
-        $stmtTit = $pdo->prepare("SELECT u.id, u.nombre_completo, u.rut, u.cargo FROM usuarios u JOIN roles r ON u.rol_id = r.id WHERE r.nombre = 'ADMIN_MUNICIPAL' AND u.activo = 1 LIMIT 1");
-        $stmtTit->execute();
-        $titular = $stmtTit->fetch();
+        // 1. Caso Administrador Municipal (Soporta subrogancia formal)
+        if ($rol_codigo === 'ADMIN_MUNICIPAL') {
+            $stmtTit = $pdo->prepare("SELECT u.id, u.nombre_completo, u.rut, u.cargo FROM usuarios u JOIN roles r ON u.rol_id = r.id WHERE r.nombre = 'ADMIN_MUNICIPAL' AND u.activo = 1 LIMIT 1");
+            $stmtTit->execute();
+            $titular = $stmtTit->fetch();
 
-        if ($titular) {
-            $stmtSub = $pdo->prepare("SELECT u.id, u.nombre_completo, u.rut, u.cargo FROM subrogancias s JOIN usuarios u ON s.usuario_subrogante_id = u.id WHERE s.usuario_titular_id = ? AND s.activo = 1 AND ? BETWEEN s.fecha_inicio AND s.fecha_fin LIMIT 1");
-            $stmtSub->execute([$titular['id'], $hoy]);
-            $subrogante = $stmtSub->fetch();
+            if ($titular) {
+                $stmtSub = $pdo->prepare("SELECT u.id, u.nombre_completo, u.rut, u.cargo FROM subrogancias s JOIN usuarios u ON s.usuario_subrogante_id = u.id WHERE s.usuario_titular_id = ? AND s.activo = 1 AND ? BETWEEN s.fecha_inicio AND s.fecha_fin LIMIT 1");
+                $stmtSub->execute([$titular['id'], $hoy]);
+                $subrogante = $stmtSub->fetch();
 
-            if ($subrogante) {
+                if ($subrogante) {
+                    return [
+                        'id'              => $subrogante['id'],
+                        'nombre'          => $subrogante['nombre_completo'],
+                        'nombre_completo' => $subrogante['nombre_completo'],
+                        'rut'             => $subrogante['rut'],
+                        'cargo'           => $subrogante['cargo'] ?: 'ADMINISTRADOR MUNICIPAL (S)',
+                        'es_subrogante'   => true
+                    ];
+                }
+
                 return [
-                    'id'              => $subrogante['id'],
-                    'nombre'          => $subrogante['nombre_completo'],
-                    'nombre_completo' => $subrogante['nombre_completo'],
-                    'rut'             => $subrogante['rut'],
-                    'cargo'           => $subrogante['cargo'] ?: 'ADMINISTRADOR MUNICIPAL (S)',
-                    'es_subrogante'   => true
+                    'id'              => $titular['id'],
+                    'nombre'          => $titular['nombre_completo'],
+                    'nombre_completo' => $titular['nombre_completo'],
+                    'rut'             => $titular['rut'],
+                    'cargo'           => $titular['cargo'] ?: 'ADMINISTRADOR MUNICIPAL',
+                    'es_subrogante'   => false
                 ];
             }
-
-            return [
-                'id'              => $titular['id'],
-                'nombre'          => $titular['nombre_completo'],
-                'nombre_completo' => $titular['nombre_completo'],
-                'rut'             => $titular['rut'],
-                'cargo'           => $titular['cargo'] ?: 'ADMINISTRADOR MUNICIPAL',
-                'es_subrogante'   => false
-            ];
         }
-    }
 
-    // 2. Otros roles (Usuario en sesión)
-    if ($usuario_sesion_id) {
-        $stmtU = $pdo->prepare("SELECT id, nombre_completo, rut, cargo FROM usuarios WHERE id = ?");
-        $stmtU->execute([$usuario_sesion_id]);
-        $usr = $stmtU->fetch();
-        if ($usr) {
-            return [
-                'id'              => $usr['id'],
-                'nombre'          => $usr['nombre_completo'],
-                'nombre_completo' => $usr['nombre_completo'],
-                'rut'             => $usr['rut'],
-                'cargo'           => $usr['cargo'] ?: $rol_codigo,
-                'es_subrogante'   => false
-            ];
+        // 2. Otros roles (Usuario en sesión)
+        if ($usuario_sesion_id) {
+            $stmtU = $pdo->prepare("SELECT id, nombre_completo, rut, cargo FROM usuarios WHERE id = ?");
+            $stmtU->execute([$usuario_sesion_id]);
+            $usr = $stmtU->fetch();
+            if ($usr) {
+                return [
+                    'id'              => $usr['id'],
+                    'nombre'          => $usr['nombre_completo'],
+                    'nombre_completo' => $usr['nombre_completo'],
+                    'rut'             => $usr['rut'],
+                    'cargo'           => $usr['cargo'] ?: $rol_codigo,
+                    'es_subrogante'   => false
+                ];
+            }
         }
-    }
 
-    return null;
+        return null;
+    }
 }

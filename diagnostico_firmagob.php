@@ -22,6 +22,8 @@ $error_test = null;
 $raw_request = null;
 $raw_response = null;
 $rut_probar = $_SESSION['user_rut'] ?? '17439829-1';
+$nombre_probar = $_SESSION['user_nombre'] ?? 'Juan Carlos Arriagada';
+$cargo_probar = $_SESSION['user_cargo'] ?? 'Administrador del Sistema';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
     $token_csrf = $_POST['csrf_token'] ?? '';
@@ -30,6 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
     } else {
         $modo_probar = strtoupper(trim($_POST['modo_probar'] ?? FIRMAGOB_MODO));
         $rut_probar = trim($_POST['rut_probar'] ?? $rut_probar);
+        $nombre_probar = trim($_POST['nombre_probar'] ?? $nombre_probar);
+        $cargo_probar = trim($_POST['cargo_probar'] ?? $cargo_probar);
         $otp_probar = trim($_POST['otp_probar'] ?? '');
         $purpose_probar = ($modo_probar === 'DESATENDIDA') ? 'Desatendido' : trim($_POST['purpose_probar'] ?? FIRMAGOB_PURPOSE);
         $entity_probar = trim($_POST['entity_probar'] ?? FIRMAGOB_ENTITY);
@@ -50,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
             $pdf->Cell(190, 10, 'Prueba de Firma Digital FirmaGob - Municipalidad de Lebu', 0, 1, 'C');
             $pdf->SetFont('Arial', '', 12);
             $pdf->Cell(190, 10, 'Fecha: ' . date('Y-m-d H:i:s'), 0, 1, 'C');
-            $pdf->Cell(190, 10, 'RUN: ' . $rut_probar . ' (Modo: ' . $modo_probar . ')', 0, 1, 'C');
+            $pdf->Cell(190, 10, 'RUN: ' . $rut_probar . ' (' . $nombre_probar . ') - Modo: ' . $modo_probar, 0, 1, 'C');
             $pdf->Output('F', $test_pdf_path);
 
             // 2. Generar JWT y payload
@@ -60,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
             $pdf_base64 = base64_encode($pdf_content);
             $checksum = hash('sha256', $pdf_content);
             $incluir_layout = isset($_POST['incluir_layout']) ? ($_POST['incluir_layout'] === '1') : false;
-            $layout_xml = $incluir_layout ? firmagob_obtener_layout_xml('JEFATURA') : null;
+            $layout_xml = $incluir_layout ? firmagob_obtener_layout_xml('JEFATURA', null, $nombre_probar, $rut_probar, $cargo_probar) : null;
 
             $file_item = [
                 'content-type' => 'application/pdf',
@@ -315,6 +319,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
                         </div>
                     </div>
 
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Nombre Completo del Firmante:</label>
+                            <input type="text" name="nombre_probar" class="form-control" value="<?= htmlspecialchars($nombre_probar) ?>" required>
+                            <div class="form-text small">Aparecerá en la estampa visual del documento.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Cargo o Rol del Firmante:</label>
+                            <input type="text" name="cargo_probar" class="form-control" value="<?= htmlspecialchars($cargo_probar) ?>" required>
+                            <div class="form-text small">Ej: Jefatura de Adquisiciones, Administrador Municipal.</div>
+                        </div>
+                    </div>
+
                     <div class="mb-4">
                         <label class="form-label fw-bold small">URL del Endpoint FirmaGob:</label>
                         <select name="url_probar" class="form-select font-monospace small mb-3">
@@ -322,11 +339,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ejecutar_prueba'])) {
                             <option value="https://api.firma.cert.digital.gob.cl/firma/v2/files/tickets" <?= (($_POST['url_probar'] ?? FIRMAGOB_API_URL) === 'https://api.firma.cert.digital.gob.cl/firma/v2/files/tickets') ? 'selected' : '' ?>>Certificación/QA: https://api.firma.cert.digital.gob.cl/firma/v2/files/tickets</option>
                         </select>
 
-                        <div class="form-check form-switch mb-2">
-                            <input class="form-check-input" type="checkbox" role="switch" name="incluir_layout" id="chkLayout" value="1" <?= (!empty($_POST['incluir_layout'])) ? 'checked' : '' ?>>
-                            <label class="form-check-label small text-muted" for="chkLayout">
-                                Incluir parámetro <code class="fw-bold">layout</code> (estampa visual en PDF). <em>(Recomendado desactivar para firma digital pura).</em>
-                            </label>
+                        <div class="p-3 bg-light rounded-3 border mb-3">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" role="switch" name="incluir_layout" id="chkLayout" value="1" <?= (isset($_POST['ejecutar_prueba']) ? !empty($_POST['incluir_layout']) : true) ? 'checked' : '' ?>>
+                                <label class="form-check-label fw-bold small text-dark" for="chkLayout">
+                                    Incluir parámetro <code class="fw-bold">layout</code> (Estampa Visual Dinámica en PDF)
+                                </label>
+                            </div>
+                            <div class="small text-muted mb-2">
+                                Genera automáticamente un recuadro gráfico con los datos del firmante, RUN, cargo, fecha/hora y Ley 19.799.
+                            </div>
+                            
+                            <!-- Vista previa de la estampa generada -->
+                            <div class="border rounded-2 p-2 bg-white d-inline-block shadow-sm mt-1">
+                                <div class="text-muted small fw-bold mb-1" style="font-size: 0.75rem;">Vista previa de la estampa visual:</div>
+                                <img src="data:image/png;base64,<?= firmagob_generar_estampa_dinamica_base64($nombre_probar, $rut_probar, $cargo_probar) ?>" alt="Vista Previa Estampa" class="img-fluid border" style="max-height: 90px;">
+                            </div>
                         </div>
 
                         <div class="form-check form-switch">
