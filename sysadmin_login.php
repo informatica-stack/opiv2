@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tiempo_restante <= 0) {
         try {
             // Buscar únicamente usuarios activos con rol SYSADMIN
             $stmt = $pdo->prepare("
-                SELECT u.id, u.nombre_completo, u.password_hash, u.unidad_id, u.activo, u.email_verificado, u.estado_aprobacion, r.nombre as rol_nombre 
+                SELECT u.id, u.nombre_completo, u.rut, u.cargo, u.password_hash, u.unidad_id, u.activo, u.email_verificado, u.estado_aprobacion, r.nombre as rol_nombre 
                 FROM usuarios u
                 JOIN roles r ON u.rol_id = r.id
                 WHERE u.email = ?
@@ -63,6 +63,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tiempo_restante <= 0) {
 
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['user_name'] = $user['nombre_completo'];
+                $_SESSION['user_nombre'] = $user['nombre_completo'];
+                $_SESSION['user_rut'] = $user['rut'] ?? '';
+                $_SESSION['user_cargo'] = !empty($user['cargo']) ? $user['cargo'] : 'Administrador de Sistemas';
                 $_SESSION['user_rol'] = 'SYSADMIN';
                 $_SESSION['user_unidad'] = $user['unidad_id'];
                 $_SESSION['es_jefe'] = 0;

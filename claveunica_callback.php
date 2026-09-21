@@ -38,7 +38,7 @@ try {
     $rut_limpio_cu = preg_replace('/[^0-9kK]/', '', $rut_cu_raw);
 
     $stmt = $pdo->prepare("
-        SELECT u.id, u.nombre_completo, u.unidad_id, u.es_jefe_unidad, u.activo, u.email_verificado, u.estado_aprobacion, r.nombre as rol_nombre 
+        SELECT u.id, u.nombre_completo, u.rut, u.cargo, u.unidad_id, u.es_jefe_unidad, u.activo, u.email_verificado, u.estado_aprobacion, r.nombre as rol_nombre 
         FROM usuarios u
         JOIN roles r ON u.rol_id = r.id
         WHERE REPLACE(REPLACE(u.rut, '.', ''), '-', '') = ?
@@ -73,8 +73,8 @@ try {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['user_name'] = $user['nombre_completo'];
         $_SESSION['user_nombre'] = $user['nombre_completo'];
-        $_SESSION['user_rut'] = $user['rut'];
-        $_SESSION['user_cargo'] = $user['cargo'] ?: $user['rol_nombre'];
+        $_SESSION['user_rut'] = !empty($user['rut']) ? $user['rut'] : $rut_cu_formateado;
+        $_SESSION['user_cargo'] = !empty($user['cargo']) ? $user['cargo'] : ($user['rol_nombre'] ?? 'Funcionario Municipal');
         $_SESSION['user_rol'] = $user['rol_nombre'];
         $_SESSION['user_unidad'] = $user['unidad_id'];
         $_SESSION['login_via'] = 'claveunica';
