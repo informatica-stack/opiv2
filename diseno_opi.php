@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // diseno_opi.php - Taller Visual de Diseno y Calibracion de Plantilla OPI (Modelo Oficial Lebu N° 758)
 require_once __DIR__ . '/config.php';
 

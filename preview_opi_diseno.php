@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // preview_opi_diseno.php - Endpoint de Generacion de Vista Previa Dinamica de la OPI en Tiempo Real
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/fpdf.php';
