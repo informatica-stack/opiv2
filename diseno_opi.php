@@ -185,7 +185,7 @@ $configs = $defaults;
 try {
     $stmt = $pdo->query("SELECT clave, valor FROM configuraciones_sistema WHERE clave LIKE 'opi_%' OR clave LIKE 'estampa_%'");
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        if ($row['valor'] !== null && $row['valor'] !== '') {
+        if ($row['valor'] !== null) {
             $configs[$row['clave']] = $row['valor'];
         }
     }
