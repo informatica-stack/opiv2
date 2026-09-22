@@ -41,27 +41,12 @@ $pie_legal_txt  = $_REQUEST['opi_pie_legal'] ?? ($config_sistema['opi_pie_legal'
 $firmas_linea_y = isset($_REQUEST['opi_firmas_linea_y']) ? floatval($_REQUEST['opi_firmas_linea_y']) : floatval($config_sistema['opi_firmas_linea_y'] ?? $y_firmas_default);
 $simular_estampas = isset($_REQUEST['simular_estampas']) ? (int)$_REQUEST['simular_estampas'] : 1;
 
-// Títulos y subtítulos configurables de los 3 pies de firma
-$firma1_tit = $_REQUEST['opi_firma1_titulo'] ?? ($config_sistema['opi_firma1_titulo'] ?? 'JEFATURA UNIDAD SOLICITANTE');
-$firma1_sub = $_REQUEST['opi_firma1_subtitulo'] ?? ($config_sistema['opi_firma1_subtitulo'] ?? 'V°B° Requerimiento Técnico');
-$firma2_tit = $_REQUEST['opi_firma2_titulo'] ?? ($config_sistema['opi_firma2_titulo'] ?? 'DIRECCIÓN DE ADM. Y FINANZAS');
-$firma2_sub = $_REQUEST['opi_firma2_subtitulo'] ?? ($config_sistema['opi_firma2_subtitulo'] ?? 'Control e Imputación Presupuestaria');
-$firma3_tit = $_REQUEST['opi_firma3_titulo'] ?? ($config_sistema['opi_firma3_titulo'] ?? 'ADMINISTRADOR MUNICIPAL');
-$firma3_sub = $_REQUEST['opi_firma3_subtitulo'] ?? ($config_sistema['opi_firma3_subtitulo'] ?? 'Autorización Final del Gasto');
-
-// Altura física de la estampa en el PDF (entre 18 y 28 mm, recomendado 24 mm)
-$alto_estampa_mm = isset($_REQUEST['estampa_alto_mm']) ? floatval($_REQUEST['estampa_alto_mm']) : floatval($config_sistema['estampa_alto_mm'] ?? 24.0);
-if ($alto_estampa_mm < 18.0 || $alto_estampa_mm > 28.0) {
-    $alto_estampa_mm = 24.0;
-}
-
 // Parámetros de personalización de la estampa digital
 $estampa_opciones = [
     'estampa_tema'            => $_REQUEST['estampa_tema'] ?? ($config_sistema['estampa_tema'] ?? 'azul_institucional'),
     'estampa_fuente'          => $_REQUEST['estampa_fuente'] ?? ($config_sistema['estampa_fuente'] ?? 'segoeui'),
     'estampa_titulo_texto'    => $_REQUEST['estampa_titulo_texto'] ?? ($config_sistema['estampa_titulo_texto'] ?? 'FIRMADO ELECTRÓNICAMENTE (FEA)'),
     'estampa_icono'           => $_REQUEST['estampa_icono'] ?? ($config_sistema['estampa_icono'] ?? 'check'),
-    'estampa_tamano_texto'    => $_REQUEST['estampa_tamano_texto'] ?? ($config_sistema['estampa_tamano_texto'] ?? 'normal'),
     'estampa_mostrar_run'     => $_REQUEST['estampa_mostrar_run'] ?? ($config_sistema['estampa_mostrar_run'] ?? '1'),
     'estampa_mostrar_cargo'   => $_REQUEST['estampa_mostrar_cargo'] ?? ($config_sistema['estampa_mostrar_cargo'] ?? '1'),
     'estampa_mostrar_fecha'   => $_REQUEST['estampa_mostrar_fecha'] ?? ($config_sistema['estampa_mostrar_fecha'] ?? '1'),
@@ -323,47 +308,47 @@ $pdf->Line(144, $y_firmas_line, 202, $y_firmas_line);
 $pdf->SetFont('Arial', 'B', 6);
 $pdf->SetTextColor(70, 80, 95);
 
-    $pdf->SetXY(14, $y_firmas_line + 1.2);
-    $pdf->Cell(58, 2.8, $safe_text($firma1_tit, 42), 0, 1, 'C');
-    $pdf->SetXY(14, $y_firmas_line + 3.8);
-    $pdf->SetFont('Arial', '', 5.5);
-    $pdf->Cell(58, 2.5, $safe_text($firma1_sub, 48), 0, 1, 'C');
+$pdf->SetXY(14, $y_firmas_line + 1.2);
+$pdf->Cell(58, 2.8, $utf("JEFATURA UNIDAD SOLICITANTE"), 0, 1, 'C');
+$pdf->SetXY(14, $y_firmas_line + 3.8);
+$pdf->SetFont('Arial', '', 5.5);
+$pdf->Cell(58, 2.5, $utf("V°B° Requerimiento Técnico"), 0, 1, 'C');
 
-    $pdf->SetFont('Arial', 'B', 6);
-    $pdf->SetXY(79, $y_firmas_line + 1.2);
-    $pdf->Cell(58, 2.8, $safe_text($firma2_tit, 42), 0, 1, 'C');
-    $pdf->SetXY(79, $y_firmas_line + 3.8);
-    $pdf->SetFont('Arial', '', 5.5);
-    $pdf->Cell(58, 2.5, $safe_text($firma2_sub, 48), 0, 1, 'C');
+$pdf->SetFont('Arial', 'B', 6);
+$pdf->SetXY(79, $y_firmas_line + 1.2);
+$pdf->Cell(58, 2.8, $utf("DIRECCIÓN DE ADM. Y FINANZAS"), 0, 1, 'C');
+$pdf->SetXY(79, $y_firmas_line + 3.8);
+$pdf->SetFont('Arial', '', 5.5);
+$pdf->Cell(58, 2.5, $utf("Control e Imputación Presupuestaria"), 0, 1, 'C');
 
-    $pdf->SetFont('Arial', 'B', 6);
-    $pdf->SetXY(144, $y_firmas_line + 1.2);
-    $pdf->Cell(58, 2.8, $safe_text($firma3_tit, 42), 0, 1, 'C');
-    $pdf->SetXY(144, $y_firmas_line + 3.8);
-    $pdf->SetFont('Arial', '', 5.5);
-    $pdf->Cell(58, 2.5, $safe_text($firma3_sub, 48), 0, 1, 'C');
+$pdf->SetFont('Arial', 'B', 6);
+$pdf->SetXY(144, $y_firmas_line + 1.2);
+$pdf->Cell(58, 2.8, $utf("ADMINISTRADOR MUNICIPAL"), 0, 1, 'C');
+$pdf->SetXY(144, $y_firmas_line + 3.8);
+$pdf->SetFont('Arial', '', 5.5);
+$pdf->Cell(58, 2.5, $utf("Autorización Final del Gasto"), 0, 1, 'C');
 
-    // --- SIMULACIÓN DE ESTAMPAS DIGITALES FIRMAGOB (SI ESTÁ ACTIVA LA OPCIÓN) ---
-    if ($simular_estampas === 1) {
-        $dibujar_estampa_real = function($x, $y_base, $nombre, $run, $cargo) use ($pdf, $estampa_opciones, $alto_estampa_mm) {
-            $w = 58;
-            $h = $alto_estampa_mm;
-            $y_top = $y_base - $h - 0.5;
+// --- SIMULACIÓN DE ESTAMPAS DIGITALES FIRMAGOB (SI ESTÁ ACTIVA LA OPCIÓN) ---
+if ($simular_estampas === 1) {
+    $dibujar_estampa_real = function($x, $y_base, $nombre, $run, $cargo) use ($pdf, $estampa_opciones) {
+        $w = 58;
+        $h = 17;
+        $y_top = $y_base - $h - 0.5;
 
-            // Generar estampa real idéntica a la que estampa FirmaGob
-            $b64 = firmagob_generar_estampa_dinamica_base64($nombre, $run, $cargo, null, $estampa_opciones);
-            if (!empty($b64)) {
-                $pdf->Image('data://image/png;base64,' . $b64, $x, $y_top, $w, $h, 'PNG');
-            }
-        };
+        // Generar estampa real idéntica a la que estampa FirmaGob
+        $b64 = firmagob_generar_estampa_dinamica_base64($nombre, $run, $cargo, null, $estampa_opciones);
+        if (!empty($b64)) {
+            $pdf->Image('data://image/png;base64,' . $b64, $x, $y_top, $w, $h, 'PNG');
+        }
+    };
 
-        // Estampa 1: Jefatura
-        $dibujar_estampa_real(14, $y_firmas_line, "JUAN CARLOS ARRIAGADA", "17.439.829-1", "Jefe DIDECO");
-        // Estampa 2: Presupuesto
-        $dibujar_estampa_real(79, $y_firmas_line, "MARÍA JOSÉ CONTRERAS", "15.987.654-3", "Encargada Presupuesto");
-        // Estampa 3: Administrador
-        $dibujar_estampa_real(144, $y_firmas_line, "ROBERTO SANDOVAL MORA", "12.345.678-9", "Administrador Municipal");
-    }
+    // Estampa 1: Jefatura
+    $dibujar_estampa_real(14, $y_firmas_line, "JUAN CARLOS ARRIAGADA", "17.439.829-1", "Jefe DIDECO");
+    // Estampa 2: Presupuesto
+    $dibujar_estampa_real(79, $y_firmas_line, "MARÍA JOSÉ CONTRERAS", "15.987.654-3", "Encargada Presupuesto");
+    // Estampa 3: Administrador
+    $dibujar_estampa_real(144, $y_firmas_line, "ROBERTO SANDOVAL MORA", "12.345.678-9", "Administrador Municipal");
+}
 
 // Pie de página legal configurable
 $y_pie = min($alto_pagina_mm - 7.0, $y_firmas_line + 7.5);

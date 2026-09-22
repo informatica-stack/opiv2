@@ -37,19 +37,11 @@ $defaults = [
     'estampa_fuente'          => 'segoeui',
     'estampa_titulo_texto'    => 'FIRMADO ELECTRÓNICAMENTE (FEA)',
     'estampa_icono'           => 'check',
-    'estampa_alto_mm'         => '24.0',
-    'estampa_tamano_texto'    => 'normal',
     'estampa_mostrar_run'     => '1',
     'estampa_mostrar_cargo'   => '1',
     'estampa_mostrar_fecha'   => '1',
     'estampa_mostrar_entidad' => '1',
     'estampa_mostrar_ley'     => '1',
-    'opi_firma1_titulo'       => 'JEFATURA UNIDAD SOLICITANTE',
-    'opi_firma1_subtitulo'    => 'V°B° Requerimiento Técnico',
-    'opi_firma2_titulo'       => 'DIRECCIÓN DE ADM. Y FINANZAS',
-    'opi_firma2_subtitulo'    => 'Control e Imputación Presupuestaria',
-    'opi_firma3_titulo'       => 'ADMINISTRADOR MUNICIPAL',
-    'opi_firma3_subtitulo'    => 'Autorización Final del Gasto',
 ];
 
 // Procesamiento de formulario POST
@@ -60,9 +52,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         try {
             $stmtDel = $pdo->prepare("DELETE FROM configuraciones_sistema WHERE clave IN (
                 'opi_tamano_papel', 'opi_titulo_documento', 'opi_clausula1_texto', 'opi_clausula2_texto', 'opi_pie_legal', 'opi_firmas_linea_y',
-                'estampa_tema', 'estampa_fuente', 'estampa_titulo_texto', 'estampa_icono', 'estampa_alto_mm', 'estampa_tamano_texto',
-                'estampa_mostrar_run', 'estampa_mostrar_cargo', 'estampa_mostrar_fecha', 'estampa_mostrar_entidad', 'estampa_mostrar_ley',
-                'opi_firma1_titulo', 'opi_firma1_subtitulo', 'opi_firma2_titulo', 'opi_firma2_subtitulo', 'opi_firma3_titulo', 'opi_firma3_subtitulo'
+                'estampa_tema', 'estampa_fuente', 'estampa_titulo_texto', 'estampa_icono',
+                'estampa_mostrar_run', 'estampa_mostrar_cargo', 'estampa_mostrar_fecha', 'estampa_mostrar_entidad', 'estampa_mostrar_ley'
             )");
             $stmtDel->execute();
             $mensaje = "Se han restablecido los textos, formato y parámetros oficiales por defecto de la plantilla y estampa OPI.";
@@ -101,22 +92,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $temas_validos   = ['azul_institucional', 'verde_validacion', 'monocromatico', 'barra_lateral'];
             $fuentes_validas = ['segoeui', 'calibri', 'arial'];
             $iconos_validos  = ['check', 'candado', 'escudo', 'ninguno'];
-            $tamanos_validos = ['normal', 'grande', 'extragrande'];
 
             $tema_post   = $_POST['estampa_tema'] ?? 'azul_institucional';
             $fuente_post = $_POST['estampa_fuente'] ?? 'segoeui';
             $icono_post  = $_POST['estampa_icono'] ?? 'check';
-            $tam_post    = $_POST['estampa_tamano_texto'] ?? 'normal';
 
             $estampa_tema   = in_array($tema_post, $temas_validos, true) ? $tema_post : 'azul_institucional';
             $estampa_fuente = in_array($fuente_post, $fuentes_validas, true) ? $fuente_post : 'segoeui';
             $estampa_icono  = in_array($icono_post, $iconos_validos, true) ? $icono_post : 'check';
-            $estampa_tam_txt = in_array($tam_post, $tamanos_validos, true) ? $tam_post : 'normal';
-
-            $estampa_alto_mm = floatval($_POST['estampa_alto_mm'] ?? 24.0);
-            if ($estampa_alto_mm < 18.0 || $estampa_alto_mm > 28.0) {
-                $estampa_alto_mm = 24.0;
-            }
 
             $estampa_titulo_texto = trim($_POST['estampa_titulo_texto'] ?? '');
             if (empty($estampa_titulo_texto)) {
@@ -125,20 +108,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             if (mb_strlen($estampa_titulo_texto, 'UTF-8') > 50) {
                 $estampa_titulo_texto = mb_substr($estampa_titulo_texto, 0, 50, 'UTF-8');
             }
-
-            // Sanitizar textos de los pies de firma
-            $limpiar_pie = function($val, $default, $max = 45) {
-                $t = trim((string)($val ?? ''));
-                if (empty($t)) $t = $default;
-                return mb_substr($t, 0, $max, 'UTF-8');
-            };
-
-            $firma1_tit = $limpiar_pie($_POST['opi_firma1_titulo'] ?? '', $defaults['opi_firma1_titulo']);
-            $firma1_sub = $limpiar_pie($_POST['opi_firma1_subtitulo'] ?? '', $defaults['opi_firma1_subtitulo']);
-            $firma2_tit = $limpiar_pie($_POST['opi_firma2_titulo'] ?? '', $defaults['opi_firma2_titulo']);
-            $firma2_sub = $limpiar_pie($_POST['opi_firma2_subtitulo'] ?? '', $defaults['opi_firma2_subtitulo']);
-            $firma3_tit = $limpiar_pie($_POST['opi_firma3_titulo'] ?? '', $defaults['opi_firma3_titulo']);
-            $firma3_sub = $limpiar_pie($_POST['opi_firma3_subtitulo'] ?? '', $defaults['opi_firma3_subtitulo']);
 
             $guardar = [
                 'opi_tamano_papel'        => $tamano_papel,
@@ -151,19 +120,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 'estampa_fuente'          => $estampa_fuente,
                 'estampa_titulo_texto'    => $estampa_titulo_texto,
                 'estampa_icono'           => $estampa_icono,
-                'estampa_alto_mm'         => number_format($estampa_alto_mm, 1, '.', ''),
-                'estampa_tamano_texto'    => $estampa_tam_txt,
                 'estampa_mostrar_run'     => isset($_POST['estampa_mostrar_run']) ? '1' : '0',
                 'estampa_mostrar_cargo'   => isset($_POST['estampa_mostrar_cargo']) ? '1' : '0',
                 'estampa_mostrar_fecha'   => isset($_POST['estampa_mostrar_fecha']) ? '1' : '0',
                 'estampa_mostrar_entidad' => isset($_POST['estampa_mostrar_entidad']) ? '1' : '0',
                 'estampa_mostrar_ley'     => isset($_POST['estampa_mostrar_ley']) ? '1' : '0',
-                'opi_firma1_titulo'       => $firma1_tit,
-                'opi_firma1_subtitulo'    => $firma1_sub,
-                'opi_firma2_titulo'       => $firma2_tit,
-                'opi_firma2_subtitulo'    => $firma2_sub,
-                'opi_firma3_titulo'       => $firma3_tit,
-                'opi_firma3_subtitulo'    => $firma3_sub,
             ];
 
             $stmtSave = $pdo->prepare("INSERT INTO configuraciones_sistema (clave, valor) VALUES (?, ?) ON DUPLICATE KEY UPDATE valor = VALUES(valor)");
@@ -171,7 +132,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $stmtSave->execute([$k, $v]);
             }
 
-            $mensaje = "Diseño de OPI, dimensiones de estampa y pies de firma guardados exitosamente.";
+            $mensaje = "Diseño de OPI y estilo de estampa digital guardados exitosamente. Las nuevas OPIs reflejarán estos cambios.";
             $tipo_mensaje = "success";
 
         } catch (Exception $e) {
@@ -204,11 +165,6 @@ if ($val_slider_y < $min_slider_y || $val_slider_y > $max_slider_y) {
     $val_slider_y = $es_oficio_actual ? 306.0 : 256.0;
 }
 
-$val_alto_estampa = floatval($configs['estampa_alto_mm'] ?? 24.0);
-if ($val_alto_estampa < 18.0 || $val_alto_estampa > 28.0) {
-    $val_alto_estampa = 24.0;
-}
-
 // Pre-calcular URL de vista previa con parámetros sincronizados para carga directa sin doble render
 $query_preview_inicial = http_build_query([
     'opi_tamano_papel'        => $tamano_actual,
@@ -222,19 +178,11 @@ $query_preview_inicial = http_build_query([
     'estampa_fuente'          => $configs['estampa_fuente'] ?? 'segoeui',
     'estampa_titulo_texto'    => $configs['estampa_titulo_texto'] ?? 'FIRMADO ELECTRÓNICAMENTE (FEA)',
     'estampa_icono'           => $configs['estampa_icono'] ?? 'check',
-    'estampa_alto_mm'         => number_format($val_alto_estampa, 1, '.', ''),
-    'estampa_tamano_texto'    => $configs['estampa_tamano_texto'] ?? 'normal',
     'estampa_mostrar_run'     => $configs['estampa_mostrar_run'] ?? '1',
     'estampa_mostrar_cargo'   => $configs['estampa_mostrar_cargo'] ?? '1',
     'estampa_mostrar_fecha'   => $configs['estampa_mostrar_fecha'] ?? '1',
     'estampa_mostrar_entidad' => $configs['estampa_mostrar_entidad'] ?? '1',
     'estampa_mostrar_ley'     => $configs['estampa_mostrar_ley'] ?? '1',
-    'opi_firma1_titulo'       => $configs['opi_firma1_titulo'] ?? $defaults['opi_firma1_titulo'],
-    'opi_firma1_subtitulo'    => $configs['opi_firma1_subtitulo'] ?? $defaults['opi_firma1_subtitulo'],
-    'opi_firma2_titulo'       => $configs['opi_firma2_titulo'] ?? $defaults['opi_firma2_titulo'],
-    'opi_firma2_subtitulo'    => $configs['opi_firma2_subtitulo'] ?? $defaults['opi_firma2_subtitulo'],
-    'opi_firma3_titulo'       => $configs['opi_firma3_titulo'] ?? $defaults['opi_firma3_titulo'],
-    'opi_firma3_subtitulo'    => $configs['opi_firma3_subtitulo'] ?? $defaults['opi_firma3_subtitulo'],
     't'                       => time()
 ]);
 $url_preview_inicial = 'preview_opi_diseno.php?' . $query_preview_inicial;
@@ -468,29 +416,6 @@ $url_preview_inicial = 'preview_opi_diseno.php?' . $query_preview_inicial;
                                 </div>
                             </div>
 
-                            <div class="row g-2 mb-3">
-                                <div class="col-12 col-sm-6">
-                                    <label class="form-label fw-bold text-secondary small mb-1">Tamaño de Texto / Escala</label>
-                                    <select name="estampa_tamano_texto" id="selectEstampaTamanoTexto" class="form-select form-select-sm fw-bold">
-                                        <option value="normal" <?= ($configs['estampa_tamano_texto'] ?? '') === 'normal' ? 'selected' : '' ?>>Estándar (Legible & Nítida)</option>
-                                        <option value="grande" <?= ($configs['estampa_tamano_texto'] ?? '') === 'grande' ? 'selected' : '' ?>>Grande (+15% Visibilidad)</option>
-                                        <option value="extragrande" <?= ($configs['estampa_tamano_texto'] ?? '') === 'extragrande' ? 'selected' : '' ?>>Extra Grande (+28% Máxima Lectura)</option>
-                                    </select>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <label class="form-label fw-bold text-secondary small mb-0">Altura de Estampa en PDF</label>
-                                        <span class="badge bg-secondary range-value-badge" id="badgeEstampaAlto"><?= htmlspecialchars(number_format($val_alto_estampa, 1, '.', '')) ?> mm</span>
-                                    </div>
-                                    <input type="range" class="form-range" id="rangeEstampaAlto" name="estampa_alto_mm" min="18.0" max="28.0" step="0.5" value="<?= htmlspecialchars(number_format($val_alto_estampa, 1, '.', '')) ?>">
-                                    <div class="d-flex justify-content-between text-muted" style="font-size: 10px;">
-                                        <span>18 mm (Compacto)</span>
-                                        <span class="fw-bold text-primary">24 mm (Óptimo)</span>
-                                        <span>28 mm (Prominente)</span>
-                                    </div>
-                                </div>
-                            </div>
-
                             <label class="form-label fw-bold text-secondary small mb-1.5">Metadatos a Incluir en la Estampa</label>
                             <div class="p-2.5 bg-light rounded-3 border">
                                 <div class="row g-2">
@@ -520,80 +445,6 @@ $url_preview_inicial = 'preview_opi_diseno.php?' . $query_preview_inicial;
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- TARJETA 4: PERSONALIZACIÓN DE PIES DE FIRMA Y CARGOS -->
-                    <div class="card shadow-sm border-light mb-3">
-                        <div class="card-header bg-white py-2.5 border-bottom d-flex align-items-center justify-content-between">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="bi bi-people-fill text-primary fs-5"></i>
-                                <h6 class="fw-bold mb-0 text-dark">4. Textos de Pies de Firma y Cargos</h6>
-                            </div>
-                            <span class="badge bg-secondary-subtle text-secondary border px-2 py-1">
-                                3 Firmantes
-                            </span>
-                        </div>
-                        <div class="card-body p-3">
-                            <div class="alert alert-light border py-2 px-3 small text-muted mb-3 d-flex align-items-center gap-2">
-                                <i class="bi bi-info-circle text-primary fs-6"></i>
-                                <div>Personalice los títulos principales y subtítulos de rol que se imprimen bajo cada una de las 3 líneas de firma.</div>
-                            </div>
-
-                            <!-- FIRMA 1 (IZQUIERDA) -->
-                            <div class="p-2.5 bg-light rounded-3 border mb-2.5">
-                                <div class="d-flex align-items-center gap-1.5 mb-2">
-                                    <span class="badge bg-primary text-white rounded-pill" style="font-size: 10px;">Firma 1</span>
-                                    <span class="fw-bold small text-dark">Izquierda (Unidad Solicitante / Origen)</span>
-                                </div>
-                                <div class="row g-2">
-                                    <div class="col-12 col-sm-6">
-                                        <label class="form-label fw-bold text-secondary small mb-1" style="font-size: 11px;">Título Principal</label>
-                                        <input type="text" name="opi_firma1_titulo" id="inputFirma1Tit" class="form-control form-control-sm fw-bold input-pie-firma" maxlength="45" value="<?= htmlspecialchars($configs['opi_firma1_titulo'] ?? $defaults['opi_firma1_titulo']) ?>">
-                                    </div>
-                                    <div class="col-12 col-sm-6">
-                                        <label class="form-label fw-bold text-secondary small mb-1" style="font-size: 11px;">Subtítulo de Rol / Acto</label>
-                                        <input type="text" name="opi_firma1_subtitulo" id="inputFirma1Sub" class="form-control form-control-sm input-pie-firma" maxlength="50" value="<?= htmlspecialchars($configs['opi_firma1_subtitulo'] ?? $defaults['opi_firma1_subtitulo']) ?>">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- FIRMA 2 (CENTRO) -->
-                            <div class="p-2.5 bg-light rounded-3 border mb-2.5">
-                                <div class="d-flex align-items-center gap-1.5 mb-2">
-                                    <span class="badge bg-success text-white rounded-pill" style="font-size: 10px;">Firma 2</span>
-                                    <span class="fw-bold small text-dark">Centro (Control Presupuestario / Finanzas)</span>
-                                </div>
-                                <div class="row g-2">
-                                    <div class="col-12 col-sm-6">
-                                        <label class="form-label fw-bold text-secondary small mb-1" style="font-size: 11px;">Título Principal</label>
-                                        <input type="text" name="opi_firma2_titulo" id="inputFirma2Tit" class="form-control form-control-sm fw-bold input-pie-firma" maxlength="45" value="<?= htmlspecialchars($configs['opi_firma2_titulo'] ?? $defaults['opi_firma2_titulo']) ?>">
-                                    </div>
-                                    <div class="col-12 col-sm-6">
-                                        <label class="form-label fw-bold text-secondary small mb-1" style="font-size: 11px;">Subtítulo de Rol / Acto</label>
-                                        <input type="text" name="opi_firma2_subtitulo" id="inputFirma2Sub" class="form-control form-control-sm input-pie-firma" maxlength="50" value="<?= htmlspecialchars($configs['opi_firma2_subtitulo'] ?? $defaults['opi_firma2_subtitulo']) ?>">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- FIRMA 3 (DERECHA) -->
-                            <div class="p-2.5 bg-light rounded-3 border mb-0">
-                                <div class="d-flex align-items-center gap-1.5 mb-2">
-                                    <span class="badge bg-dark text-white rounded-pill" style="font-size: 10px;">Firma 3</span>
-                                    <span class="fw-bold small text-dark">Derecha (Autorización Final / Alcaldía / Adm.)</span>
-                                </div>
-                                <div class="row g-2">
-                                    <div class="col-12 col-sm-6">
-                                        <label class="form-label fw-bold text-secondary small mb-1" style="font-size: 11px;">Título Principal</label>
-                                        <input type="text" name="opi_firma3_titulo" id="inputFirma3Tit" class="form-control form-control-sm fw-bold input-pie-firma" maxlength="45" value="<?= htmlspecialchars($configs['opi_firma3_titulo'] ?? $defaults['opi_firma3_titulo']) ?>">
-                                    </div>
-                                    <div class="col-12 col-sm-6">
-                                        <label class="form-label fw-bold text-secondary small mb-1" style="font-size: 11px;">Subtítulo de Rol / Acto</label>
-                                        <input type="text" name="opi_firma3_subtitulo" id="inputFirma3Sub" class="form-control form-control-sm input-pie-firma" maxlength="50" value="<?= htmlspecialchars($configs['opi_firma3_subtitulo'] ?? $defaults['opi_firma3_subtitulo']) ?>">
-                                    </div>
-                                </div>
-                            </div>
-
                         </div>
                     </div>
 
@@ -661,7 +512,7 @@ $url_preview_inicial = 'preview_opi_diseno.php?' . $query_preview_inicial;
         const posY = encodeURIComponent(document.getElementById('rangePosY').value);
         const simular = document.getElementById('swSimularEstampas').checked ? '1' : '0';
 
-        // Metadatos de Estampa FirmaGob
+        // Parámetros de Personalización de Estampa FirmaGob
         const estampaTema = encodeURIComponent(document.getElementById('selectEstampaTema')?.value || 'azul_institucional');
         const estampaFuente = encodeURIComponent(document.getElementById('selectEstampaFuente')?.value || 'segoeui');
         const estampaTitulo = encodeURIComponent(document.getElementById('inputEstampaTitulo')?.value || '');
@@ -672,19 +523,7 @@ $url_preview_inicial = 'preview_opi_diseno.php?' . $query_preview_inicial;
         const estampaEntidad = document.getElementById('swEstampaEntidad')?.checked ? '1' : '0';
         const estampaLey = document.getElementById('swEstampaLey')?.checked ? '1' : '0';
 
-        // Escala y Altura de Estampa
-        const estampaAlto = encodeURIComponent(document.getElementById('rangeEstampaAlto')?.value || '24.0');
-        const estampaTamanoTexto = encodeURIComponent(document.getElementById('selectEstampaTamanoTexto')?.value || 'normal');
-
-        // Pies de Firma y Cargos Dinámicos
-        const f1Tit = encodeURIComponent(document.getElementById('inputFirma1Tit')?.value || '');
-        const f1Sub = encodeURIComponent(document.getElementById('inputFirma1Sub')?.value || '');
-        const f2Tit = encodeURIComponent(document.getElementById('inputFirma2Tit')?.value || '');
-        const f2Sub = encodeURIComponent(document.getElementById('inputFirma2Sub')?.value || '');
-        const f3Tit = encodeURIComponent(document.getElementById('inputFirma3Tit')?.value || '');
-        const f3Sub = encodeURIComponent(document.getElementById('inputFirma3Sub')?.value || '');
-
-        return `opi_tamano_papel=${tamano}&opi_titulo_documento=${titulo}&opi_clausula1_texto=${clausula1}&opi_clausula2_texto=${clausula2}&opi_pie_legal=${pieLegal}&opi_firmas_linea_y=${posY}&simular_estampas=${simular}&estampa_tema=${estampaTema}&estampa_fuente=${estampaFuente}&estampa_titulo_texto=${estampaTitulo}&estampa_icono=${estampaIcono}&estampa_mostrar_run=${estampaRun}&estampa_mostrar_cargo=${estampaCargo}&estampa_mostrar_fecha=${estampaFecha}&estampa_mostrar_entidad=${estampaEntidad}&estampa_mostrar_ley=${estampaLey}&estampa_alto_mm=${estampaAlto}&estampa_tamano_texto=${estampaTamanoTexto}&opi_firma1_titulo=${f1Tit}&opi_firma1_subtitulo=${f1Sub}&opi_firma2_titulo=${f2Tit}&opi_firma2_subtitulo=${f2Sub}&opi_firma3_titulo=${f3Tit}&opi_firma3_subtitulo=${f3Sub}&t=${Date.now()}`;
+        return `opi_tamano_papel=${tamano}&opi_titulo_documento=${titulo}&opi_clausula1_texto=${clausula1}&opi_clausula2_texto=${clausula2}&opi_pie_legal=${pieLegal}&opi_firmas_linea_y=${posY}&simular_estampas=${simular}&estampa_tema=${estampaTema}&estampa_fuente=${estampaFuente}&estampa_titulo_texto=${estampaTitulo}&estampa_icono=${estampaIcono}&estampa_mostrar_run=${estampaRun}&estampa_mostrar_cargo=${estampaCargo}&estampa_mostrar_fecha=${estampaFecha}&estampa_mostrar_entidad=${estampaEntidad}&estampa_mostrar_ley=${estampaLey}&t=${Date.now()}`;
     }
 
     function actualizarVistaPrevia() {
@@ -749,28 +588,12 @@ $url_preview_inicial = 'preview_opi_diseno.php?' . $query_preview_inicial;
         });
     }
 
-    // Sincronizar Slider de Alto de Estampa
-    const rangeEstampaAlto = document.getElementById('rangeEstampaAlto');
-    const badgeEstampaAlto = document.getElementById('badgeEstampaAlto');
-    if (rangeEstampaAlto && badgeEstampaAlto) {
-        rangeEstampaAlto.addEventListener('input', function() {
-            badgeEstampaAlto.textContent = parseFloat(this.value).toFixed(1) + ' mm';
-            asegurarEstampasActivas();
-            dispararActualizacionDebounce();
-        });
-    }
-
     // Escuchar cambios en todos los campos de texto
     ['inputTitulo', 'inputClausula1', 'inputClausula2', 'inputPieLegal', 'inputEstampaTitulo'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('input', dispararActualizacionDebounce);
         }
-    });
-
-    // Escuchar cambios en los 6 campos de pies de firma y cargos
-    document.querySelectorAll('.input-pie-firma').forEach(el => {
-        el.addEventListener('input', dispararActualizacionDebounce);
     });
 
     // Auto-activar conmutador de simulación si se edita el diseño de la estampa
@@ -791,7 +614,7 @@ $url_preview_inicial = 'preview_opi_diseno.php?' . $query_preview_inicial;
     }
 
     // Escuchar cambios en selectores de estampa
-    ['selectEstampaTema', 'selectEstampaFuente', 'selectEstampaIcono', 'selectEstampaTamanoTexto'].forEach(id => {
+    ['selectEstampaTema', 'selectEstampaFuente', 'selectEstampaIcono'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('change', () => {

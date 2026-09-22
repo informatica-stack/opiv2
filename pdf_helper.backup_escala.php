@@ -141,14 +141,6 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
     $cfg_pie_legal_txt  = !empty($config_sistema['opi_pie_legal']) ? $config_sistema['opi_pie_legal'] : 'Documento Oficial emitido por el Sistema Institucional OPI - Validez legal bajo Ley N° 19.799 de Firma Electrónica';
     $cfg_firmas_linea_y = !empty($config_sistema['opi_firmas_linea_y']) ? floatval($config_sistema['opi_firmas_linea_y']) : $y_firmas_default;
 
-    // Títulos y subtítulos configurables de los pies de firma
-    $cfg_firma1_tit     = !empty($config_sistema['opi_firma1_titulo']) ? $config_sistema['opi_firma1_titulo'] : 'JEFATURA UNIDAD SOLICITANTE';
-    $cfg_firma1_sub     = !empty($config_sistema['opi_firma1_subtitulo']) ? $config_sistema['opi_firma1_subtitulo'] : 'V°B° Requerimiento Técnico';
-    $cfg_firma2_tit     = !empty($config_sistema['opi_firma2_titulo']) ? $config_sistema['opi_firma2_titulo'] : 'DIRECCIÓN DE ADM. Y FINANZAS';
-    $cfg_firma2_sub     = !empty($config_sistema['opi_firma2_subtitulo']) ? $config_sistema['opi_firma2_subtitulo'] : 'Control e Imputación Presupuestaria';
-    $cfg_firma3_tit     = !empty($config_sistema['opi_firma3_titulo']) ? $config_sistema['opi_firma3_titulo'] : 'ADMINISTRADOR MUNICIPAL';
-    $cfg_firma3_sub     = !empty($config_sistema['opi_firma3_subtitulo']) ? $config_sistema['opi_firma3_subtitulo'] : 'Autorización Final del Gasto';
-
     // 4. Instanciar FPDF (Tamaño Oficio Chileno 215.9 x 330.2 mm o Carta 215.9 x 279.4 mm)
     $pdf = new FPDF('P', 'mm', $dimensiones_papel);
     $pdf->SetMargins(14, 10, 14);
@@ -441,24 +433,24 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
     $pdf->SetTextColor(70, 80, 95);
 
     $pdf->SetXY(14, $y_firmas_line + 1.2);
-    $pdf->Cell(58, 2.8, $safe_text($cfg_firma1_tit, 42), 0, 1, 'C');
+    $pdf->Cell(58, 2.8, $utf("JEFATURA UNIDAD SOLICITANTE"), 0, 1, 'C');
     $pdf->SetXY(14, $y_firmas_line + 3.8);
     $pdf->SetFont('Arial', '', 5.5);
-    $pdf->Cell(58, 2.5, $safe_text($cfg_firma1_sub, 48), 0, 1, 'C');
+    $pdf->Cell(58, 2.5, $utf("V°B° Requerimiento Técnico"), 0, 1, 'C');
 
     $pdf->SetFont('Arial', 'B', 6);
     $pdf->SetXY(79, $y_firmas_line + 1.2);
-    $pdf->Cell(58, 2.8, $safe_text($cfg_firma2_tit, 42), 0, 1, 'C');
+    $pdf->Cell(58, 2.8, $utf("DIRECCIÓN DE ADM. Y FINANZAS"), 0, 1, 'C');
     $pdf->SetXY(79, $y_firmas_line + 3.8);
     $pdf->SetFont('Arial', '', 5.5);
-    $pdf->Cell(58, 2.5, $safe_text($cfg_firma2_sub, 48), 0, 1, 'C');
+    $pdf->Cell(58, 2.5, $utf("Control e Imputación Presupuestaria"), 0, 1, 'C');
 
     $pdf->SetFont('Arial', 'B', 6);
     $pdf->SetXY(144, $y_firmas_line + 1.2);
-    $pdf->Cell(58, 2.8, $safe_text($cfg_firma3_tit, 42), 0, 1, 'C');
+    $pdf->Cell(58, 2.8, $utf("ADMINISTRADOR MUNICIPAL"), 0, 1, 'C');
     $pdf->SetXY(144, $y_firmas_line + 3.8);
     $pdf->SetFont('Arial', '', 5.5);
-    $pdf->Cell(58, 2.5, $safe_text($cfg_firma3_sub, 48), 0, 1, 'C');
+    $pdf->Cell(58, 2.5, $utf("Autorización Final del Gasto"), 0, 1, 'C');
 
     // Pie de página oficial
     $y_pie = min($alto_pagina_mm - 7.0, $y_firmas_line + 7.5);
