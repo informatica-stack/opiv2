@@ -89,8 +89,7 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
     $ags_usadas = array_unique(array_filter(array_column($items, 'ag_codigo')));
     $cuenta_str = !empty($cuentas_usadas) ? implode(", ", $cuentas_usadas) : '-';
     $ag_str = !empty($ags_usadas) ? implode(", ", $ags_usadas) : '01';
-    // Mostrar únicamente el ID/código registrado del Centro de Costos
-    $cc_str = !empty($exp['centro_costo_cod']) ? $exp['centro_costo_cod'] : (!empty($exp['centro_costo_id']) ? (string)$exp['centro_costo_id'] : '-');
+    $cc_str = !empty($exp['centro_costo']) ? ($exp['centro_costo_cod'] ? $exp['centro_costo_cod'] . ' - ' : '') . $exp['centro_costo'] : '-';
 
     // 3. Crear directorio si no existe
     $anio = date('Y');
@@ -241,40 +240,17 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
         if (!empty($it['id_producto_cm'])) {
             $desc .= " (ID CM: " . $it['id_producto_cm'] . ")";
         }
+        // Truncado multibyte-safe para prevenir caracteres cortados
+        if (mb_strlen($desc, 'UTF-8') > 66) {
+            $desc = mb_substr($desc, 0, 63, 'UTF-8') . '...';
+        }
 
-        // Medir extensión del texto para calcular altura dinámica de la fila sin desbordar a otras columnas
-        $pdf->SetFont('Arial', '', 7.5);
-        $texto_desc = " " . trim($desc);
-        $ancho_txt = $pdf->GetStringWidth($texto_desc);
-        $lineas = max(1, (int)ceil($ancho_txt / 88.0));
-        $lineas = min(3, $lineas); // Máximo 3 líneas para preservar diseño de 1 carilla
-        $line_h = 3.8;
-        $row_h  = max(4.8, $lineas * $line_h);
-
-        $x_fila = 14;
-        $y_fila = $pdf->GetY();
-
-        // Borde exterior de la fila completa
-        $pdf->Rect($x_fila, $y_fila, 188, $row_h);
-
-        // Cantidad
-        $pdf->SetXY($x_fila, $y_fila);
-        $pdf->Cell(16, $row_h, number_format($cant, 0, ',', '.'), 'R', 0, 'C');
-
-        // Unidad
-        $pdf->Cell(18, $row_h, $safe_text(mb_strtoupper($it['unidad_medida'] ?: 'UNID', 'UTF-8'), 8), 'R', 0, 'C');
-
-        // Descripción: MultiCell exactamente en 92mm sin solapar precio
-        $pdf->SetXY($x_fila + 34, $y_fila + max(0, ($row_h - ($lineas * $line_h)) / 2));
-        $pdf->MultiCell(92, $line_h, $safe_text($desc, 130), 0, 'L');
-
-        // Monto Unitario y Monto Total
-        $pdf->SetXY($x_fila + 34 + 92, $y_fila);
-        $pdf->Cell(31, $row_h, "$ " . number_format($p_unit, 0, ',', '.'), 'LR', 0, 'R');
-        $pdf->Cell(31, $row_h, "$ " . number_format($sub, 0, ',', '.'), 'L', 0, 'R');
-
-        // Posicionar cursor para la siguiente fila
-        $pdf->SetXY($x_fila, $y_fila + $row_h);
+        $pdf->SetX(14);
+        $pdf->Cell(16, 4.8, number_format($cant, 0, ',', '.'), 1, 0, 'C');
+        $pdf->Cell(18, 4.8, $safe_text(mb_strtoupper($it['unidad_medida'] ?: 'UNID', 'UTF-8'), 10), 1, 0, 'C');
+        $pdf->Cell(92, 4.8, $utf(" " . $desc), 1, 0, 'L');
+        $pdf->Cell(31, 4.8, "$ " . number_format($p_unit, 0, ',', '.'), 1, 0, 'R');
+        $pdf->Cell(31, 4.8, "$ " . number_format($sub, 0, ',', '.'), 1, 1, 'R');
     }
 
     // Rellenar filas vacías si hay menos de 4 para preservar la estructura visual del Modelo Lebu
@@ -320,58 +296,51 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
     $pdf->SetLineWidth(0.25);
     $y_cajas = $pdf->GetY() + 2.5;
 
-    // 1. RECUADRO DATOS PROVEEDOR (Cuadrícula simétrica 188mm)
+    // 1. RECUADRO DATOS PROVEEDOR
     $pdf->SetFillColor(248, 250, 252);
-    $pdf->Rect(14, $y_cajas, 188, 11, 'DF');
+    $pdf->Rect(14, $y_cajas, 188, 12, 'DF');
     
-    // Título lateral bloque 1
-    $pdf->SetXY(16, $y_cajas + 1.2);
+    $pdf->SetXY(16, $y_cajas + 1.5);
     $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(34, 4, $utf("DATOS PROVEEDOR:"), 0, 0, 'L');
-
-    // Fila 1: Razón Social (abarca todo el ancho de datos)
-    $pdf->SetXY(52, $y_cajas + 1.2);
-    $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(25, 4, $utf("RAZÓN SOCIAL:"), 0, 0, 'L');
+    $pdf->Cell(36, 4, $utf("DATOS PROVEEDOR:"), 0, 0, 'L');
+    $pdf->Cell(24, 4, $utf("RAZÓN SOCIAL:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
     $razon_prov = $exp['razon_social'] ?: 'PENDIENTE DE ADJUDICACIÓN';
-    $pdf->Cell(125, 4, $safe_text($razon_prov, 82), 0, 1, 'L');
+    $pdf->Cell(124, 4, $safe_text($razon_prov, 78), 0, 1, 'L');
 
-    // Fila 2: RUT y Dirección alineados en 2 columnas fijas (X=52 y X=126)
-    $pdf->SetXY(52, $y_cajas + 5.8);
+    $pdf->SetXY(52, $y_cajas + 6);
     $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(25, 4, $utf("RUT:"), 0, 0, 'L');
+    $pdf->Cell(12, 4, $utf("RUT:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
-    $pdf->Cell(49, 4, $safe_text($exp['rut_proveedor'] ?: '-', 24), 0, 0, 'L');
+    $pdf->Cell(44, 4, $safe_text($exp['rut_proveedor'] ?: '-', 20), 0, 0, 'L');
 
-    $pdf->SetXY(126, $y_cajas + 5.8);
     $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(26, 4, $utf("DIRECCIÓN:"), 0, 0, 'L');
+    $pdf->Cell(20, 4, $utf("DIRECCIÓN:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
-    $pdf->Cell(50, 4, $safe_text($exp['direccion_proveedor'] ?: '-', 38), 0, 1, 'L');
+    $pdf->Cell(72, 4, $safe_text($exp['direccion_proveedor'] ?: '-', 50), 0, 1, 'L');
 
-    // 2. RECUADRO IMPUTACIÓN PRESUPUESTARIA (Cuadrícula simétrica 188mm)
-    $y_caja2 = $y_cajas + 13.0;
+    // 2. RECUADRO IMPUTACIÓN PRESUPUESTARIA
+    $y_caja2 = $y_cajas + 14;
     $pdf->SetFillColor(248, 250, 252);
-    $pdf->Rect(14, $y_caja2, 188, 11, 'DF');
+    $pdf->Rect(14, $y_caja2, 188, 12, 'DF');
 
-    // Título lateral bloque 2
-    $pdf->SetXY(16, $y_caja2 + 1.2);
+    $pdf->SetXY(16, $y_caja2 + 1.5);
     $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(34, 4, $utf("IMPUTACIÓN PRESUP.:"), 0, 0, 'L');
-
-    // Fila 1: Cuenta N° y Centro de Costo (SOLO ID REGISTRADO)
-    $pdf->SetXY(52, $y_caja2 + 1.2);
-    $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(25, 4, $utf("CUENTA N°:"), 0, 0, 'L');
+    $pdf->Cell(42, 4, $utf("IMPUTACIÓN PRESUPUESTARIA:"), 0, 0, 'L');
+    
+    $pdf->Cell(18, 4, $utf("CUENTA N°:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
-    $pdf->Cell(49, 4, $safe_text($cuenta_str, 24), 0, 0, 'L');
+    $pdf->Cell(38, 4, $safe_text($cuenta_str, 24), 0, 0, 'L');
 
-    $pdf->SetXY(126, $y_caja2 + 1.2);
     $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(26, 4, $utf("CENTRO COSTO:"), 0, 0, 'L');
+    $pdf->Cell(24, 4, $utf("ÁREA GESTIÓN:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
-    $pdf->Cell(50, 4, $safe_text($cc_str, 20), 0, 1, 'L');
+    $pdf->Cell(14, 4, $safe_text($ag_str, 8), 0, 0, 'L');
+
+    $pdf->SetFont('Arial', 'B', 7);
+    $pdf->Cell(24, 4, $utf("CENTRO COSTO:"), 0, 0, 'L');
+    $pdf->SetFont('Arial', '', 7);
+    $pdf->Cell(26, 4, $safe_text($cc_str, 18), 0, 1, 'L');
 
     // Chequeo de autorizaciones inter-CC
     $aut_txt = "N° -";
@@ -381,78 +350,57 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
         if (!empty($ext_auts)) {
             $parts = [];
             foreach ($ext_auts as $ea) {
-                $parts[] = ($ea['cc_nombre'] ?: $ea['cc_codigo']) . " ($ " . number_format($ea['monto_imputado'], 0, ',', '.') . ")";
+                $parts[] = ($ea['cc_nombre'] ?: $ea['cc_codigo']) . " ($ " . number_format($ea['monto_imputado'], 0, ',', '.') . " - " . $ea['estado'] . ")";
             }
-            $aut_txt = "AUT. EXT: " . implode(" | ", $parts);
+            $aut_txt = "AUT. CC EXT: " . implode(" | ", $parts);
         }
     }
 
-    // Fila 2: Área Gestión y Complementaria
-    $pdf->SetXY(52, $y_caja2 + 5.8);
+    $pdf->SetXY(58, $y_caja2 + 6);
     $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(25, 4, $utf("ÁREA GESTIÓN:"), 0, 0, 'L');
-    $pdf->SetFont('Arial', '', 7);
-    $pdf->Cell(49, 4, $safe_text($ag_str, 24), 0, 0, 'L');
-
-    $pdf->SetXY(126, $y_caja2 + 5.8);
-    $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(26, 4, $utf("COMPLEMENTARIA:"), 0, 0, 'L');
+    $pdf->Cell(28, 4, $utf("COMPLEMENTARIA:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 6.5);
-    $pdf->Cell(50, 4, $safe_text($aut_txt, 35), 0, 1, 'L');
+    $pdf->Cell(100, 4, $safe_text($aut_txt, 75), 0, 1, 'L');
 
-    // 3. RECUADRO PLAN DE COMPRAS Y MODALIDADES (Cuadrícula simétrica 188mm)
-    $y_caja3 = $y_caja2 + 13.0;
+    // 3. RECUADRO PLAN DE COMPRAS Y MODALIDADES
+    $y_caja3 = $y_caja2 + 14;
     $pdf->SetFillColor(248, 250, 252);
-    $pdf->Rect(14, $y_caja3, 188, 16, 'DF');
+    $pdf->Rect(14, $y_caja3, 188, 17, 'DF');
 
-    // Título lateral bloque 3
-    $pdf->SetXY(16, $y_caja3 + 1.2);
+    $pdf->SetXY(16, $y_caja3 + 1.5);
     $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(34, 4, $utf("PLAN DE COMPRAS:"), 0, 0, 'L');
-
-    // Fila 1: Proyecto (SOLO ID REGISTRADO) e Ítem N°
-    $proy_id_str = !empty($exp['plan_compras_proyecto']) ? $exp['plan_compras_proyecto'] : '-';
-    $pdf->SetXY(52, $y_caja3 + 1.2);
-    $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(25, 4, $utf("PROYECTO ID:"), 0, 0, 'L');
+    $pdf->Cell(36, 4, $utf("PLAN DE COMPRAS:"), 0, 0, 'L');
+    $pdf->Cell(18, 4, $utf("PROYECTO:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
-    $pdf->Cell(49, 4, $safe_text($proy_id_str, 24), 0, 0, 'L');
-
-    $pdf->SetXY(126, $y_caja3 + 1.2);
+    $pdf->Cell(48, 4, $safe_text($exp['plan_compras_proyecto'] ?: '-', 30), 0, 0, 'L');
     $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(26, 4, $utf("ÍTEM N°:"), 0, 0, 'L');
+    $pdf->Cell(12, 4, $utf("ÍTEM:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
-    $pdf->Cell(50, 4, $safe_text($exp['plan_compras_item'] ?: '-', 20), 0, 1, 'L');
+    $pdf->Cell(70, 4, $safe_text($exp['plan_compras_item'] ?: '-', 45), 0, 1, 'L');
 
-    // Fila 2: Contrato Suministros ID y Convenio Marco OC
-    $pdf->SetXY(52, $y_caja3 + 5.8);
+    $pdf->SetXY(16, $y_caja3 + 6.5);
     $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(25, 4, $utf("C. SUMINISTROS:"), 0, 0, 'L');
+    $pdf->Cell(36, 4, $utf("C. SUMINISTROS ID:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
-    $pdf->Cell(49, 4, $safe_text($exp['id_contrato_suministro'] ?: '-', 24), 0, 0, 'L');
-
-    $pdf->SetXY(126, $y_caja3 + 5.8);
+    $pdf->Cell(48, 4, $safe_text($exp['id_contrato_suministro'] ?: '-', 26), 0, 0, 'L');
     $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(26, 4, $utf("CONV. MARCO OC:"), 0, 0, 'L');
+    $pdf->Cell(30, 4, $utf("CONV. MARCO O°C:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
     $conv_marco = $exp['conv_marco_oc'] ?: ($exp['orden_compra_numero'] ?: '-');
-    $pdf->Cell(50, 4, $safe_text($conv_marco, 28), 0, 1, 'L');
+    $pdf->Cell(54, 4, $safe_text($conv_marco, 32), 0, 1, 'L');
 
-    // Fila 3: Compra Ágil ID y Decreto Alcaldicio N°
-    $pdf->SetXY(52, $y_caja3 + 10.4);
+    $pdf->SetXY(16, $y_caja3 + 11.5);
     $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(25, 4, $utf("COMPRA ÁGIL ID:"), 0, 0, 'L');
+    $pdf->Cell(36, 4, $utf("COMPRA ÁGIL ID:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
-    $pdf->Cell(49, 4, $safe_text($exp['id_compra_agil'] ?: '-', 24), 0, 0, 'L');
-
-    $pdf->SetXY(126, $y_caja3 + 10.4);
+    $pdf->Cell(48, 4, $safe_text($exp['id_compra_agil'] ?: '-', 26), 0, 0, 'L');
     $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(26, 4, $utf("DECRETO ALC. N°:"), 0, 0, 'L');
+    $pdf->Cell(34, 4, $utf("DECRETO ALCALDICIO N°:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
     $pdf->Cell(50, 4, $safe_text($exp['decreto_alcaldicio_numero'] ?: '-', 28), 0, 1, 'L');
 
     // --- CLÁUSULA 2: DESTINO DE LOS BIENES / SERVICIOS ---
-    $y_clausula2 = $y_caja3 + 18.0;
+    $y_clausula2 = $y_caja3 + 19;
     $pdf->SetXY(14, $y_clausula2);
     $pdf->SetFont('Arial', 'B', 7.5);
     $pdf->Cell(188, 4, $utf($cfg_clausula2_txt), 0, 1, 'L');

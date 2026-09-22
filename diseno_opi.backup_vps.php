@@ -345,10 +345,6 @@ $url_preview_inicial = 'preview_opi_diseno.php?' . $query_preview_inicial;
                                     <option value="LETTER" <?= !$es_oficio_actual ? 'selected' : '' ?>>Carta / Letter (8.5 x 11" — 215.9 x 279.4 mm) [Estándar Corto]</option>
                                 </select>
                                 <div class="form-text small text-muted">Oficio Chileno añade +50.8 mm de altura permitiendo hasta 16 ítems en una sola página sin descuadres ni saltos de hoja.</div>
-                                <div class="alert alert-info py-1.5 px-2.5 mt-2 mb-0 small d-flex align-items-center gap-2" style="font-size: 11.5px;">
-                                    <i class="bi bi-info-circle-fill text-primary fs-6"></i>
-                                    <span><strong>Consejo de Impresión:</strong> Si en sus bandejas de impresora cargan resmas estándar <strong>Carta</strong>, seleccione <em>Carta</em> para evitar que la impresora reduzca la escala automáticamente al 84%.</span>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -640,7 +636,7 @@ $url_preview_inicial = 'preview_opi_diseno.php?' . $query_preview_inicial;
                         </div>
                     </div>
                     <div class="card-body p-0 flex-grow-1 bg-dark">
-                        <iframe id="previewIframe" src="<?= htmlspecialchars($url_preview_inicial) ?>#toolbar=1&navpanes=0&view=FitH" class="preview-iframe" title="Vista Previa de la OPI"></iframe>
+                        <iframe id="previewIframe" src="<?= htmlspecialchars($url_preview_inicial) ?>" class="preview-iframe" title="Vista Previa de la OPI"></iframe>
                     </div>
                 </div>
             </div>
@@ -693,10 +689,9 @@ $url_preview_inicial = 'preview_opi_diseno.php?' . $query_preview_inicial;
 
     function actualizarVistaPrevia() {
         const query = obtenerParametrosPreview();
-        const urlVisual = `preview_opi_diseno.php?${query}#toolbar=1&navpanes=0&view=FitH`;
-        const urlDirecta = `preview_opi_diseno.php?${query}`;
-        document.getElementById('previewIframe').src = urlVisual;
-        document.getElementById('btnAbrirNuevaPestana').href = urlDirecta;
+        const url = `preview_opi_diseno.php?${query}`;
+        document.getElementById('previewIframe').src = url;
+        document.getElementById('btnAbrirNuevaPestana').href = url;
     }
 
     function dispararActualizacionDebounce() {

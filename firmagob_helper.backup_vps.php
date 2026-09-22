@@ -223,52 +223,14 @@ if (!function_exists('firmagob_generar_estampa_dinamica_base64')) {
             $cargo_limpio = mb_substr($cargo_limpio, 0, 42, 'UTF-8') . '...';
         }
 
-        // Resolución de fuentes TrueType: Prioridad 1: assets/fonts local del proyecto (Docker/Linux/Windows)
-        $assets_font_dir = __DIR__ . '/assets/fonts';
-        $f_candidates = [
-            'segoeui' => [
-                [$assets_font_dir . '/segoeui.ttf', $assets_font_dir . '/segoeuib.ttf'],
-                ['C:/Windows/Fonts/segoeui.ttf', 'C:/Windows/Fonts/segoeuib.ttf'],
-                ['/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf']
-            ],
-            'calibri' => [
-                [$assets_font_dir . '/calibri.ttf', $assets_font_dir . '/calibrib.ttf'],
-                ['C:/Windows/Fonts/calibri.ttf', 'C:/Windows/Fonts/calibrib.ttf'],
-                ['/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf', '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf']
-            ],
-            'arial' => [
-                [$assets_font_dir . '/arial.ttf', $assets_font_dir . '/arialbd.ttf'],
-                ['C:/Windows/Fonts/arial.ttf', 'C:/Windows/Fonts/arialbd.ttf'],
-                ['/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf', '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf']
-            ]
+        // Mapa de fuentes TrueType en Windows
+        $f_map = [
+            'segoeui' => ['C:/Windows/Fonts/segoeui.ttf', 'C:/Windows/Fonts/segoeuib.ttf'],
+            'calibri' => ['C:/Windows/Fonts/calibri.ttf', 'C:/Windows/Fonts/calibrib.ttf'],
+            'arial'   => ['C:/Windows/Fonts/arial.ttf',   'C:/Windows/Fonts/arialbd.ttf']
         ];
-
-        $normalizar_font_path = function($path) {
-            if (!file_exists($path)) return false;
-            // En Windows, si la ruta contiene caracteres no ASCII (ej: tilde en 'Informática'), FreeType falla.
-            if (PHP_OS_FAMILY === 'Windows' && preg_match('/[^\x20-\x7E]/', $path)) {
-                $cmd = 'cmd /c for %I in ("' . $path . '") do @echo %~sI';
-                $short = @shell_exec($cmd);
-                if ($short && file_exists(trim($short))) {
-                    return trim($short);
-                }
-            }
-            return $path;
-        };
-
-        $candidates = $f_candidates[$fuente_id] ?? $f_candidates['segoeui'];
-        $f_pair = null;
-        if (function_exists('imagettftext')) {
-            foreach ($candidates as $pair) {
-                $p0 = $normalizar_font_path($pair[0]);
-                $p1 = $normalizar_font_path($pair[1]);
-                if ($p0 && $p1 && file_exists($p0) && file_exists($p1)) {
-                    $f_pair = [$p0, $p1];
-                    break;
-                }
-            }
-        }
-        $has_ttf = ($f_pair !== null);
+        $f_pair = $f_map[$fuente_id] ?? $f_map['segoeui'];
+        $has_ttf = function_exists('imagettftext') && file_exists($f_pair[0]) && file_exists($f_pair[1]);
 
         $offset_x = ($tema === 'barra_lateral') ? 34 : 22;
 
@@ -335,16 +297,13 @@ if (!function_exists('firmagob_generar_estampa_dinamica_base64')) {
             }
 
         } else {
-            // Fallback transparente a fuentes bitmap si no hubiera TrueType (con conversión ISO para no romper tildes)
-            $safe_bm = function($str) {
-                return function_exists('utf8_decode') ? utf8_decode((string)$str) : (string)$str;
-            };
-            imagestring($im, 4, 10, 8, $safe_bm(mb_strtoupper($titulo, 'UTF-8')), $c_hdr_txt);
-            imagestring($im, 4, 10, 68, $safe_bm('Firmante: ' . $nombre_limpio), $c_name);
-            imagestring($im, 3, 10, 115, $safe_bm('RUN: ' . $run_formateado . ' | Cargo: ' . $cargo_limpio), $c_meta);
-            imagestring($im, 3, 10, 162, $safe_bm('Fecha: ' . $fecha_hora), $c_muted);
-            imagestring($im, 3, 10, 195, $safe_bm('Entidad: ' . $entidad_nombre), $c_muted);
-            imagestring($im, 2, 10, 238, $safe_bm('Validez Legal: Ley N° 19.799 sobre Firma Electrónica'), $c_muted);
+            // Fallback transparente a fuentes bitmap si no hubiera TrueType
+            imagestring($im, 4, 10, 8, mb_strtoupper($titulo, 'UTF-8'), $c_hdr_txt);
+            imagestring($im, 4, 10, 68, 'Firmante: ' . $nombre_limpio, $c_name);
+            imagestring($im, 3, 10, 115, 'RUN: ' . $run_formateado . ' | Cargo: ' . $cargo_limpio, $c_meta);
+            imagestring($im, 3, 10, 162, 'Fecha: ' . $fecha_hora, $c_muted);
+            imagestring($im, 3, 10, 195, 'Entidad: ' . $entidad_nombre, $c_muted);
+            imagestring($im, 2, 10, 238, 'Validez Legal: Ley No 19.799 sobre Firma Electronica', $c_muted);
         }
 
         ob_start();

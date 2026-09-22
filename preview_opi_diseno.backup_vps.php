@@ -162,41 +162,12 @@ $items_muestra = [
 ];
 
 foreach ($items_muestra as $it) {
-    if (empty($it['desc'])) {
-        $pdf->SetX(14);
-        $pdf->Cell(16, 4.8, "", 1, 0, 'C');
-        $pdf->Cell(18, 4.8, "", 1, 0, 'C');
-        $pdf->Cell(92, 4.8, "", 1, 0, 'L');
-        $pdf->Cell(31, 4.8, "", 1, 0, 'R');
-        $pdf->Cell(31, 4.8, "", 1, 1, 'R');
-        continue;
-    }
-
-    $pdf->SetFont('Arial', '', 7.5);
-    $desc = (string)$it['desc'];
-    $ancho_txt = $pdf->GetStringWidth(" " . $desc);
-    $lineas = max(1, (int)ceil($ancho_txt / 88.0));
-    $lineas = min(3, $lineas);
-    $line_h = 3.8;
-    $row_h  = max(4.8, $lineas * $line_h);
-
-    $x_fila = 14;
-    $y_fila = $pdf->GetY();
-
-    $pdf->Rect($x_fila, $y_fila, 188, $row_h);
-
-    $pdf->SetXY($x_fila, $y_fila);
-    $pdf->Cell(16, $row_h, $it['cant'] ? number_format($it['cant'], 0, ',', '.') : '', 'R', 0, 'C');
-    $pdf->Cell(18, $row_h, $safe_text($it['unidad'], 8), 'R', 0, 'C');
-
-    $pdf->SetXY($x_fila + 34, $y_fila + max(0, ($row_h - ($lineas * $line_h)) / 2));
-    $pdf->MultiCell(92, $line_h, $safe_text($desc, 130), 0, 'L');
-
-    $pdf->SetXY($x_fila + 34 + 92, $y_fila);
-    $pdf->Cell(31, $row_h, $it['unit'] ? "$ " . number_format($it['unit'], 0, ',', '.') : '', 'LR', 0, 'R');
-    $pdf->Cell(31, $row_h, $it['total'] ? "$ " . number_format($it['total'], 0, ',', '.') : '', 'L', 0, 'R');
-
-    $pdf->SetXY($x_fila, $y_fila + $row_h);
+    $pdf->SetX(14);
+    $pdf->Cell(16, 4.8, $it['cant'] ? number_format($it['cant'], 0, ',', '.') : '', 1, 0, 'C');
+    $pdf->Cell(18, 4.8, $utf($it['unidad']), 1, 0, 'C');
+    $pdf->Cell(92, 4.8, $utf(" " . $it['desc']), 1, 0, 'L');
+    $pdf->Cell(31, 4.8, $it['unit'] ? "$ " . number_format($it['unit'], 0, ',', '.') : '', 1, 0, 'R');
+    $pdf->Cell(31, 4.8, $it['total'] ? "$ " . number_format($it['total'], 0, ',', '.') : '', 1, 1, 'R');
 }
 
 // Totales de Muestra
@@ -225,117 +196,100 @@ $pdf->Cell(31, 5, $utf("TOTAL:"), 1, 0, 'R', true);
 $pdf->SetFont('Arial', 'B', 8.5);
 $pdf->Cell(31, 5, "$ " . number_format($total_bruto, 0, ',', '.'), 1, 1, 'R');
 
-// --- RECUADROS INSTITUCIONALES DE INFORMACIÓN (Alineación Tabular Fija) ---
+// --- RECUADROS INSTITUCIONALES DE INFORMACIÓN ---
 $pdf->SetDrawColor(160, 165, 175);
 $pdf->SetLineWidth(0.25);
 $y_cajas = $pdf->GetY() + 2.5;
 
-// 1. RECUADRO DATOS PROVEEDOR (Cuadrícula simétrica 188mm)
+// 1. RECUADRO DATOS PROVEEDOR
 $pdf->SetFillColor(248, 250, 252);
-$pdf->Rect(14, $y_cajas, 188, 11, 'DF');
+$pdf->Rect(14, $y_cajas, 188, 12, 'DF');
 
-$pdf->SetXY(16, $y_cajas + 1.2);
+$pdf->SetXY(16, $y_cajas + 1.5);
 $pdf->SetFont('Arial', 'B', 7);
-$pdf->Cell(34, 4, $utf("DATOS PROVEEDOR:"), 0, 0, 'L');
-
-$pdf->SetXY(52, $y_cajas + 1.2);
-$pdf->SetFont('Arial', 'B', 7);
-$pdf->Cell(25, 4, $utf("RAZÓN SOCIAL:"), 0, 0, 'L');
+$pdf->Cell(36, 4, $utf("DATOS PROVEEDOR:"), 0, 0, 'L');
+$pdf->Cell(24, 4, $utf("RAZÓN SOCIAL:"), 0, 0, 'L');
 $pdf->SetFont('Arial', '', 7);
-$pdf->Cell(125, 4, $safe_text("DISTRIBUIDORA Y SERVICIOS INTEGRALES SUR LTDA.", 82), 0, 1, 'L');
+$pdf->Cell(124, 4, $safe_text("DISTRIBUIDORA Y SERVICIOS INTEGRALES SUR LTDA.", 78), 0, 1, 'L');
 
-$pdf->SetXY(52, $y_cajas + 5.8);
+$pdf->SetXY(52, $y_cajas + 6);
 $pdf->SetFont('Arial', 'B', 7);
-$pdf->Cell(25, 4, $utf("RUT:"), 0, 0, 'L');
+$pdf->Cell(12, 4, $utf("RUT:"), 0, 0, 'L');
 $pdf->SetFont('Arial', '', 7);
-$pdf->Cell(49, 4, $utf("76.890.123-4"), 0, 0, 'L');
+$pdf->Cell(44, 4, $utf("76.890.123-4"), 0, 0, 'L');
 
-$pdf->SetXY(126, $y_cajas + 5.8);
 $pdf->SetFont('Arial', 'B', 7);
-$pdf->Cell(26, 4, $utf("DIRECCIÓN:"), 0, 0, 'L');
+$pdf->Cell(20, 4, $utf("DIRECCIÓN:"), 0, 0, 'L');
 $pdf->SetFont('Arial', '', 7);
-$pdf->Cell(50, 4, $safe_text("Av. Ignacio Carrera Pinto N° 450, Lebu", 38), 0, 1, 'L');
+$pdf->Cell(72, 4, $safe_text("Av. Ignacio Carrera Pinto N° 450, Lebu", 50), 0, 1, 'L');
 
-// 2. RECUADRO IMPUTACIÓN PRESUPUESTARIA (Cuadrícula simétrica 188mm)
-$y_caja2 = $y_cajas + 13.0;
+// 2. RECUADRO IMPUTACIÓN PRESUPUESTARIA
+$y_caja2 = $y_cajas + 14;
 $pdf->SetFillColor(248, 250, 252);
-$pdf->Rect(14, $y_caja2, 188, 11, 'DF');
+$pdf->Rect(14, $y_caja2, 188, 12, 'DF');
 
-$pdf->SetXY(16, $y_caja2 + 1.2);
+$pdf->SetXY(16, $y_caja2 + 1.5);
 $pdf->SetFont('Arial', 'B', 7);
-$pdf->Cell(34, 4, $utf("IMPUTACIÓN PRESUP.:"), 0, 0, 'L');
+$pdf->Cell(42, 4, $utf("IMPUTACIÓN PRESUPUESTARIA:"), 0, 0, 'L');
 
-$pdf->SetXY(52, $y_caja2 + 1.2);
-$pdf->SetFont('Arial', 'B', 7);
-$pdf->Cell(25, 4, $utf("CUENTA N°:"), 0, 0, 'L');
+$pdf->Cell(18, 4, $utf("CUENTA N°:"), 0, 0, 'L');
 $pdf->SetFont('Arial', '', 7);
-$pdf->Cell(49, 4, $utf("215.22.04.001"), 0, 0, 'L');
+$pdf->Cell(38, 4, $utf("215.22.04.001"), 0, 0, 'L');
 
-$pdf->SetXY(126, $y_caja2 + 1.2);
 $pdf->SetFont('Arial', 'B', 7);
-$pdf->Cell(26, 4, $utf("CENTRO COSTO:"), 0, 0, 'L');
+$pdf->Cell(24, 4, $utf("ÁREA GESTIÓN:"), 0, 0, 'L');
 $pdf->SetFont('Arial', '', 7);
-$pdf->Cell(50, 4, $utf("11"), 0, 1, 'L'); // SOLO ID
+$pdf->Cell(14, 4, $utf("01"), 0, 0, 'L');
 
-$pdf->SetXY(52, $y_caja2 + 5.8);
 $pdf->SetFont('Arial', 'B', 7);
-$pdf->Cell(25, 4, $utf("ÁREA GESTIÓN:"), 0, 0, 'L');
+$pdf->Cell(24, 4, $utf("CENTRO COSTO:"), 0, 0, 'L');
 $pdf->SetFont('Arial', '', 7);
-$pdf->Cell(49, 4, $utf("01"), 0, 0, 'L');
+$pdf->Cell(26, 4, $safe_text("102 - DIDECO", 18), 0, 1, 'L');
 
-$pdf->SetXY(126, $y_caja2 + 5.8);
+$pdf->SetXY(58, $y_caja2 + 6);
 $pdf->SetFont('Arial', 'B', 7);
-$pdf->Cell(26, 4, $utf("COMPLEMENTARIA:"), 0, 0, 'L');
+$pdf->Cell(28, 4, $utf("COMPLEMENTARIA:"), 0, 0, 'L');
 $pdf->SetFont('Arial', '', 6.5);
-$pdf->Cell(50, 4, $safe_text("AUT. EXT: Obras ($ 150.000)", 35), 0, 1, 'L');
+$pdf->Cell(100, 4, $safe_text("AUT. CC EXT: Dirección de Obras ($ 150.000 - APROBADO)", 75), 0, 1, 'L');
 
-// 3. RECUADRO PLAN DE COMPRAS Y MODALIDADES (Cuadrícula simétrica 188mm)
-$y_caja3 = $y_caja2 + 13.0;
+// 3. RECUADRO PLAN DE COMPRAS Y MODALIDADES
+$y_caja3 = $y_caja2 + 14;
 $pdf->SetFillColor(248, 250, 252);
-$pdf->Rect(14, $y_caja3, 188, 16, 'DF');
+$pdf->Rect(14, $y_caja3, 188, 17, 'DF');
 
-$pdf->SetXY(16, $y_caja3 + 1.2);
+$pdf->SetXY(16, $y_caja3 + 1.5);
 $pdf->SetFont('Arial', 'B', 7);
-$pdf->Cell(34, 4, $utf("PLAN DE COMPRAS:"), 0, 0, 'L');
-
-$pdf->SetXY(52, $y_caja3 + 1.2);
-$pdf->SetFont('Arial', 'B', 7);
-$pdf->Cell(25, 4, $utf("PROYECTO ID:"), 0, 0, 'L');
+$pdf->Cell(36, 4, $utf("PLAN DE COMPRAS:"), 0, 0, 'L');
+$pdf->Cell(18, 4, $utf("PROYECTO:"), 0, 0, 'L');
 $pdf->SetFont('Arial', '', 7);
-$pdf->Cell(49, 4, $utf("PROY-042"), 0, 0, 'L'); // SOLO ID
-
-$pdf->SetXY(126, $y_caja3 + 1.2);
+$pdf->Cell(48, 4, $safe_text("FORTALECIMIENTO GESTIÓN COMUNITARIA", 30), 0, 0, 'L');
 $pdf->SetFont('Arial', 'B', 7);
-$pdf->Cell(26, 4, $utf("ÍTEM N°:"), 0, 0, 'L');
+$pdf->Cell(12, 4, $utf("ÍTEM:"), 0, 0, 'L');
 $pdf->SetFont('Arial', '', 7);
-$pdf->Cell(50, 4, $utf("1"), 0, 1, 'L');
+$pdf->Cell(70, 4, $safe_text("MATERIALES E INSUMOS OFICINA", 45), 0, 1, 'L');
 
-$pdf->SetXY(52, $y_caja3 + 5.8);
+$pdf->SetXY(16, $y_caja3 + 6.5);
 $pdf->SetFont('Arial', 'B', 7);
-$pdf->Cell(25, 4, $utf("C. SUMINISTROS:"), 0, 0, 'L');
+$pdf->Cell(36, 4, $utf("C. SUMINISTROS ID:"), 0, 0, 'L');
 $pdf->SetFont('Arial', '', 7);
-$pdf->Cell(49, 4, $safe_text("CS-2026-089", 24), 0, 0, 'L');
-
-$pdf->SetXY(126, $y_caja3 + 5.8);
+$pdf->Cell(48, 4, $safe_text("CS-2026-089", 26), 0, 0, 'L');
 $pdf->SetFont('Arial', 'B', 7);
-$pdf->Cell(26, 4, $utf("CONV. MARCO OC:"), 0, 0, 'L');
+$pdf->Cell(30, 4, $utf("CONV. MARCO O°C:"), 0, 0, 'L');
 $pdf->SetFont('Arial', '', 7);
-$pdf->Cell(50, 4, $safe_text("2345-789-CM26", 28), 0, 1, 'L');
+$pdf->Cell(54, 4, $safe_text("2345-789-CM26", 32), 0, 1, 'L');
 
-$pdf->SetXY(52, $y_caja3 + 10.4);
+$pdf->SetXY(16, $y_caja3 + 11.5);
 $pdf->SetFont('Arial', 'B', 7);
-$pdf->Cell(25, 4, $utf("COMPRA ÁGIL ID:"), 0, 0, 'L');
+$pdf->Cell(36, 4, $utf("COMPRA ÁGIL ID:"), 0, 0, 'L');
 $pdf->SetFont('Arial', '', 7);
-$pdf->Cell(49, 4, $safe_text("CA-8902", 24), 0, 0, 'L');
-
-$pdf->SetXY(126, $y_caja3 + 10.4);
+$pdf->Cell(48, 4, $safe_text("CA-8902", 26), 0, 0, 'L');
 $pdf->SetFont('Arial', 'B', 7);
-$pdf->Cell(26, 4, $utf("DECRETO ALC. N°:"), 0, 0, 'L');
+$pdf->Cell(34, 4, $utf("DECRETO ALCALDICIO N°:"), 0, 0, 'L');
 $pdf->SetFont('Arial', '', 7);
 $pdf->Cell(50, 4, $safe_text("DEC-ALC-758/2026", 28), 0, 1, 'L');
 
 // --- CLÁUSULA 2: DESTINO DE LOS BIENES / SERVICIOS ---
-$y_clausula2 = $y_caja3 + 18.0;
+$y_clausula2 = $y_caja3 + 19;
 $pdf->SetXY(14, $y_clausula2);
 $pdf->SetFont('Arial', 'B', 7.5);
 $pdf->Cell(188, 4, $utf($clausula2_txt), 0, 1, 'L');
