@@ -102,17 +102,14 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
     $ruta_absoluta = $dir . $nombre_archivo;
     $ruta_relativa = "uploads/$anio/exp_$expediente_id/" . $nombre_archivo;
 
+    // 4. Instanciar FPDF (Tamaño Carta: 215.9 x 279.4 mm, márgenes 14mm)
+    $pdf = new FPDF('P', 'mm', 'Letter');
+    $pdf->SetMargins(14, 10, 14);
+    $pdf->SetAutoPageBreak(false);
+    $pdf->AddPage();
+
     $utf = function($text) {
         return iconv('UTF-8', 'windows-1252//TRANSLIT', (string)$text);
-    };
-
-    // Helper seguro para textos multibyte con longitud máxima opcional
-    $safe_text = function($text, $max_len = 0) use ($utf) {
-        $str = (string)($text ?? '');
-        if ($max_len > 0 && mb_strlen($str, 'UTF-8') > $max_len) {
-            $str = mb_substr($str, 0, $max_len - 3, 'UTF-8') . '...';
-        }
-        return $utf($str);
     };
 
     // --- CONFIGURACIÓN DINÁMICA DE PLANTILLA (Base de Datos o Valores Predeterminados) ---
@@ -126,69 +123,52 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
         }
     }
 
-    $cfg_tamano_papel   = !empty($config_sistema['opi_tamano_papel']) ? strtoupper(trim($config_sistema['opi_tamano_papel'])) : 'OFICIO';
-    $es_oficio          = ($cfg_tamano_papel === 'OFICIO');
-
-    // Dimensiones en mm: Oficio Chileno (215.9 x 330.2 mm / 8.5 x 13") vs Carta (215.9 x 279.4 mm / 8.5 x 11")
-    $dimensiones_papel  = $es_oficio ? [215.9, 330.2] : 'Letter';
-    $alto_pagina_mm     = $es_oficio ? 330.2 : 279.4;
-    $filas_min          = $es_oficio ? 6 : 4;
-    $y_firmas_default   = $es_oficio ? 306.0 : 256.0;
-
     $cfg_titulo_doc     = !empty($config_sistema['opi_titulo_documento']) ? $config_sistema['opi_titulo_documento'] : 'ORDEN DE PEDIDO INTERNO';
     $cfg_clausula1_txt  = !empty($config_sistema['opi_clausula1_texto']) ? $config_sistema['opi_clausula1_texto'] : '1. Agradeceré a Usted, tenga a bien efectuar la adquisición de los siguientes bienes y/o servicios:';
     $cfg_clausula2_txt  = !empty($config_sistema['opi_clausula2_texto']) ? $config_sistema['opi_clausula2_texto'] : '2. Los presentes bienes/servicios serán destinados a:';
     $cfg_pie_legal_txt  = !empty($config_sistema['opi_pie_legal']) ? $config_sistema['opi_pie_legal'] : 'Documento Oficial emitido por el Sistema Institucional OPI - Validez legal bajo Ley N° 19.799 de Firma Electrónica';
-    $cfg_firmas_linea_y = !empty($config_sistema['opi_firmas_linea_y']) ? floatval($config_sistema['opi_firmas_linea_y']) : $y_firmas_default;
-
-    // 4. Instanciar FPDF (Tamaño Oficio Chileno 215.9 x 330.2 mm o Carta 215.9 x 279.4 mm)
-    $pdf = new FPDF('P', 'mm', $dimensiones_papel);
-    $pdf->SetMargins(14, 10, 14);
-    $pdf->SetAutoPageBreak(false);
-    $pdf->AddPage();
+    $cfg_firmas_linea_y = !empty($config_sistema['opi_firmas_linea_y']) ? floatval($config_sistema['opi_firmas_linea_y']) : 256.0;
 
     // --- ENCABEZADO INSTITUCIONAL OFICIAL (Modelo N° 758) ---
     if (file_exists(__DIR__ . '/logo.png')) {
         $pdf->Image(__DIR__ . '/logo.png', 14, 8, 22);
     }
 
-    // Columna Izquierda: Institución y Unidad Solicitante
-    $unidad_solicitante = mb_strtoupper($exp['unidad'] ?? 'DEPARTAMENTO DE ADQUISICIONES', 'UTF-8');
+    // Columna Izquierda: Institución y Unidad
     $pdf->SetXY(38, 8);
     $pdf->SetFont('Arial', '', 7.5);
-    $pdf->Cell(54, 3.5, $utf("República de Chile"), 0, 1, 'L');
+    $pdf->Cell(60, 3.5, $utf("República de Chile"), 0, 1, 'L');
     $pdf->SetX(38);
     $pdf->SetFont('Arial', 'B', 8.5);
-    $pdf->Cell(54, 4, $utf("MUNICIPALIDAD DE LEBU"), 0, 1, 'L');
+    $pdf->Cell(60, 4, $utf("MUNICIPALIDAD DE LEBU"), 0, 1, 'L');
     $pdf->SetX(38);
-    $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(54, 3.5, $safe_text($unidad_solicitante, 36), 0, 1, 'L');
+    $pdf->SetFont('Arial', 'B', 7.5);
+    $pdf->Cell(60, 3.5, $utf(mb_strtoupper($exp['unidad'] ?? 'DEPARTAMENTO DE ADQUISICIONES')), 0, 1, 'L');
 
-    // Columna Centro: Título Oficial Configurable (perfectamente centrado)
-    $pdf->SetXY(92, 9);
-    $pdf->SetFont('Arial', 'B', 10.5);
-    $pdf->Cell(54, 5, $safe_text($cfg_titulo_doc, 32), 0, 1, 'C');
+    // Columna Centro: Título Oficial
+    $pdf->SetXY(98, 10);
+    $pdf->SetFont('Arial', 'B', 11);
+    $pdf->Cell(60, 5, $utf($cfg_titulo_doc), 0, 1, 'C');
 
     // Columna Derecha: Folio y Fecha
-    $pdf->SetXY(146, 8);
+    $pdf->SetXY(158, 8);
     $pdf->SetFont('Arial', 'B', 10);
-    $pdf->Cell(56, 4.5, $utf("N° " . $folio_mostrar), 0, 1, 'R');
-    $pdf->SetXY(146, 13);
+    $pdf->Cell(44, 4.5, $utf("N° " . $folio_mostrar), 0, 1, 'R');
+    $pdf->SetXY(148, 13);
     $pdf->SetFont('Arial', '', 8);
     $fecha_txt = "Lebu, " . pdf_fecha_espanol($exp['fecha_aprobacion_opi'] ?? $exp['created_at']);
-    $pdf->Cell(56, 4, $utf($fecha_txt), 0, 1, 'R');
+    $pdf->Cell(54, 4, $utf($fecha_txt), 0, 1, 'R');
 
-    // Línea separadora de cabecera
+    // Línea separadora
     $pdf->SetDrawColor(180, 180, 180);
-    $pdf->SetLineWidth(0.3);
-    $pdf->Line(14, 22.5, 202, 22.5);
+    $pdf->Line(14, 23, 202, 23);
 
     // --- SECCIÓN DE / A ---
-    $pdf->SetXY(14, 24);
+    $pdf->SetXY(14, 25);
     $pdf->SetFont('Arial', 'B', 8);
     $pdf->Cell(8, 4, $utf("DE:"), 0, 0, 'L');
     $pdf->SetFont('Arial', 'B', 8);
-    $pdf->Cell(180, 4, $safe_text(mb_strtoupper($exp['unidad'] ?? '', 'UTF-8'), 95), 0, 1, 'L');
+    $pdf->Cell(180, 4, $utf(mb_strtoupper($exp['unidad'] ?? '')), 0, 1, 'L');
 
     $pdf->SetX(14);
     $pdf->SetFont('Arial', 'B', 8);
@@ -196,29 +176,28 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
     $pdf->SetFont('Arial', '', 8);
     $pdf->Cell(180, 4, $utf("DIRECCIÓN DE ADMINISTRACIÓN Y FINANZAS - UNIDAD DE ADQUISICIONES"), 0, 1, 'L');
 
-    // --- CLÁUSULA 1: TEXTO INTRODUCTORIO (Con soporte multilínea dinámico) ---
-    $pdf->SetXY(14, 33);
+    // --- CLÁUSULA 1: TEXTO INTRODUCTORIO ---
+    $pdf->SetXY(14, 34);
     $pdf->SetFont('Arial', '', 7.5);
-    $pdf->MultiCell(188, 3.5, $utf($cfg_clausula1_txt), 0, 'L');
+    $pdf->Cell(188, 4, $utf($cfg_clausula1_txt), 0, 1, 'L');
 
     // --- TABLA PRINCIPAL DE PRODUCTOS / SERVICIOS ---
-    // Posición Y dinámica post-cláusula 1 para evitar solapamientos
-    $y_tabla = max(39.0, $pdf->GetY() + 1.5);
+    $y_tabla = 39;
     $pdf->SetXY(14, $y_tabla);
     $pdf->SetDrawColor(0, 0, 0);
     $pdf->SetFillColor(235, 238, 242);
     $pdf->SetFont('Arial', 'B', 7);
     
-    // Encabezados de Columnas calibrados (Ancho total: 16 + 18 + 92 + 31 + 31 = 188mm)
-    $pdf->Cell(16, 5, $utf("CANT."), 1, 0, 'C', true);
+    // Encabezados de Columnas (Ancho total: 14 + 18 + 96 + 30 + 30 = 188mm)
+    $pdf->Cell(14, 5, $utf("CANT."), 1, 0, 'C', true);
     $pdf->Cell(18, 5, $utf("UNIDAD"), 1, 0, 'C', true);
-    $pdf->Cell(92, 5, $utf("DESCRIPCIÓN DE LOS BIENES Y/O SERVICIOS"), 1, 0, 'L', true);
-    $pdf->Cell(31, 5, $utf("MONTO UNITARIO"), 1, 0, 'R', true);
-    $pdf->Cell(31, 5, $utf("MONTO TOTAL"), 1, 1, 'R', true);
+    $pdf->Cell(96, 5, $utf("DESCRIPCIÓN DE LOS BIENES Y/O SERVICIOS"), 1, 0, 'L', true);
+    $pdf->Cell(30, 5, $utf("MONTO UNITARIO"), 1, 0, 'R', true);
+    $pdf->Cell(30, 5, $utf("MONTO TOTAL"), 1, 1, 'R', true);
 
     $pdf->SetFont('Arial', '', 7.5);
     $total_items_acumulado = 0;
-    $filas_min = 4;
+    $filas_max = 4;
     $fila_actual = 0;
 
     foreach ($items as $it) {
@@ -228,111 +207,108 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
         $sub = $cant * $p_unit;
         $total_items_acumulado += $sub;
 
-        $desc = (string)$it['descripcion'];
+        $desc = $it['descripcion'];
         if (!empty($it['id_producto_cm'])) {
             $desc .= " (ID CM: " . $it['id_producto_cm'] . ")";
         }
-        // Truncado multibyte-safe para prevenir caracteres cortados
-        if (mb_strlen($desc, 'UTF-8') > 66) {
-            $desc = mb_substr($desc, 0, 63, 'UTF-8') . '...';
+        if (strlen($desc) > 65) {
+            $desc = substr($desc, 0, 62) . '...';
         }
 
         $pdf->SetX(14);
-        $pdf->Cell(16, 4.8, number_format($cant, 0, ',', '.'), 1, 0, 'C');
-        $pdf->Cell(18, 4.8, $safe_text(mb_strtoupper($it['unidad_medida'] ?: 'UNID', 'UTF-8'), 10), 1, 0, 'C');
-        $pdf->Cell(92, 4.8, $utf(" " . $desc), 1, 0, 'L');
-        $pdf->Cell(31, 4.8, "$ " . number_format($p_unit, 0, ',', '.'), 1, 0, 'R');
-        $pdf->Cell(31, 4.8, "$ " . number_format($sub, 0, ',', '.'), 1, 1, 'R');
+        $pdf->Cell(14, 4.8, number_format($cant, 0, ',', '.'), 1, 0, 'C');
+        $pdf->Cell(18, 4.8, $utf(mb_strtoupper($it['unidad_medida'] ?: 'UNID')), 1, 0, 'C');
+        $pdf->Cell(96, 4.8, $utf(" " . $desc), 1, 0, 'L');
+        $pdf->Cell(30, 4.8, "$ " . number_format($p_unit, 0, ',', '.'), 1, 0, 'R');
+        $pdf->Cell(30, 4.8, "$ " . number_format($sub, 0, ',', '.'), 1, 1, 'R');
     }
 
-    // Rellenar filas vacías si hay menos de 4 para preservar la estructura visual del Modelo Lebu
-    while ($fila_actual < $filas_min) {
+    // Rellenar filas vacías para mantener estructura rígida de Modelo N° 758
+    while ($fila_actual < $filas_max) {
         $fila_actual++;
         $pdf->SetX(14);
-        $pdf->Cell(16, 4.8, "", 1, 0, 'C');
+        $pdf->Cell(14, 4.8, "", 1, 0, 'C');
         $pdf->Cell(18, 4.8, "", 1, 0, 'C');
-        $pdf->Cell(92, 4.8, "", 1, 0, 'L');
-        $pdf->Cell(31, 4.8, "", 1, 0, 'R');
-        $pdf->Cell(31, 4.8, "", 1, 1, 'R');
+        $pdf->Cell(96, 4.8, "", 1, 0, 'L');
+        $pdf->Cell(30, 4.8, "", 1, 0, 'R');
+        $pdf->Cell(30, 4.8, "", 1, 1, 'R');
     }
 
     // --- CÁLCULO DE TOTALES ---
-    // Perfectamente alineados con las columnas MONTO UNITARIO (31mm) y MONTO TOTAL (31mm)
     $monto_final = floatval($exp['monto_definitivo'] ?: ($total_items_acumulado ?: $exp['monto_estimado']));
     $iva = round($monto_final - ($monto_final / 1.19));
     $neto = $monto_final - $iva;
 
     $pdf->SetX(14);
     $pdf->SetFont('Arial', 'B', 7.5);
-    $pdf->Cell(126, 4.5, "", 0, 0);
-    $pdf->Cell(31, 4.5, $utf("MONTO NETO:"), 1, 0, 'R', true);
+    $pdf->Cell(128, 4.5, "", 0, 0);
+    $pdf->Cell(30, 4.5, $utf("MONTO NETO:"), 1, 0, 'R', true);
     $pdf->SetFont('Arial', '', 7.5);
-    $pdf->Cell(31, 4.5, "$ " . number_format($neto, 0, ',', '.'), 1, 1, 'R');
+    $pdf->Cell(30, 4.5, "$ " . number_format($neto, 0, ',', '.'), 1, 1, 'R');
 
     $pdf->SetX(14);
     $pdf->SetFont('Arial', 'B', 7.5);
-    $pdf->Cell(126, 4.5, "", 0, 0);
-    $pdf->Cell(31, 4.5, $utf("I.V.A. (19%):"), 1, 0, 'R', true);
+    $pdf->Cell(128, 4.5, "", 0, 0);
+    $pdf->Cell(30, 4.5, $utf("I.V.A. (19%):"), 1, 0, 'R', true);
     $pdf->SetFont('Arial', '', 7.5);
-    $pdf->Cell(31, 4.5, "$ " . number_format($iva, 0, ',', '.'), 1, 1, 'R');
+    $pdf->Cell(30, 4.5, "$ " . number_format($iva, 0, ',', '.'), 1, 1, 'R');
 
     $pdf->SetX(14);
     $pdf->SetFont('Arial', 'B', 8);
-    $pdf->Cell(126, 5, "", 0, 0);
-    $pdf->Cell(31, 5, $utf("TOTAL:"), 1, 0, 'R', true);
+    $pdf->Cell(128, 5, "", 0, 0);
+    $pdf->Cell(30, 5, $utf("TOTAL:"), 1, 0, 'R', true);
     $pdf->SetFont('Arial', 'B', 8.5);
-    $pdf->Cell(31, 5, "$ " . number_format($monto_final, 0, ',', '.'), 1, 1, 'R');
+    $pdf->Cell(30, 5, "$ " . number_format($monto_final, 0, ',', '.'), 1, 1, 'R');
 
     // --- RECUADROS INSTITUCIONALES DE INFORMACIÓN DE RESPALDO (Modelo Lebu N° 758) ---
-    $pdf->SetDrawColor(160, 165, 175);
-    $pdf->SetLineWidth(0.25);
-    $y_cajas = $pdf->GetY() + 2.5;
+    $y_cajas = $pdf->GetY() + 3;
 
     // 1. RECUADRO DATOS PROVEEDOR
-    $pdf->SetFillColor(248, 250, 252);
-    $pdf->Rect(14, $y_cajas, 188, 12, 'DF');
+    $pdf->SetXY(14, $y_cajas);
+    $pdf->SetFont('Arial', 'B', 7);
+    $pdf->SetFillColor(245, 247, 250);
+    $pdf->Rect(14, $y_cajas, 188, 12);
     
     $pdf->SetXY(16, $y_cajas + 1.5);
+    $pdf->Cell(38, 4, $utf("DATOS PROVEEDOR:"), 0, 0, 'L');
     $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(36, 4, $utf("DATOS PROVEEDOR:"), 0, 0, 'L');
-    $pdf->Cell(24, 4, $utf("RAZÓN SOCIAL:"), 0, 0, 'L');
+    $pdf->Cell(25, 4, $utf("RAZÓN SOCIAL:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
-    $razon_prov = $exp['razon_social'] ?: 'PENDIENTE DE ADJUDICACIÓN';
-    $pdf->Cell(124, 4, $safe_text($razon_prov, 78), 0, 1, 'L');
+    $pdf->Cell(120, 4, $utf($exp['razon_social'] ?: 'PENDIENTE DE ADJUDICACIÓN'), 0, 1, 'L');
 
-    $pdf->SetXY(52, $y_cajas + 6);
+    $pdf->SetXY(54, $y_cajas + 6);
     $pdf->SetFont('Arial', 'B', 7);
     $pdf->Cell(12, 4, $utf("RUT:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
-    $pdf->Cell(44, 4, $safe_text($exp['rut_proveedor'] ?: '-', 20), 0, 0, 'L');
+    $pdf->Cell(45, 4, $utf($exp['rut_proveedor'] ?: '-'), 0, 0, 'L');
 
     $pdf->SetFont('Arial', 'B', 7);
     $pdf->Cell(20, 4, $utf("DIRECCIÓN:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
-    $pdf->Cell(72, 4, $safe_text($exp['direccion_proveedor'] ?: '-', 50), 0, 1, 'L');
+    $pdf->Cell(55, 4, $utf($exp['direccion_proveedor'] ?: '-'), 0, 1, 'L');
 
     // 2. RECUADRO IMPUTACIÓN PRESUPUESTARIA
     $y_caja2 = $y_cajas + 14;
-    $pdf->SetFillColor(248, 250, 252);
-    $pdf->Rect(14, $y_caja2, 188, 12, 'DF');
+    $pdf->SetXY(14, $y_caja2);
+    $pdf->Rect(14, $y_caja2, 188, 12);
 
     $pdf->SetXY(16, $y_caja2 + 1.5);
     $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(42, 4, $utf("IMPUTACIÓN PRESUPUESTARIA:"), 0, 0, 'L');
+    $pdf->Cell(38, 4, $utf("IMPUTACIÓN PRESUPUESTARIA:"), 0, 0, 'L');
     
-    $pdf->Cell(18, 4, $utf("CUENTA N°:"), 0, 0, 'L');
+    $pdf->Cell(22, 4, $utf("CUENTA N°:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
-    $pdf->Cell(38, 4, $safe_text($cuenta_str, 24), 0, 0, 'L');
+    $pdf->Cell(40, 4, $utf($cuenta_str), 0, 0, 'L');
 
     $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(24, 4, $utf("ÁREA GESTIÓN:"), 0, 0, 'L');
+    $pdf->Cell(26, 4, $utf("ÁREA GESTIÓN:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
-    $pdf->Cell(14, 4, $safe_text($ag_str, 8), 0, 0, 'L');
+    $pdf->Cell(15, 4, $utf($ag_str), 0, 0, 'L');
 
     $pdf->SetFont('Arial', 'B', 7);
     $pdf->Cell(24, 4, $utf("CENTRO COSTO:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
-    $pdf->Cell(26, 4, $safe_text($cc_str, 18), 0, 1, 'L');
+    $pdf->Cell(22, 4, $utf($cc_str), 0, 1, 'L');
 
     // Chequeo de autorizaciones inter-CC
     $aut_txt = "N° -";
@@ -348,76 +324,65 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
         }
     }
 
-    $pdf->SetXY(58, $y_caja2 + 6);
+    $pdf->SetXY(54, $y_caja2 + 6);
     $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(28, 4, $utf("COMPLEMENTARIA:"), 0, 0, 'L');
+    $pdf->Cell(32, 4, $utf("COMPLEMENTARIA:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 6.5);
-    $pdf->Cell(100, 4, $safe_text($aut_txt, 75), 0, 1, 'L');
+    $pdf->Cell(95, 4, $utf(substr($aut_txt, 0, 75)), 0, 1, 'L');
 
     // 3. RECUADRO PLAN DE COMPRAS Y MODALIDADES
     $y_caja3 = $y_caja2 + 14;
-    $pdf->SetFillColor(248, 250, 252);
-    $pdf->Rect(14, $y_caja3, 188, 17, 'DF');
+    $pdf->SetXY(14, $y_caja3);
+    $pdf->Rect(14, $y_caja3, 188, 17);
 
     $pdf->SetXY(16, $y_caja3 + 1.5);
     $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(36, 4, $utf("PLAN DE COMPRAS:"), 0, 0, 'L');
-    $pdf->Cell(18, 4, $utf("PROYECTO:"), 0, 0, 'L');
+    $pdf->Cell(38, 4, $utf("PLAN DE COMPRAS:"), 0, 0, 'L');
+    $pdf->Cell(20, 4, $utf("PROYECTO:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
-    $pdf->Cell(48, 4, $safe_text($exp['plan_compras_proyecto'] ?: '-', 30), 0, 0, 'L');
+    $pdf->Cell(50, 4, $utf($exp['plan_compras_proyecto'] ?: '-'), 0, 0, 'L');
     $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(12, 4, $utf("ÍTEM:"), 0, 0, 'L');
+    $pdf->Cell(15, 4, $utf("ÍTEM:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
-    $pdf->Cell(70, 4, $safe_text($exp['plan_compras_item'] ?: '-', 45), 0, 1, 'L');
+    $pdf->Cell(45, 4, $utf($exp['plan_compras_item'] ?: '-'), 0, 1, 'L');
 
     $pdf->SetXY(16, $y_caja3 + 6.5);
     $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(36, 4, $utf("C. SUMINISTROS ID:"), 0, 0, 'L');
+    $pdf->Cell(38, 4, $utf("C. SUMINISTROS ID:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
-    $pdf->Cell(48, 4, $safe_text($exp['id_contrato_suministro'] ?: '-', 26), 0, 0, 'L');
+    $pdf->Cell(50, 4, $utf($exp['id_contrato_suministro'] ?: '-'), 0, 0, 'L');
     $pdf->SetFont('Arial', 'B', 7);
     $pdf->Cell(30, 4, $utf("CONV. MARCO O°C:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
     $conv_marco = $exp['conv_marco_oc'] ?: ($exp['orden_compra_numero'] ?: '-');
-    $pdf->Cell(54, 4, $safe_text($conv_marco, 32), 0, 1, 'L');
+    $pdf->Cell(45, 4, $utf($conv_marco), 0, 1, 'L');
 
     $pdf->SetXY(16, $y_caja3 + 11.5);
     $pdf->SetFont('Arial', 'B', 7);
-    $pdf->Cell(36, 4, $utf("COMPRA ÁGIL ID:"), 0, 0, 'L');
+    $pdf->Cell(38, 4, $utf("COMPRA ÁGIL ID:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
-    $pdf->Cell(48, 4, $safe_text($exp['id_compra_agil'] ?: '-', 26), 0, 0, 'L');
+    $pdf->Cell(50, 4, $utf($exp['id_compra_agil'] ?: '-'), 0, 0, 'L');
     $pdf->SetFont('Arial', 'B', 7);
     $pdf->Cell(34, 4, $utf("DECRETO ALCALDICIO N°:"), 0, 0, 'L');
     $pdf->SetFont('Arial', '', 7);
-    $pdf->Cell(50, 4, $safe_text($exp['decreto_alcaldicio_numero'] ?: '-', 28), 0, 1, 'L');
+    $pdf->Cell(40, 4, $utf($exp['decreto_alcaldicio_numero'] ?: '-'), 0, 1, 'L');
 
     // --- CLÁUSULA 2: DESTINO DE LOS BIENES / SERVICIOS ---
     $y_clausula2 = $y_caja3 + 19;
     $pdf->SetXY(14, $y_clausula2);
     $pdf->SetFont('Arial', 'B', 7.5);
     $pdf->Cell(188, 4, $utf($cfg_clausula2_txt), 0, 1, 'L');
-
-    // Recuadro y texto del motivo de compra
-    $pdf->SetXY(14, $y_clausula2 + 4.2);
-    $motivo = $exp['motivo_compra'] ?: ($exp['titulo_compra'] ?? '-');
-    // Truncado protector máximo para asegurar que el texto no rebase la página
-    if (mb_strlen($motivo, 'UTF-8') > 360) {
-        $motivo = mb_substr($motivo, 0, 357, 'UTF-8') . '...';
-    }
     $pdf->SetFont('Arial', '', 7.5);
+    $pdf->SetXY(14, $y_clausula2 + 4);
+    $motivo = $exp['motivo_compra'] ?: ($exp['titulo_compra'] ?? '-');
     $pdf->MultiCell(188, 3.5, $utf($motivo), 1, 'L');
-    $y_despues_motivo = $pdf->GetY();
 
     // --- LÍNEAS DE BASE PARA LAS 3 FIRMAS DIGITALES (FIRMAGOB) ---
-    // Cálculo dinámico para evitar solapamientos si el motivo es extenso
-    $tope_max_y = $alto_pagina_mm - 16.0;
-    $y_firmas_line = max($cfg_firmas_linea_y, $y_despues_motivo + 20.0);
-    if ($y_firmas_line > $tope_max_y) {
-        $y_firmas_line = $tope_max_y;
-    }
-
+    // Diseño limpio: Sin cajas cerradas ni texto redundante interno.
+    // La estampa oficial de FirmaGob se estampa directamente sobre cada línea base horizontal.
+    $y_firmas_line = $cfg_firmas_linea_y;
     $pdf->SetDrawColor(120, 120, 120);
-    $pdf->SetLineWidth(0.35);
+    $pdf->SetLineWidth(0.3);
 
     // Línea 1: Jefatura Unidad Solicitante (Izquierda: X=14 a 72, Ancho=58mm)
     $pdf->Line(14, $y_firmas_line, 72, $y_firmas_line);
@@ -428,37 +393,11 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
     // Línea 3: Administrador Municipal (Derecha: X=144 a 202, Ancho=58mm)
     $pdf->Line(144, $y_firmas_line, 202, $y_firmas_line);
 
-    // Subtítulos institucionales bajo cada línea de firma (orientación previa a FirmaGob)
-    $pdf->SetFont('Arial', 'B', 6);
-    $pdf->SetTextColor(70, 80, 95);
-
-    $pdf->SetXY(14, $y_firmas_line + 1.2);
-    $pdf->Cell(58, 2.8, $utf("JEFATURA UNIDAD SOLICITANTE"), 0, 1, 'C');
-    $pdf->SetXY(14, $y_firmas_line + 3.8);
-    $pdf->SetFont('Arial', '', 5.5);
-    $pdf->Cell(58, 2.5, $utf("V°B° Requerimiento Técnico"), 0, 1, 'C');
-
-    $pdf->SetFont('Arial', 'B', 6);
-    $pdf->SetXY(79, $y_firmas_line + 1.2);
-    $pdf->Cell(58, 2.8, $utf("DIRECCIÓN DE ADM. Y FINANZAS"), 0, 1, 'C');
-    $pdf->SetXY(79, $y_firmas_line + 3.8);
-    $pdf->SetFont('Arial', '', 5.5);
-    $pdf->Cell(58, 2.5, $utf("Control e Imputación Presupuestaria"), 0, 1, 'C');
-
-    $pdf->SetFont('Arial', 'B', 6);
-    $pdf->SetXY(144, $y_firmas_line + 1.2);
-    $pdf->Cell(58, 2.8, $utf("ADMINISTRADOR MUNICIPAL"), 0, 1, 'C');
-    $pdf->SetXY(144, $y_firmas_line + 3.8);
-    $pdf->SetFont('Arial', '', 5.5);
-    $pdf->Cell(58, 2.5, $utf("Autorización Final del Gasto"), 0, 1, 'C');
-
     // Pie de página oficial
-    $y_pie = min($alto_pagina_mm - 7.0, $y_firmas_line + 7.5);
-    $pdf->SetXY(14, $y_pie);
+    $pdf->SetXY(14, $y_firmas_line + 4);
     $pdf->SetFont('Arial', '', 6.5);
     $pdf->SetTextColor(110, 110, 110);
     $pdf->Cell(188, 3, $utf($cfg_pie_legal_txt), 0, 1, 'C');
-    $pdf->SetTextColor(0, 0, 0);
 
     // Guardar archivo binario
     $pdf->Output('F', $ruta_absoluta);

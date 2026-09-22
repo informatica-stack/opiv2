@@ -17,21 +17,15 @@ if ($rol !== 'SYSADMIN' && $rol !== 'ADMIN_MUNICIPAL') {
 }
 
 // 1. Obtener parametros desde GET/POST con fallback a $config_sistema de BD
-$tamano_papel   = isset($_REQUEST['opi_tamano_papel']) ? strtoupper(trim($_REQUEST['opi_tamano_papel'])) : ($config_sistema['opi_tamano_papel'] ?? 'OFICIO');
-$es_oficio      = ($tamano_papel === 'OFICIO');
-$dimensiones    = $es_oficio ? [215.9, 330.2] : 'Letter';
-$alto_pagina_mm = $es_oficio ? 330.2 : 279.4;
-$y_firmas_default = $es_oficio ? 306.0 : 256.0;
-
 $titulo_doc     = $_REQUEST['opi_titulo_documento'] ?? ($config_sistema['opi_titulo_documento'] ?? 'ORDEN DE PEDIDO INTERNO');
 $clausula1_txt  = $_REQUEST['opi_clausula1_texto'] ?? ($config_sistema['opi_clausula1_texto'] ?? '1. Agradecere a Usted, tenga a bien efectuar la adquisicion de los siguientes bienes y/o servicios:');
 $clausula2_txt  = $_REQUEST['opi_clausula2_texto'] ?? ($config_sistema['opi_clausula2_texto'] ?? '2. Los presentes bienes/servicios seran destinados a:');
 $pie_legal_txt  = $_REQUEST['opi_pie_legal'] ?? ($config_sistema['opi_pie_legal'] ?? 'Documento Oficial emitido por el Sistema Institucional OPI - Validez legal bajo Ley N° 19.799 de Firma Electronica');
-$firmas_linea_y = isset($_REQUEST['opi_firmas_linea_y']) ? floatval($_REQUEST['opi_firmas_linea_y']) : floatval($config_sistema['opi_firmas_linea_y'] ?? $y_firmas_default);
+$firmas_linea_y = isset($_REQUEST['opi_firmas_linea_y']) ? floatval($_REQUEST['opi_firmas_linea_y']) : floatval($config_sistema['opi_firmas_linea_y'] ?? 256.0);
 $simular_estampas = isset($_REQUEST['simular_estampas']) ? (int)$_REQUEST['simular_estampas'] : 1;
 
-// 2. Instanciar FPDF (Oficio Chileno 215.9 x 330.2 mm o Carta 215.9 x 279.4 mm)
-$pdf = new FPDF('P', 'mm', $dimensiones);
+// 2. Instanciar FPDF (Carta: 215.9 x 279.4 mm, margenes 14mm)
+$pdf = new FPDF('P', 'mm', 'Letter');
 $pdf->SetMargins(14, 10, 14);
 $pdf->SetAutoPageBreak(false);
 $pdf->AddPage();
@@ -262,10 +256,9 @@ $pdf->MultiCell(188, 3.5, $utf($motivo_ejemplo), 1, 'L');
 $y_despues_motivo = $pdf->GetY();
 
 // --- LÍNEAS DE BASE PARA LAS 3 FIRMAS DIGITALES (FIRMAGOB) ---
-$tope_max_y = $alto_pagina_mm - 16.0;
 $y_firmas_line = max($firmas_linea_y, $y_despues_motivo + 20.0);
-if ($y_firmas_line > $tope_max_y) {
-    $y_firmas_line = $tope_max_y;
+if ($y_firmas_line > 263.0) {
+    $y_firmas_line = 263.0;
 }
 
 $pdf->SetDrawColor(120, 120, 120);
@@ -358,7 +351,7 @@ if ($simular_estampas === 1) {
 }
 
 // Pie de página legal configurable
-$y_pie = min($alto_pagina_mm - 7.0, $y_firmas_line + 7.5);
+$y_pie = min(272.0, $y_firmas_line + 7.5);
 $pdf->SetXY(14, $y_pie);
 $pdf->SetFont('Arial', '', 6.5);
 $pdf->SetTextColor(110, 110, 110);

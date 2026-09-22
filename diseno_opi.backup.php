@@ -18,12 +18,11 @@ $tipo_mensaje = '';
 
 // Valores oficiales por defecto
 $defaults = [
-    'opi_tamano_papel'     => 'OFICIO',
     'opi_titulo_documento' => 'ORDEN DE PEDIDO INTERNO',
     'opi_clausula1_texto'  => '1. Agradeceré a Usted, tenga a bien efectuar la adquisición de los siguientes bienes y/o servicios:',
     'opi_clausula2_texto'  => '2. Los presentes bienes/servicios serán destinados a:',
     'opi_pie_legal'        => 'Documento Oficial emitido por el Sistema Institucional OPI - Validez legal bajo Ley N° 19.799 de Firma Electrónica',
-    'opi_firmas_linea_y'   => '306.0'
+    'opi_firmas_linea_y'   => '256.0'
 ];
 
 // Procesamiento de formulario POST
@@ -32,9 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($accion === 'restablecer') {
         try {
-            $stmtDel = $pdo->prepare("DELETE FROM configuraciones_sistema WHERE clave IN ('opi_tamano_papel', 'opi_titulo_documento', 'opi_clausula1_texto', 'opi_clausula2_texto', 'opi_pie_legal', 'opi_firmas_linea_y')");
+            $stmtDel = $pdo->prepare("DELETE FROM configuraciones_sistema WHERE clave IN ('opi_titulo_documento', 'opi_clausula1_texto', 'opi_clausula2_texto', 'opi_pie_legal', 'opi_firmas_linea_y')");
             $stmtDel->execute();
-            $mensaje = "Se han restablecido los textos y parámetros oficiales por defecto de la plantilla OPI.";
+            $mensaje = "Se han restablecido los textos y parametros oficiales por defecto de la plantilla OPI.";
             $tipo_mensaje = "success";
         } catch (Exception $e) {
             $mensaje = "Error al restablecer valores: " . $e->getMessage();
@@ -42,32 +41,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } else {
         try {
-            $tamano_papel   = strtoupper(trim($_POST['opi_tamano_papel'] ?? 'OFICIO'));
-            if ($tamano_papel !== 'LETTER') {
-                $tamano_papel = 'OFICIO';
-            }
-
             $titulo_doc     = trim($_POST['opi_titulo_documento'] ?? $defaults['opi_titulo_documento']);
             $clausula1_txt  = trim($_POST['opi_clausula1_texto'] ?? $defaults['opi_clausula1_texto']);
             $clausula2_txt  = trim($_POST['opi_clausula2_texto'] ?? $defaults['opi_clausula2_texto']);
             $pie_legal_txt  = trim($_POST['opi_pie_legal'] ?? $defaults['opi_pie_legal']);
+            $firmas_linea_y = floatval($_POST['opi_firmas_linea_y'] ?? 256.0);
 
-            $y_default = ($tamano_papel === 'OFICIO') ? 306.0 : 256.0;
-            $firmas_linea_y = floatval($_POST['opi_firmas_linea_y'] ?? $y_default);
-
-            // Validar límites razonables para posición Y según formato de hoja
-            if ($tamano_papel === 'OFICIO') {
-                if ($firmas_linea_y < 260 || $firmas_linea_y > 320) {
-                    $firmas_linea_y = 306.0;
-                }
-            } else {
-                if ($firmas_linea_y < 220 || $firmas_linea_y > 270) {
-                    $firmas_linea_y = 256.0;
-                }
+            // Validar límites razonables para posición Y
+            if ($firmas_linea_y < 220 || $firmas_linea_y > 270) {
+                $firmas_linea_y = 256.0;
             }
 
             $guardar = [
-                'opi_tamano_papel'     => $tamano_papel,
                 'opi_titulo_documento' => $titulo_doc,
                 'opi_clausula1_texto'  => $clausula1_txt,
                 'opi_clausula2_texto'  => $clausula2_txt,
@@ -80,11 +65,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmtSave->execute([$k, $v]);
             }
 
-            $mensaje = "Diseño, tamaño de papel y parámetros de la plantilla OPI guardados exitosamente. Todas las nuevas OPIs generadas reflejarán estos cambios.";
+            $mensaje = "Diseno y parametros de la plantilla OPI guardados exitosamente. Todas las nuevas OPIs generadas reflejaran estos cambios.";
             $tipo_mensaje = "success";
 
         } catch (Exception $e) {
-            $mensaje = "Error al guardar el diseño: " . $e->getMessage();
+            $mensaje = "Error al guardar el diseno: " . $e->getMessage();
             $tipo_mensaje = "error";
         }
     }
@@ -178,33 +163,6 @@ try {
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                     <input type="hidden" name="accion" id="formAccion" value="guardar">
 
-                    <!-- TARJETA 0: FORMATO Y TAMAÑO DE HOJA -->
-                    <div class="card shadow-sm border-light mb-3">
-                        <div class="card-header bg-white py-2.5 border-bottom d-flex align-items-center justify-content-between">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="bi bi-aspect-ratio text-primary fs-5"></i>
-                                <h6 class="fw-bold mb-0 text-dark">Formato y Dimensiones de Impresión</h6>
-                            </div>
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
-                                Estándar Chile
-                            </span>
-                        </div>
-                        <div class="card-body p-3">
-                            <?php 
-                            $tamano_actual = $configs['opi_tamano_papel'] ?? 'OFICIO';
-                            $es_oficio_actual = ($tamano_actual === 'OFICIO');
-                            ?>
-                            <div class="mb-0">
-                                <label class="form-label fw-bold text-secondary small mb-1">Tamaño de Hoja para OPIs</label>
-                                <select name="opi_tamano_papel" id="selectTamanoPapel" class="form-select form-select-sm fw-bold text-dark">
-                                    <option value="OFICIO" <?= $es_oficio_actual ? 'selected' : '' ?>>Oficio Chileno (8.5 x 13" — 215.9 x 330.2 mm) [Recomendado: +5cm de espacio]</option>
-                                    <option value="LETTER" <?= !$es_oficio_actual ? 'selected' : '' ?>>Carta / Letter (8.5 x 11" — 215.9 x 279.4 mm) [Estándar Corto]</option>
-                                </select>
-                                <div class="form-text small text-muted">Oficio Chileno añade +50.8 mm de altura permitiendo hasta 16 ítems en una sola página sin descuadres ni saltos de hoja.</div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- TARJETA 1: TEXTOS Y CLÁUSULAS OFICIALES -->
                     <div class="card shadow-sm border-light mb-3">
                         <div class="card-header bg-white py-2.5 border-bottom d-flex align-items-center gap-2">
@@ -252,21 +210,17 @@ try {
                             </span>
                         </div>
                         <div class="card-body p-3">
-                            <?php
-                            $min_slider_y = $es_oficio_actual ? 275 : 235;
-                            $max_slider_y = $es_oficio_actual ? 318 : 265;
-                            $val_slider_y = floatval($configs['opi_firmas_linea_y'] ?? ($es_oficio_actual ? 306.0 : 256.0));
-                            ?>
+                            
                             <div class="p-2.5 bg-light rounded-3 border mb-3">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <label class="form-label fw-bold text-dark small mb-0">Posición Vertical Y de las Líneas Base (mm)</label>
-                                    <span class="badge bg-primary range-value-badge" id="badgePosY"><?= htmlspecialchars((string)$val_slider_y) ?> mm</span>
+                                    <span class="badge bg-primary range-value-badge" id="badgePosY"><?= htmlspecialchars($configs['opi_firmas_linea_y']) ?> mm</span>
                                 </div>
-                                <input type="range" class="form-range" id="rangePosY" name="opi_firmas_linea_y" min="<?= $min_slider_y ?>" max="<?= $max_slider_y ?>" step="0.5" value="<?= htmlspecialchars((string)$val_slider_y) ?>">
+                                <input type="range" class="form-range" id="rangePosY" name="opi_firmas_linea_y" min="235" max="265" step="0.5" value="<?= htmlspecialchars($configs['opi_firmas_linea_y']) ?>">
                                 <div class="d-flex justify-content-between text-muted" style="font-size: 10px;">
-                                    <span id="sliderHelpMin"><?= $es_oficio_actual ? '275 mm (Más arriba)' : '235 mm (Más arriba)' ?></span>
-                                    <span id="sliderHelpOpt"><?= $es_oficio_actual ? '306 mm (Óptimo Oficio)' : '256 mm (Óptimo Carta)' ?></span>
-                                    <span id="sliderHelpMax"><?= $es_oficio_actual ? '318 mm (Más abajo)' : '265 mm (Más abajo)' ?></span>
+                                    <span>235 mm (Más arriba)</span>
+                                    <span>256 mm (Óptimo Oficial)</span>
+                                    <span>265 mm (Más abajo)</span>
                                 </div>
                             </div>
 
@@ -336,8 +290,6 @@ try {
     let debounceTimer = null;
 
     function obtenerParametrosPreview() {
-        const selectTam = document.getElementById('selectTamanoPapel');
-        const tamano = selectTam ? encodeURIComponent(selectTam.value) : 'OFICIO';
         const titulo = encodeURIComponent(document.getElementById('inputTitulo').value);
         const clausula1 = encodeURIComponent(document.getElementById('inputClausula1').value);
         const clausula2 = encodeURIComponent(document.getElementById('inputClausula2').value);
@@ -345,7 +297,7 @@ try {
         const posY = encodeURIComponent(document.getElementById('rangePosY').value);
         const simular = document.getElementById('swSimularEstampas').checked ? '1' : '0';
 
-        return `opi_tamano_papel=${tamano}&opi_titulo_documento=${titulo}&opi_clausula1_texto=${clausula1}&opi_clausula2_texto=${clausula2}&opi_pie_legal=${pieLegal}&opi_firmas_linea_y=${posY}&simular_estampas=${simular}&t=${Date.now()}`;
+        return `opi_titulo_documento=${titulo}&opi_clausula1_texto=${clausula1}&opi_clausula2_texto=${clausula2}&opi_pie_legal=${pieLegal}&opi_firmas_linea_y=${posY}&simular_estampas=${simular}&t=${Date.now()}`;
     }
 
     function actualizarVistaPrevia() {
@@ -360,44 +312,6 @@ try {
         debounceTimer = setTimeout(() => {
             actualizarVistaPrevia();
         }, 350);
-    }
-
-    function adaptarControlesTamanoPapel(tamano, recalcularY = false) {
-        const range = document.getElementById('rangePosY');
-        const badge = document.getElementById('badgePosY');
-        const helpMin = document.getElementById('sliderHelpMin');
-        const helpOpt = document.getElementById('sliderHelpOpt');
-        const helpMax = document.getElementById('sliderHelpMax');
-
-        if (tamano === 'OFICIO') {
-            range.min = "275";
-            range.max = "318";
-            if (recalcularY || parseFloat(range.value) < 275 || parseFloat(range.value) > 318) {
-                range.value = "306.0";
-            }
-            if (helpMin) helpMin.textContent = "275 mm (Más arriba)";
-            if (helpOpt) helpOpt.textContent = "306 mm (Óptimo Oficio)";
-            if (helpMax) helpMax.textContent = "318 mm (Más abajo)";
-        } else {
-            range.min = "235";
-            range.max = "265";
-            if (recalcularY || parseFloat(range.value) < 235 || parseFloat(range.value) > 265) {
-                range.value = "256.0";
-            }
-            if (helpMin) helpMin.textContent = "235 mm (Más arriba)";
-            if (helpOpt) helpOpt.textContent = "256 mm (Óptimo Carta)";
-            if (helpMax) helpMax.textContent = "265 mm (Más abajo)";
-        }
-        if (badge) badge.textContent = parseFloat(range.value).toFixed(1) + ' mm';
-    }
-
-    // Escuchar cambio de tamaño de papel
-    const selectTamanoPapel = document.getElementById('selectTamanoPapel');
-    if (selectTamanoPapel) {
-        selectTamanoPapel.addEventListener('change', function() {
-            adaptarControlesTamanoPapel(this.value, true);
-            actualizarVistaPrevia();
-        });
     }
 
     // Sincronizar Slider de Posición Y

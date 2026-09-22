@@ -102,6 +102,12 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
     $ruta_absoluta = $dir . $nombre_archivo;
     $ruta_relativa = "uploads/$anio/exp_$expediente_id/" . $nombre_archivo;
 
+    // 4. Instanciar FPDF (Tamaño Carta: 215.9 x 279.4 mm, márgenes 14mm)
+    $pdf = new FPDF('P', 'mm', 'Letter');
+    $pdf->SetMargins(14, 10, 14);
+    $pdf->SetAutoPageBreak(false);
+    $pdf->AddPage();
+
     $utf = function($text) {
         return iconv('UTF-8', 'windows-1252//TRANSLIT', (string)$text);
     };
@@ -126,26 +132,11 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
         }
     }
 
-    $cfg_tamano_papel   = !empty($config_sistema['opi_tamano_papel']) ? strtoupper(trim($config_sistema['opi_tamano_papel'])) : 'OFICIO';
-    $es_oficio          = ($cfg_tamano_papel === 'OFICIO');
-
-    // Dimensiones en mm: Oficio Chileno (215.9 x 330.2 mm / 8.5 x 13") vs Carta (215.9 x 279.4 mm / 8.5 x 11")
-    $dimensiones_papel  = $es_oficio ? [215.9, 330.2] : 'Letter';
-    $alto_pagina_mm     = $es_oficio ? 330.2 : 279.4;
-    $filas_min          = $es_oficio ? 6 : 4;
-    $y_firmas_default   = $es_oficio ? 306.0 : 256.0;
-
     $cfg_titulo_doc     = !empty($config_sistema['opi_titulo_documento']) ? $config_sistema['opi_titulo_documento'] : 'ORDEN DE PEDIDO INTERNO';
     $cfg_clausula1_txt  = !empty($config_sistema['opi_clausula1_texto']) ? $config_sistema['opi_clausula1_texto'] : '1. Agradeceré a Usted, tenga a bien efectuar la adquisición de los siguientes bienes y/o servicios:';
     $cfg_clausula2_txt  = !empty($config_sistema['opi_clausula2_texto']) ? $config_sistema['opi_clausula2_texto'] : '2. Los presentes bienes/servicios serán destinados a:';
     $cfg_pie_legal_txt  = !empty($config_sistema['opi_pie_legal']) ? $config_sistema['opi_pie_legal'] : 'Documento Oficial emitido por el Sistema Institucional OPI - Validez legal bajo Ley N° 19.799 de Firma Electrónica';
-    $cfg_firmas_linea_y = !empty($config_sistema['opi_firmas_linea_y']) ? floatval($config_sistema['opi_firmas_linea_y']) : $y_firmas_default;
-
-    // 4. Instanciar FPDF (Tamaño Oficio Chileno 215.9 x 330.2 mm o Carta 215.9 x 279.4 mm)
-    $pdf = new FPDF('P', 'mm', $dimensiones_papel);
-    $pdf->SetMargins(14, 10, 14);
-    $pdf->SetAutoPageBreak(false);
-    $pdf->AddPage();
+    $cfg_firmas_linea_y = !empty($config_sistema['opi_firmas_linea_y']) ? floatval($config_sistema['opi_firmas_linea_y']) : 256.0;
 
     // --- ENCABEZADO INSTITUCIONAL OFICIAL (Modelo N° 758) ---
     if (file_exists(__DIR__ . '/logo.png')) {
@@ -410,10 +401,9 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
 
     // --- LÍNEAS DE BASE PARA LAS 3 FIRMAS DIGITALES (FIRMAGOB) ---
     // Cálculo dinámico para evitar solapamientos si el motivo es extenso
-    $tope_max_y = $alto_pagina_mm - 16.0;
     $y_firmas_line = max($cfg_firmas_linea_y, $y_despues_motivo + 20.0);
-    if ($y_firmas_line > $tope_max_y) {
-        $y_firmas_line = $tope_max_y;
+    if ($y_firmas_line > 263.0) {
+        $y_firmas_line = 263.0; // Límite inferior seguro en papel Carta (279.4mm)
     }
 
     $pdf->SetDrawColor(120, 120, 120);
@@ -453,7 +443,7 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
     $pdf->Cell(58, 2.5, $utf("Autorización Final del Gasto"), 0, 1, 'C');
 
     // Pie de página oficial
-    $y_pie = min($alto_pagina_mm - 7.0, $y_firmas_line + 7.5);
+    $y_pie = min(272.0, $y_firmas_line + 7.5);
     $pdf->SetXY(14, $y_pie);
     $pdf->SetFont('Arial', '', 6.5);
     $pdf->SetTextColor(110, 110, 110);
