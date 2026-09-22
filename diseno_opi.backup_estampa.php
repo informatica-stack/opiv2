@@ -18,21 +18,12 @@ $tipo_mensaje = '';
 
 // Valores oficiales por defecto
 $defaults = [
-    'opi_tamano_papel'        => 'OFICIO',
-    'opi_titulo_documento'    => 'ORDEN DE PEDIDO INTERNO',
-    'opi_clausula1_texto'     => '1. Agradeceré a Usted, tenga a bien efectuar la adquisición de los siguientes bienes y/o servicios:',
-    'opi_clausula2_texto'     => '2. Los presentes bienes/servicios serán destinados a:',
-    'opi_pie_legal'           => 'Documento Oficial emitido por el Sistema Institucional OPI - Validez legal bajo Ley N° 19.799 de Firma Electrónica',
-    'opi_firmas_linea_y'      => '306.0',
-    'estampa_tema'            => 'azul_institucional',
-    'estampa_fuente'          => 'segoeui',
-    'estampa_titulo_texto'    => 'FIRMADO ELECTRÓNICAMENTE (FEA)',
-    'estampa_icono'           => 'check',
-    'estampa_mostrar_run'     => '1',
-    'estampa_mostrar_cargo'   => '1',
-    'estampa_mostrar_fecha'   => '1',
-    'estampa_mostrar_entidad' => '1',
-    'estampa_mostrar_ley'     => '1',
+    'opi_tamano_papel'     => 'OFICIO',
+    'opi_titulo_documento' => 'ORDEN DE PEDIDO INTERNO',
+    'opi_clausula1_texto'  => '1. Agradeceré a Usted, tenga a bien efectuar la adquisición de los siguientes bienes y/o servicios:',
+    'opi_clausula2_texto'  => '2. Los presentes bienes/servicios serán destinados a:',
+    'opi_pie_legal'        => 'Documento Oficial emitido por el Sistema Institucional OPI - Validez legal bajo Ley N° 19.799 de Firma Electrónica',
+    'opi_firmas_linea_y'   => '306.0'
 ];
 
 // Procesamiento de formulario POST
@@ -41,13 +32,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($accion === 'restablecer') {
         try {
-            $stmtDel = $pdo->prepare("DELETE FROM configuraciones_sistema WHERE clave IN (
-                'opi_tamano_papel', 'opi_titulo_documento', 'opi_clausula1_texto', 'opi_clausula2_texto', 'opi_pie_legal', 'opi_firmas_linea_y',
-                'estampa_tema', 'estampa_fuente', 'estampa_titulo_texto', 'estampa_icono',
-                'estampa_mostrar_run', 'estampa_mostrar_cargo', 'estampa_mostrar_fecha', 'estampa_mostrar_entidad', 'estampa_mostrar_ley'
-            )");
+            $stmtDel = $pdo->prepare("DELETE FROM configuraciones_sistema WHERE clave IN ('opi_tamano_papel', 'opi_titulo_documento', 'opi_clausula1_texto', 'opi_clausula2_texto', 'opi_pie_legal', 'opi_firmas_linea_y')");
             $stmtDel->execute();
-            $mensaje = "Se han restablecido los textos, formato y parámetros oficiales por defecto de la plantilla y estampa OPI.";
+            $mensaje = "Se han restablecido los textos y parámetros oficiales por defecto de la plantilla OPI.";
             $tipo_mensaje = "success";
         } catch (Exception $e) {
             $mensaje = "Error al restablecer valores: " . $e->getMessage();
@@ -80,21 +67,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $guardar = [
-                'opi_tamano_papel'        => $tamano_papel,
-                'opi_titulo_documento'    => $titulo_doc,
-                'opi_clausula1_texto'     => $clausula1_txt,
-                'opi_clausula2_texto'     => $clausula2_txt,
-                'opi_pie_legal'           => $pie_legal_txt,
-                'opi_firmas_linea_y'      => (string)$firmas_linea_y,
-                'estampa_tema'            => $_POST['estampa_tema'] ?? 'azul_institucional',
-                'estampa_fuente'          => $_POST['estampa_fuente'] ?? 'segoeui',
-                'estampa_titulo_texto'    => trim($_POST['estampa_titulo_texto'] ?? 'FIRMADO ELECTRÓNICAMENTE (FEA)'),
-                'estampa_icono'           => $_POST['estampa_icono'] ?? 'check',
-                'estampa_mostrar_run'     => isset($_POST['estampa_mostrar_run']) ? '1' : '0',
-                'estampa_mostrar_cargo'   => isset($_POST['estampa_mostrar_cargo']) ? '1' : '0',
-                'estampa_mostrar_fecha'   => isset($_POST['estampa_mostrar_fecha']) ? '1' : '0',
-                'estampa_mostrar_entidad' => isset($_POST['estampa_mostrar_entidad']) ? '1' : '0',
-                'estampa_mostrar_ley'     => isset($_POST['estampa_mostrar_ley']) ? '1' : '0',
+                'opi_tamano_papel'     => $tamano_papel,
+                'opi_titulo_documento' => $titulo_doc,
+                'opi_clausula1_texto'  => $clausula1_txt,
+                'opi_clausula2_texto'  => $clausula2_txt,
+                'opi_pie_legal'        => $pie_legal_txt,
+                'opi_firmas_linea_y'   => (string)$firmas_linea_y
             ];
 
             $stmtSave = $pdo->prepare("INSERT INTO configuraciones_sistema (clave, valor) VALUES (?, ?) ON DUPLICATE KEY UPDATE valor = VALUES(valor)");
@@ -102,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmtSave->execute([$k, $v]);
             }
 
-            $mensaje = "Diseño de OPI y estilo de estampa digital guardados exitosamente. Las nuevas OPIs reflejarán estos cambios.";
+            $mensaje = "Diseño, tamaño de papel y parámetros de la plantilla OPI guardados exitosamente. Todas las nuevas OPIs generadas reflejarán estos cambios.";
             $tipo_mensaje = "success";
 
         } catch (Exception $e) {
@@ -115,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Cargar valores actuales desde la base de datos
 $configs = $defaults;
 try {
-    $stmt = $pdo->query("SELECT clave, valor FROM configuraciones_sistema WHERE clave LIKE 'opi_%' OR clave LIKE 'estampa_%'");
+    $stmt = $pdo->query("SELECT clave, valor FROM configuraciones_sistema WHERE clave LIKE 'opi_%'");
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         if ($row['valor'] !== null && $row['valor'] !== '') {
             $configs[$row['clave']] = $row['valor'];
@@ -303,86 +281,6 @@ try {
                         </div>
                     </div>
 
-                    <!-- TARJETA 3: ESTILO Y PERSONALIZACIÓN DE LA ESTAMPA DIGITAL FIRMAGOB -->
-                    <div class="card shadow-sm border-light mb-3">
-                        <div class="card-header bg-white py-2.5 border-bottom d-flex align-items-center justify-content-between">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="bi bi-shield-check text-primary fs-5"></i>
-                                <h6 class="fw-bold mb-0 text-dark">3. Diseño de Estampa Digital FirmaGob</h6>
-                            </div>
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
-                                Motor HD FreeType
-                            </span>
-                        </div>
-                        <div class="card-body p-3">
-                            <div class="row g-2 mb-3">
-                                <div class="col-12 col-sm-6">
-                                    <label class="form-label fw-bold text-secondary small mb-1">Paleta Cromática / Tema</label>
-                                    <select name="estampa_tema" id="selectEstampaTema" class="form-select form-select-sm fw-bold">
-                                        <option value="azul_institucional" <?= ($configs['estampa_tema'] ?? '') === 'azul_institucional' ? 'selected' : '' ?>>Azul Institucional (Gobierno)</option>
-                                        <option value="verde_validacion" <?= ($configs['estampa_tema'] ?? '') === 'verde_validacion' ? 'selected' : '' ?>>Verde Certificación (Seguro)</option>
-                                        <option value="monocromatico" <?= ($configs['estampa_tema'] ?? '') === 'monocromatico' ? 'selected' : '' ?>>Gris Pizarra (Monocromo)</option>
-                                        <option value="barra_lateral" <?= ($configs['estampa_tema'] ?? '') === 'barra_lateral' ? 'selected' : '' ?>>Minimalista con Barra Lateral</option>
-                                    </select>
-                                </div>
-                                <div class="col-12 col-sm-6">
-                                    <label class="form-label fw-bold text-secondary small mb-1">Tipografía TrueType</label>
-                                    <select name="estampa_fuente" id="selectEstampaFuente" class="form-select form-select-sm fw-bold">
-                                        <option value="segoeui" <?= ($configs['estampa_fuente'] ?? '') === 'segoeui' ? 'selected' : '' ?>>Segoe UI (Moderna & Nítida)</option>
-                                        <option value="calibri" <?= ($configs['estampa_fuente'] ?? '') === 'calibri' ? 'selected' : '' ?>>Calibri (Corporativa Compacta)</option>
-                                        <option value="arial" <?= ($configs['estampa_fuente'] ?? '') === 'arial' ? 'selected' : '' ?>>Arial (Formal Clásica)</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="row g-2 mb-3">
-                                <div class="col-12 col-sm-7">
-                                    <label class="form-label fw-bold text-secondary small mb-1">Texto Cabecera de la Estampa</label>
-                                    <input type="text" name="estampa_titulo_texto" id="inputEstampaTitulo" class="form-control form-control-sm fw-bold" value="<?= htmlspecialchars($configs['estampa_titulo_texto'] ?? 'FIRMADO ELECTRÓNICAMENTE (FEA)') ?>">
-                                </div>
-                                <div class="col-12 col-sm-5">
-                                    <label class="form-label fw-bold text-secondary small mb-1">Icono / Distintivo</label>
-                                    <select name="estampa_icono" id="selectEstampaIcono" class="form-select form-select-sm fw-bold">
-                                        <option value="check" <?= ($configs['estampa_icono'] ?? '') === 'check' ? 'selected' : '' ?>>✓ Tilde de Verificación</option>
-                                        <option value="candado" <?= ($configs['estampa_icono'] ?? '') === 'candado' ? 'selected' : '' ?>>🔒 Candado Criptográfico</option>
-                                        <option value="escudo" <?= ($configs['estampa_icono'] ?? '') === 'escudo' ? 'selected' : '' ?>>🛡️ Escudo Institucional</option>
-                                        <option value="ninguno" <?= ($configs['estampa_icono'] ?? '') === 'ninguno' ? 'selected' : '' ?>>Sin Icono (Solo Texto)</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <label class="form-label fw-bold text-secondary small mb-1.5">Metadatos a Incluir en la Estampa</label>
-                            <div class="p-2.5 bg-light rounded-3 border">
-                                <div class="row g-2">
-                                    <div class="col-6">
-                                        <div class="form-check form-switch mb-1.5">
-                                            <input class="form-check-input check-estampa-meta" type="checkbox" name="estampa_mostrar_run" id="swEstampaRun" value="1" <?= ($configs['estampa_mostrar_run'] ?? '1') === '1' ? 'checked' : '' ?>>
-                                            <label class="form-check-label small fw-semibold" for="swEstampaRun">RUN del firmante</label>
-                                        </div>
-                                        <div class="form-check form-switch mb-1.5">
-                                            <input class="form-check-input check-estampa-meta" type="checkbox" name="estampa_mostrar_cargo" id="swEstampaCargo" value="1" <?= ($configs['estampa_mostrar_cargo'] ?? '1') === '1' ? 'checked' : '' ?>>
-                                            <label class="form-check-label small fw-semibold" for="swEstampaCargo">Cargo / Rol</label>
-                                        </div>
-                                        <div class="form-check form-switch mb-0">
-                                            <input class="form-check-input check-estampa-meta" type="checkbox" name="estampa_mostrar_fecha" id="swEstampaFecha" value="1" <?= ($configs['estampa_mostrar_fecha'] ?? '1') === '1' ? 'checked' : '' ?>>
-                                            <label class="form-check-label small fw-semibold" for="swEstampaFecha">Fecha y hora CLT</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="form-check form-switch mb-1.5">
-                                            <input class="form-check-input check-estampa-meta" type="checkbox" name="estampa_mostrar_entidad" id="swEstampaEntidad" value="1" <?= ($configs['estampa_mostrar_entidad'] ?? '1') === '1' ? 'checked' : '' ?>>
-                                            <label class="form-check-label small fw-semibold" for="swEstampaEntidad">Entidad (Mun. Lebu)</label>
-                                        </div>
-                                        <div class="form-check form-switch mb-0">
-                                            <input class="form-check-input check-estampa-meta" type="checkbox" name="estampa_mostrar_ley" id="swEstampaLey" value="1" <?= ($configs['estampa_mostrar_ley'] ?? '1') === '1' ? 'checked' : '' ?>>
-                                            <label class="form-check-label small fw-semibold" for="swEstampaLey">Mención Ley N° 19.799</label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- BOTONES DE ACCIÓN -->
                     <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
                         <button type="button" class="btn btn-outline-danger btn-sm" onclick="restablecerValores()">
@@ -447,18 +345,7 @@ try {
         const posY = encodeURIComponent(document.getElementById('rangePosY').value);
         const simular = document.getElementById('swSimularEstampas').checked ? '1' : '0';
 
-        // Parámetros de Personalización de Estampa FirmaGob
-        const estampaTema = encodeURIComponent(document.getElementById('selectEstampaTema')?.value || 'azul_institucional');
-        const estampaFuente = encodeURIComponent(document.getElementById('selectEstampaFuente')?.value || 'segoeui');
-        const estampaTitulo = encodeURIComponent(document.getElementById('inputEstampaTitulo')?.value || '');
-        const estampaIcono = encodeURIComponent(document.getElementById('selectEstampaIcono')?.value || 'check');
-        const estampaRun = document.getElementById('swEstampaRun')?.checked ? '1' : '0';
-        const estampaCargo = document.getElementById('swEstampaCargo')?.checked ? '1' : '0';
-        const estampaFecha = document.getElementById('swEstampaFecha')?.checked ? '1' : '0';
-        const estampaEntidad = document.getElementById('swEstampaEntidad')?.checked ? '1' : '0';
-        const estampaLey = document.getElementById('swEstampaLey')?.checked ? '1' : '0';
-
-        return `opi_tamano_papel=${tamano}&opi_titulo_documento=${titulo}&opi_clausula1_texto=${clausula1}&opi_clausula2_texto=${clausula2}&opi_pie_legal=${pieLegal}&opi_firmas_linea_y=${posY}&simular_estampas=${simular}&estampa_tema=${estampaTema}&estampa_fuente=${estampaFuente}&estampa_titulo_texto=${estampaTitulo}&estampa_icono=${estampaIcono}&estampa_mostrar_run=${estampaRun}&estampa_mostrar_cargo=${estampaCargo}&estampa_mostrar_fecha=${estampaFecha}&estampa_mostrar_entidad=${estampaEntidad}&estampa_mostrar_ley=${estampaLey}&t=${Date.now()}`;
+        return `opi_tamano_papel=${tamano}&opi_titulo_documento=${titulo}&opi_clausula1_texto=${clausula1}&opi_clausula2_texto=${clausula2}&opi_pie_legal=${pieLegal}&opi_firmas_linea_y=${posY}&simular_estampas=${simular}&t=${Date.now()}`;
     }
 
     function actualizarVistaPrevia() {
@@ -524,24 +411,11 @@ try {
     }
 
     // Escuchar cambios en todos los campos de texto
-    ['inputTitulo', 'inputClausula1', 'inputClausula2', 'inputPieLegal', 'inputEstampaTitulo'].forEach(id => {
+    ['inputTitulo', 'inputClausula1', 'inputClausula2', 'inputPieLegal'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('input', dispararActualizacionDebounce);
         }
-    });
-
-    // Escuchar cambios en selectores de estampa
-    ['selectEstampaTema', 'selectEstampaFuente', 'selectEstampaIcono'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('change', actualizarVistaPrevia);
-        }
-    });
-
-    // Escuchar checkboxes de metadatos de estampa
-    document.querySelectorAll('.check-estampa-meta').forEach(cb => {
-        cb.addEventListener('change', actualizarVistaPrevia);
     });
 
     // Escuchar toggle de estampas simuladas

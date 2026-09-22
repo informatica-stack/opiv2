@@ -3,7 +3,6 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/fpdf.php';
 require_once __DIR__ . '/pdf_helper.php';
-require_once __DIR__ . '/firmagob_helper.php';
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (!isset($_SESSION['user_id'])) {
@@ -30,19 +29,6 @@ $clausula2_txt  = $_REQUEST['opi_clausula2_texto'] ?? ($config_sistema['opi_clau
 $pie_legal_txt  = $_REQUEST['opi_pie_legal'] ?? ($config_sistema['opi_pie_legal'] ?? 'Documento Oficial emitido por el Sistema Institucional OPI - Validez legal bajo Ley N° 19.799 de Firma Electronica');
 $firmas_linea_y = isset($_REQUEST['opi_firmas_linea_y']) ? floatval($_REQUEST['opi_firmas_linea_y']) : floatval($config_sistema['opi_firmas_linea_y'] ?? $y_firmas_default);
 $simular_estampas = isset($_REQUEST['simular_estampas']) ? (int)$_REQUEST['simular_estampas'] : 1;
-
-// Parámetros de personalización de la estampa digital
-$estampa_opciones = [
-    'estampa_tema'            => $_REQUEST['estampa_tema'] ?? ($config_sistema['estampa_tema'] ?? 'azul_institucional'),
-    'estampa_fuente'          => $_REQUEST['estampa_fuente'] ?? ($config_sistema['estampa_fuente'] ?? 'segoeui'),
-    'estampa_titulo_texto'    => $_REQUEST['estampa_titulo_texto'] ?? ($config_sistema['estampa_titulo_texto'] ?? 'FIRMADO ELECTRÓNICAMENTE (FEA)'),
-    'estampa_icono'           => $_REQUEST['estampa_icono'] ?? ($config_sistema['estampa_icono'] ?? 'check'),
-    'estampa_mostrar_run'     => $_REQUEST['estampa_mostrar_run'] ?? ($config_sistema['estampa_mostrar_run'] ?? '1'),
-    'estampa_mostrar_cargo'   => $_REQUEST['estampa_mostrar_cargo'] ?? ($config_sistema['estampa_mostrar_cargo'] ?? '1'),
-    'estampa_mostrar_fecha'   => $_REQUEST['estampa_mostrar_fecha'] ?? ($config_sistema['estampa_mostrar_fecha'] ?? '1'),
-    'estampa_mostrar_entidad' => $_REQUEST['estampa_mostrar_entidad'] ?? ($config_sistema['estampa_mostrar_entidad'] ?? '1'),
-    'estampa_mostrar_ley'     => $_REQUEST['estampa_mostrar_ley'] ?? ($config_sistema['estampa_mostrar_ley'] ?? '1'),
-];
 
 // 2. Instanciar FPDF (Oficio Chileno 215.9 x 330.2 mm o Carta 215.9 x 279.4 mm)
 $pdf = new FPDF('P', 'mm', $dimensiones);
@@ -320,24 +306,55 @@ $pdf->Cell(58, 2.5, $utf("Autorización Final del Gasto"), 0, 1, 'C');
 
 // --- SIMULACIÓN DE ESTAMPAS DIGITALES FIRMAGOB (SI ESTÁ ACTIVA LA OPCIÓN) ---
 if ($simular_estampas === 1) {
-    $dibujar_estampa_real = function($x, $y_base, $nombre, $run, $cargo) use ($pdf, $estampa_opciones) {
+    $dibujar_estampa_simulada = function($x, $y_base, $titulo_rol, $nombre, $run, $cargo) use ($pdf, $utf) {
         $w = 58;
         $h = 17;
         $y_top = $y_base - $h - 0.5;
 
-        // Generar estampa real idéntica a la que estampa FirmaGob
-        $b64 = firmagob_generar_estampa_dinamica_base64($nombre, $run, $cargo, null, $estampa_opciones);
-        if (!empty($b64)) {
-            $pdf->Image('data://image/png;base64,' . $b64, $x, $y_top, $w, $h, 'PNG');
-        }
+        // Fondo blanco y borde suave
+        $pdf->SetFillColor(255, 255, 255);
+        $pdf->SetDrawColor(203, 213, 225);
+        $pdf->Rect($x, $y_top, $w, $h, 'DF');
+
+        // Barra superior azul institucional
+        $pdf->SetFillColor(238, 242, 255);
+        $pdf->Rect($x + 0.3, $y_top + 0.3, $w - 0.6, 3.2, 'F');
+        
+        $pdf->SetXY($x + 1, $y_top + 0.4);
+        $pdf->SetFont('Arial', 'B', 5);
+        $pdf->SetTextColor(29, 78, 216);
+        $pdf->Cell($w - 2, 3, $utf("FIRMADO ELECTRÓNICAMENTE (FEA)"), 0, 1, 'L');
+
+        // Líneas de metadatos
+        $pdf->SetTextColor(15, 23, 42);
+        $pdf->SetFont('Arial', 'B', 4.8);
+        $pdf->SetXY($x + 1.2, $y_top + 3.8);
+        $pdf->Cell($w - 2.4, 2.6, $utf("Firmante: " . mb_strtoupper($nombre, 'UTF-8')), 0, 1, 'L');
+
+        $pdf->SetFont('Arial', '', 4.6);
+        $pdf->SetXY($x + 1.2, $y_top + 6.5);
+        $pdf->Cell($w - 2.4, 2.6, $utf("RUN: " . $run . " | Cargo: " . $cargo), 0, 1, 'L');
+
+        $pdf->SetTextColor(100, 116, 139);
+        $pdf->SetXY($x + 1.2, $y_top + 9.2);
+        $pdf->Cell($w - 2.4, 2.5, $utf("Fecha: " . date('d/m/Y H:i:s') . " CLT"), 0, 1, 'L');
+
+        $pdf->SetXY($x + 1.2, $y_top + 11.7);
+        $pdf->Cell($w - 2.4, 2.5, $utf("Entidad: Ilustre Municipalidad de Lebu"), 0, 1, 'L');
+
+        $pdf->SetFont('Arial', 'I', 4.2);
+        $pdf->SetXY($x + 1.2, $y_top + 14.2);
+        $pdf->Cell($w - 2.4, 2.2, $utf("Validez Legal: Ley N° 19.799 sobre Firma Electrónica"), 0, 1, 'L');
+
+        $pdf->SetTextColor(0, 0, 0);
     };
 
     // Estampa 1: Jefatura
-    $dibujar_estampa_real(14, $y_firmas_line, "JUAN CARLOS ARRIAGADA", "17.439.829-1", "Jefe DIDECO");
+    $dibujar_estampa_simulada(14, $y_firmas_line, "V°B° TÉCNICO JEFATURA", "JUAN CARLOS ARRIAGADA", "17.439.829-1", "Jefe DIDECO");
     // Estampa 2: Presupuesto
-    $dibujar_estampa_real(79, $y_firmas_line, "MARÍA JOSÉ CONTRERAS", "15.987.654-3", "Encargada Presupuesto");
+    $dibujar_estampa_simulada(79, $y_firmas_line, "V°B° PRESUPUESTARIO", "MARÍA JOSÉ CONTRERAS", "15.987.654-3", "Encargada Presupuesto");
     // Estampa 3: Administrador
-    $dibujar_estampa_real(144, $y_firmas_line, "ROBERTO SANDOVAL MORA", "12.345.678-9", "Administrador Municipal");
+    $dibujar_estampa_simulada(144, $y_firmas_line, "AUTORIZACIÓN FINAL", "ROBERTO SANDOVAL MORA", "12.345.678-9", "Administrador Municipal");
 }
 
 // Pie de página legal configurable

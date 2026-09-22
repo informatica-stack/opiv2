@@ -74,123 +74,38 @@ if (!function_exists('firmagob_formatear_run')) {
 
 if (!function_exists('firmagob_generar_estampa_dinamica_base64')) {
     /**
-     * Genera una estampa visual institucional de alta resolución (HD) en memoria RAM usando PHP GD.
-     * Soporta fuentes TrueType con anti-aliasing, paletas cromáticas institucionales, iconos y metadatos configurables.
+     * Genera una estampa visual compacta e institucional en memoria RAM usando PHP GD.
+     * Sin logo municipal, optimizada para ocupar poco espacio y mostrar metadatos legibles.
      *
      * @param string $nombre Nombre del firmante
      * @param string $run RUN del firmante
      * @param string $cargo Cargo o rol del firmante
      * @param string|null $fecha_hora Fecha y hora en formato string (opcional)
-     * @param array $opciones_custom Opciones de personalización dinámicas (opcional)
      * @return string Imagen PNG codificada en Base64
      */
-    function firmagob_generar_estampa_dinamica_base64($nombre, $run, $cargo = '', $fecha_hora = null, $opciones_custom = []) {
+    function firmagob_generar_estampa_dinamica_base64($nombre, $run, $cargo = '', $fecha_hora = null) {
         if (!extension_loaded('gd')) {
+            // Fallback transparente si GD no estuviese disponible
             return 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
         }
 
-        // Si el 4to argumento se pasó como array de opciones personalizadas
-        if (is_array($fecha_hora)) {
-            $opciones_custom = $fecha_hora;
-            $fecha_hora = null;
-        }
-
-        // Cargar configuraciones del sistema si no están presentes
-        global $config_sistema, $pdo;
-        if (!isset($config_sistema) || empty($config_sistema)) {
-            try {
-                if (isset($pdo)) {
-                    $stmtCfg = $pdo->query("SELECT clave, valor FROM configuraciones_sistema WHERE clave LIKE 'estampa_%'");
-                    $cfg_db = $stmtCfg->fetchAll(PDO::FETCH_KEY_PAIR);
-                    $config_sistema = array_merge($config_sistema ?? [], $cfg_db);
-                }
-            } catch (Exception $e) {}
-        }
-
-        $cfg = array_merge($config_sistema ?? [], $opciones_custom ?? []);
-
-        // Parámetros de diseño
-        $tema            = $cfg['estampa_tema'] ?? 'azul_institucional';
-        $fuente_id       = $cfg['estampa_fuente'] ?? 'segoeui';
-        $titulo          = $cfg['estampa_titulo_texto'] ?? 'FIRMADO ELECTRÓNICAMENTE (FEA)';
-        $icono           = $cfg['estampa_icono'] ?? 'check';
-        $mostrar_run     = ($cfg['estampa_mostrar_run'] ?? '1') === '1';
-        $mostrar_cargo   = ($cfg['estampa_mostrar_cargo'] ?? '1') === '1';
-        $mostrar_fecha   = ($cfg['estampa_mostrar_fecha'] ?? '1') === '1';
-        $mostrar_entidad = ($cfg['estampa_mostrar_entidad'] ?? '1') === '1';
-        $mostrar_ley     = ($cfg['estampa_mostrar_ley'] ?? '1') === '1';
-        $entidad_nombre  = defined('FIRMAGOB_ENTITY') ? FIRMAGOB_ENTITY : 'Ilustre Municipalidad de Lebu';
-
-        // Dimensiones en alta resolución 2x para nitidez vectorial (760x220 px reescalado a 380x110 pt)
-        $width  = 760;
-        $height = 220;
+        $width = 380;
+        $height = 110;
         $im = imagecreatetruecolor($width, $height);
 
-        // Paletas cromáticas profesionales
-        $paletas = [
-            'azul_institucional' => [
-                'bg'       => [255, 255, 255],
-                'border'   => [37, 99, 235],
-                'hdr_bg'   => [239, 246, 255],
-                'hdr_text' => [29, 78, 216],
-                'name'     => [15, 23, 42],
-                'meta'     => [51, 65, 85],
-                'muted'    => [100, 116, 139]
-            ],
-            'verde_validacion' => [
-                'bg'       => [255, 255, 255],
-                'border'   => [5, 150, 105],
-                'hdr_bg'   => [236, 253, 245],
-                'hdr_text' => [4, 120, 87],
-                'name'     => [15, 23, 42],
-                'meta'     => [51, 65, 85],
-                'muted'    => [100, 116, 139]
-            ],
-            'monocromatico' => [
-                'bg'       => [255, 255, 255],
-                'border'   => [71, 85, 105],
-                'hdr_bg'   => [241, 245, 249],
-                'hdr_text' => [30, 41, 59],
-                'name'     => [15, 23, 42],
-                'meta'     => [51, 65, 85],
-                'muted'    => [100, 116, 139]
-            ],
-            'barra_lateral' => [
-                'bg'       => [255, 255, 255],
-                'border'   => [203, 213, 225],
-                'accent'   => [37, 99, 235],
-                'hdr_bg'   => [255, 255, 255],
-                'hdr_text' => [29, 78, 216],
-                'name'     => [15, 23, 42],
-                'meta'     => [51, 65, 85],
-                'muted'    => [100, 116, 139]
-            ]
-        ];
+        // Paleta de colores sobria e institucional
+        $bg_color     = imagecolorallocate($im, 255, 255, 255); // Fondo blanco
+        $border_color = imagecolorallocate($im, 30, 64, 175);   // Azul institucional #1e40af
+        $hdr_bg       = imagecolorallocate($im, 239, 246, 255); // Fondo cabecera azul suave #eff6ff
+        $text_blue    = imagecolorallocate($im, 29, 78, 216);   // Azul texto #1d4ed8
+        $text_dark    = imagecolorallocate($im, 15, 23, 42);    // Texto principal oscuro #0f172a
+        $text_muted   = imagecolorallocate($im, 100, 116, 139); // Texto secundario gris #64748b
 
-        $paleta = $paletas[$tema] ?? $paletas['azul_institucional'];
-
-        $c_bg      = imagecolorallocate($im, $paleta['bg'][0], $paleta['bg'][1], $paleta['bg'][2]);
-        $c_border  = imagecolorallocate($im, $paleta['border'][0], $paleta['border'][1], $paleta['border'][2]);
-        $c_hdr_bg  = imagecolorallocate($im, $paleta['hdr_bg'][0], $paleta['hdr_bg'][1], $paleta['hdr_bg'][2]);
-        $c_hdr_txt = imagecolorallocate($im, $paleta['hdr_text'][0], $paleta['hdr_text'][1], $paleta['hdr_text'][2]);
-        $c_name    = imagecolorallocate($im, $paleta['name'][0], $paleta['name'][1], $paleta['name'][2]);
-        $c_meta    = imagecolorallocate($im, $paleta['meta'][0], $paleta['meta'][1], $paleta['meta'][2]);
-        $c_muted   = imagecolorallocate($im, $paleta['muted'][0], $paleta['muted'][1], $paleta['muted'][2]);
-
-        imagefilledrectangle($im, 0, 0, $width, $height, $c_bg);
-
-        // Estructura del marco
-        if ($tema === 'barra_lateral') {
-            $c_accent = imagecolorallocate($im, $paleta['accent'][0], $paleta['accent'][1], $paleta['accent'][2]);
-            imagefilledrectangle($im, 0, 0, 16, $height, $c_accent);
-            imagerectangle($im, 0, 0, $width - 1, $height - 1, $c_border);
-            imagerectangle($im, 1, 1, $width - 2, $height - 2, $c_border);
-        } else {
-            imagefilledrectangle($im, 3, 3, $width - 4, 46, $c_hdr_bg);
-            imagerectangle($im, 0, 0, $width - 1, $height - 1, $c_border);
-            imagerectangle($im, 1, 1, $width - 2, $height - 2, $c_border);
-            imagerectangle($im, 2, 2, $width - 3, $height - 3, $c_border);
-        }
+        // Rellenar fondo y dibujar marco
+        imagefilledrectangle($im, 0, 0, $width, $height, $bg_color);
+        imagefilledrectangle($im, 2, 2, $width - 3, 22, $hdr_bg); // Barra superior
+        imagerectangle($im, 0, 0, $width - 1, $height - 1, $border_color);
+        imagerectangle($im, 1, 1, $width - 2, $height - 2, $border_color);
 
         // Datos formateados
         $run_formateado = firmagob_formatear_run($run);
@@ -203,95 +118,25 @@ if (!function_exists('firmagob_generar_estampa_dinamica_base64')) {
         if (empty($nombre_limpio)) {
             $nombre_limpio = 'FUNCIONARIO AUTORIZADO';
         }
-        if (mb_strlen($nombre_limpio, 'UTF-8') > 45) {
-            $nombre_limpio = mb_substr($nombre_limpio, 0, 42, 'UTF-8') . '...';
+        if (mb_strlen($nombre_limpio) > 36) {
+            $nombre_limpio = mb_substr($nombre_limpio, 0, 33) . '...';
         }
 
         $cargo_limpio = trim((string)$cargo);
         if (empty($cargo_limpio)) {
             $cargo_limpio = 'Funcionario Autorizado';
         }
-        if (mb_strlen($cargo_limpio, 'UTF-8') > 45) {
-            $cargo_limpio = mb_substr($cargo_limpio, 0, 42, 'UTF-8') . '...';
+        if (mb_strlen($cargo_limpio) > 36) {
+            $cargo_limpio = mb_substr($cargo_limpio, 0, 33) . '...';
         }
 
-        // Mapa de fuentes TrueType en Windows
-        $f_map = [
-            'segoeui' => ['C:/Windows/Fonts/segoeui.ttf', 'C:/Windows/Fonts/segoeuib.ttf'],
-            'calibri' => ['C:/Windows/Fonts/calibri.ttf', 'C:/Windows/Fonts/calibrib.ttf'],
-            'arial'   => ['C:/Windows/Fonts/arial.ttf',   'C:/Windows/Fonts/arialbd.ttf']
-        ];
-        $f_pair = $f_map[$fuente_id] ?? $f_map['segoeui'];
-        $has_ttf = function_exists('imagettftext') && file_exists($f_pair[0]) && file_exists($f_pair[1]);
-
-        $offset_x = ($tema === 'barra_lateral') ? 34 : 20;
-
-        if ($has_ttf) {
-            $f_reg  = $f_pair[0];
-            $f_bold = $f_pair[1];
-
-            // Renderizado de iconos vectoriales
-            if ($icono === 'check') {
-                $c_badge = imagecolorallocate($im, 16, 185, 129);
-                imagefilledellipse($im, $offset_x + 10, 24, 22, 22, $c_badge);
-                $c_chk = imagecolorallocate($im, 255, 255, 255);
-                imagesetthickness($im, 3);
-                imageline($im, $offset_x + 5, 24, $offset_x + 9, 29, $c_chk);
-                imageline($im, $offset_x + 9, 29, $offset_x + 16, 18, $c_chk);
-                imagesetthickness($im, 1);
-                $title_x = $offset_x + 30;
-            } elseif ($icono === 'candado') {
-                $c_lock = $c_hdr_txt;
-                imagesetthickness($im, 2);
-                imagearc($im, $offset_x + 10, 18, 14, 14, 180, 360, $c_lock);
-                imagefilledrectangle($im, $offset_x + 3, 18, $offset_x + 17, 29, $c_lock);
-                imagesetthickness($im, 1);
-                $title_x = $offset_x + 28;
-            } elseif ($icono === 'escudo') {
-                $c_shield = $c_hdr_txt;
-                imagefilledrectangle($im, $offset_x + 2, 14, $offset_x + 18, 23, $c_shield);
-                imagefilledarc($im, $offset_x + 10, 23, 16, 14, 0, 180, $c_shield, IMG_ARC_PIE);
-                $title_x = $offset_x + 28;
-            } else {
-                $title_x = $offset_x;
-            }
-
-            // Título de la estampa
-            imagettftext($im, 13, 0, $title_x, 32, $c_hdr_txt, $f_bold, mb_strtoupper($titulo, 'UTF-8'));
-
-            // Nombre del firmante
-            imagettftext($im, 16, 0, $offset_x, 82, $c_name, $f_bold, $nombre_limpio);
-
-            // Línea 2: RUN / Cargo
-            $parts_l2 = [];
-            if ($mostrar_run) $parts_l2[] = "RUN: " . $run_formateado;
-            if ($mostrar_cargo) $parts_l2[] = "Cargo: " . $cargo_limpio;
-            if (!empty($parts_l2)) {
-                imagettftext($im, 12.5, 0, $offset_x, 118, $c_meta, $f_reg, implode(' | ', $parts_l2));
-            }
-
-            // Línea 3: Fecha / Entidad
-            $parts_l3 = [];
-            if ($mostrar_fecha) $parts_l3[] = "Fecha: " . $fecha_hora;
-            if ($mostrar_entidad) $parts_l3[] = "Entidad: " . $entidad_nombre;
-            if (!empty($parts_l3)) {
-                imagettftext($im, 11.5, 0, $offset_x, 154, $c_muted, $f_reg, implode(' | ', $parts_l3));
-            }
-
-            // Línea 4: Mención Legal
-            if ($mostrar_ley) {
-                imagettftext($im, 10.5, 0, $offset_x, 192, $c_muted, $f_reg, "Validez Legal: Ley N° 19.799 sobre Firma Electrónica");
-            }
-
-        } else {
-            // Fallback transparente a fuentes bitmap si no hubiera TrueType
-            imagestring($im, 3, 10, 4, mb_strtoupper($titulo, 'UTF-8'), $c_hdr_txt);
-            imagestring($im, 2, 10, 28, 'Firmante: ' . $nombre_limpio, $c_name);
-            imagestring($im, 2, 10, 46, 'RUN: ' . $run_formateado . ' | Cargo: ' . $cargo_limpio, $c_meta);
-            imagestring($im, 2, 10, 64, 'Fecha: ' . $fecha_hora, $c_muted);
-            imagestring($im, 2, 10, 80, 'Entidad: ' . $entidad_nombre, $c_muted);
-            imagestring($im, 1, 10, 96, 'Validez Legal: Ley No 19.799 sobre Firma Electronica', $c_muted);
-        }
+        // Renderizado con fuentes bitmap estándar de GD
+        imagestring($im, 3, 10, 4, 'FIRMADO ELECTRONICAMENTE (FEA)', $text_blue);
+        imagestring($im, 2, 10, 28, 'Firmante: ' . $nombre_limpio, $text_dark);
+        imagestring($im, 2, 10, 46, 'RUN: ' . $run_formateado . ' | Cargo: ' . $cargo_limpio, $text_dark);
+        imagestring($im, 2, 10, 64, 'Fecha: ' . $fecha_hora, $text_muted);
+        imagestring($im, 2, 10, 80, 'Entidad: ' . FIRMAGOB_ENTITY, $text_muted);
+        imagestring($im, 1, 10, 96, 'Validez Legal: Ley No 19.799 sobre Firma Electronica', $text_muted);
 
         ob_start();
         imagepng($im);
