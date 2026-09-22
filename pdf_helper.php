@@ -142,13 +142,13 @@ function generar_pdf_base_opi($pdo, $expediente_id) {
     $cfg_pie_legal_txt  = !empty($config_sistema['opi_pie_legal']) ? $config_sistema['opi_pie_legal'] : 'Documento Oficial emitido por el Sistema Institucional OPI - Validez legal bajo Ley N° 19.799 de Firma Electrónica';
     $cfg_firmas_linea_y = !empty($config_sistema['opi_firmas_linea_y']) ? floatval($config_sistema['opi_firmas_linea_y']) : $y_firmas_default;
 
-    // Títulos y subtítulos configurables de los pies de firma
+    // Títulos y subtítulos configurables de los pies de firma (permite subtítulos vacíos)
     $cfg_firma1_tit     = !empty($config_sistema['opi_firma1_titulo']) ? $config_sistema['opi_firma1_titulo'] : 'JEFATURA UNIDAD SOLICITANTE';
-    $cfg_firma1_sub     = !empty($config_sistema['opi_firma1_subtitulo']) ? $config_sistema['opi_firma1_subtitulo'] : 'V°B° Requerimiento Técnico';
+    $cfg_firma1_sub     = array_key_exists('opi_firma1_subtitulo', $config_sistema) ? $config_sistema['opi_firma1_subtitulo'] : 'V°B° Requerimiento Técnico';
     $cfg_firma2_tit     = !empty($config_sistema['opi_firma2_titulo']) ? $config_sistema['opi_firma2_titulo'] : 'DIRECCIÓN DE ADM. Y FINANZAS';
-    $cfg_firma2_sub     = !empty($config_sistema['opi_firma2_subtitulo']) ? $config_sistema['opi_firma2_subtitulo'] : 'Control e Imputación Presupuestaria';
+    $cfg_firma2_sub     = array_key_exists('opi_firma2_subtitulo', $config_sistema) ? $config_sistema['opi_firma2_subtitulo'] : 'Control e Imputación Presupuestaria';
     $cfg_firma3_tit     = !empty($config_sistema['opi_firma3_titulo']) ? $config_sistema['opi_firma3_titulo'] : 'ADMINISTRADOR MUNICIPAL';
-    $cfg_firma3_sub     = !empty($config_sistema['opi_firma3_subtitulo']) ? $config_sistema['opi_firma3_subtitulo'] : 'Autorización Final del Gasto';
+    $cfg_firma3_sub     = array_key_exists('opi_firma3_subtitulo', $config_sistema) ? $config_sistema['opi_firma3_subtitulo'] : 'Autorización Final del Gasto';
 
     // 4. Instanciar FPDF (Tamaño Oficio Chileno 215.9 x 330.2 mm o Carta 215.9 x 279.4 mm)
     $pdf = new FPDF('P', 'mm', $dimensiones_papel);

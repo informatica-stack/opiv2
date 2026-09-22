@@ -126,19 +126,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $estampa_titulo_texto = mb_substr($estampa_titulo_texto, 0, 50, 'UTF-8');
             }
 
-            // Sanitizar textos de los pies de firma
-            $limpiar_pie = function($val, $default, $max = 45) {
+            // Sanitizar textos de los pies de firma (permite dejar subtítulos en blanco)
+            $limpiar_pie = function($val, $max = 50) {
                 $t = trim((string)($val ?? ''));
-                if (empty($t)) $t = $default;
                 return mb_substr($t, 0, $max, 'UTF-8');
             };
 
-            $firma1_tit = $limpiar_pie($_POST['opi_firma1_titulo'] ?? '', $defaults['opi_firma1_titulo']);
-            $firma1_sub = $limpiar_pie($_POST['opi_firma1_subtitulo'] ?? '', $defaults['opi_firma1_subtitulo']);
-            $firma2_tit = $limpiar_pie($_POST['opi_firma2_titulo'] ?? '', $defaults['opi_firma2_titulo']);
-            $firma2_sub = $limpiar_pie($_POST['opi_firma2_subtitulo'] ?? '', $defaults['opi_firma2_subtitulo']);
-            $firma3_tit = $limpiar_pie($_POST['opi_firma3_titulo'] ?? '', $defaults['opi_firma3_titulo']);
-            $firma3_sub = $limpiar_pie($_POST['opi_firma3_subtitulo'] ?? '', $defaults['opi_firma3_subtitulo']);
+            $firma1_tit = $limpiar_pie($_POST['opi_firma1_titulo'] ?? '', 45);
+            $firma1_sub = $limpiar_pie($_POST['opi_firma1_subtitulo'] ?? '', 50);
+            $firma2_tit = $limpiar_pie($_POST['opi_firma2_titulo'] ?? '', 45);
+            $firma2_sub = $limpiar_pie($_POST['opi_firma2_subtitulo'] ?? '', 50);
+            $firma3_tit = $limpiar_pie($_POST['opi_firma3_titulo'] ?? '', 45);
+            $firma3_sub = $limpiar_pie($_POST['opi_firma3_subtitulo'] ?? '', 50);
 
             $guardar = [
                 'opi_tamano_papel'        => $tamano_papel,

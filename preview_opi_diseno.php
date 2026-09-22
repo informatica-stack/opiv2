@@ -41,13 +41,13 @@ $pie_legal_txt  = $_REQUEST['opi_pie_legal'] ?? ($config_sistema['opi_pie_legal'
 $firmas_linea_y = isset($_REQUEST['opi_firmas_linea_y']) ? floatval($_REQUEST['opi_firmas_linea_y']) : floatval($config_sistema['opi_firmas_linea_y'] ?? $y_firmas_default);
 $simular_estampas = isset($_REQUEST['simular_estampas']) ? (int)$_REQUEST['simular_estampas'] : 1;
 
-// Títulos y subtítulos configurables de los 3 pies de firma
-$firma1_tit = $_REQUEST['opi_firma1_titulo'] ?? ($config_sistema['opi_firma1_titulo'] ?? 'JEFATURA UNIDAD SOLICITANTE');
-$firma1_sub = $_REQUEST['opi_firma1_subtitulo'] ?? ($config_sistema['opi_firma1_subtitulo'] ?? 'V°B° Requerimiento Técnico');
-$firma2_tit = $_REQUEST['opi_firma2_titulo'] ?? ($config_sistema['opi_firma2_titulo'] ?? 'DIRECCIÓN DE ADM. Y FINANZAS');
-$firma2_sub = $_REQUEST['opi_firma2_subtitulo'] ?? ($config_sistema['opi_firma2_subtitulo'] ?? 'Control e Imputación Presupuestaria');
-$firma3_tit = $_REQUEST['opi_firma3_titulo'] ?? ($config_sistema['opi_firma3_titulo'] ?? 'ADMINISTRADOR MUNICIPAL');
-$firma3_sub = $_REQUEST['opi_firma3_subtitulo'] ?? ($config_sistema['opi_firma3_subtitulo'] ?? 'Autorización Final del Gasto');
+// Títulos y subtítulos configurables de los 3 pies de firma (permite subtítulos vacíos)
+$firma1_tit = isset($_REQUEST['opi_firma1_titulo']) ? $_REQUEST['opi_firma1_titulo'] : (array_key_exists('opi_firma1_titulo', $config_sistema) ? $config_sistema['opi_firma1_titulo'] : 'JEFATURA UNIDAD SOLICITANTE');
+$firma1_sub = isset($_REQUEST['opi_firma1_subtitulo']) ? $_REQUEST['opi_firma1_subtitulo'] : (array_key_exists('opi_firma1_subtitulo', $config_sistema) ? $config_sistema['opi_firma1_subtitulo'] : 'V°B° Requerimiento Técnico');
+$firma2_tit = isset($_REQUEST['opi_firma2_titulo']) ? $_REQUEST['opi_firma2_titulo'] : (array_key_exists('opi_firma2_titulo', $config_sistema) ? $config_sistema['opi_firma2_titulo'] : 'DIRECCIÓN DE ADM. Y FINANZAS');
+$firma2_sub = isset($_REQUEST['opi_firma2_subtitulo']) ? $_REQUEST['opi_firma2_subtitulo'] : (array_key_exists('opi_firma2_subtitulo', $config_sistema) ? $config_sistema['opi_firma2_subtitulo'] : 'Control e Imputación Presupuestaria');
+$firma3_tit = isset($_REQUEST['opi_firma3_titulo']) ? $_REQUEST['opi_firma3_titulo'] : (array_key_exists('opi_firma3_titulo', $config_sistema) ? $config_sistema['opi_firma3_titulo'] : 'ADMINISTRADOR MUNICIPAL');
+$firma3_sub = isset($_REQUEST['opi_firma3_subtitulo']) ? $_REQUEST['opi_firma3_subtitulo'] : (array_key_exists('opi_firma3_subtitulo', $config_sistema) ? $config_sistema['opi_firma3_subtitulo'] : 'Autorización Final del Gasto');
 
 // Altura física de la estampa en el PDF (entre 18 y 28 mm, recomendado 24 mm)
 $alto_estampa_mm = isset($_REQUEST['estampa_alto_mm']) ? floatval($_REQUEST['estampa_alto_mm']) : floatval($config_sistema['estampa_alto_mm'] ?? 24.0);
