@@ -13,6 +13,15 @@ if ($rol !== 'SYSADMIN' && $rol !== 'ADMIN_MUNICIPAL') {
     die("Acceso Denegado. Modulo exclusivo para Administracion del Sistema.");
 }
 
+// Asegurar existencia de la tabla configuraciones_sistema
+try {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS `configuraciones_sistema` (
+        `clave` varchar(50) NOT NULL,
+        `valor` text DEFAULT NULL,
+        PRIMARY KEY (`clave`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+} catch (Exception $e) {}
+
 $mensaje = '';
 $tipo_mensaje = '';
 
@@ -36,7 +45,7 @@ $defaults = [
 ];
 
 // Procesamiento de formulario POST
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $accion = $_POST['accion'] ?? 'guardar';
 
     if ($accion === 'restablecer') {
@@ -68,15 +77,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $y_default = ($tamano_papel === 'OFICIO') ? 306.0 : 256.0;
             $firmas_linea_y = floatval($_POST['opi_firmas_linea_y'] ?? $y_default);
 
-            // Validar límites razonables para posición Y según formato de hoja
+            // Validar límites exactos para posición Y según formato de hoja
             if ($tamano_papel === 'OFICIO') {
-                if ($firmas_linea_y < 260 || $firmas_linea_y > 320) {
+                if ($firmas_linea_y < 275 || $firmas_linea_y > 318) {
                     $firmas_linea_y = 306.0;
                 }
             } else {
-                if ($firmas_linea_y < 220 || $firmas_linea_y > 270) {
+                if ($firmas_linea_y < 235 || $firmas_linea_y > 265) {
                     $firmas_linea_y = 256.0;
                 }
+            }
+
+            // Validar lista blanca de temas, tipografías e iconos
+            $temas_validos   = ['azul_institucional', 'verde_validacion', 'monocromatico', 'barra_lateral'];
+            $fuentes_validas = ['segoeui', 'calibri', 'arial'];
+            $iconos_validos  = ['check', 'candado', 'escudo', 'ninguno'];
+
+            $tema_post   = $_POST['estampa_tema'] ?? 'azul_institucional';
+            $fuente_post = $_POST['estampa_fuente'] ?? 'segoeui';
+            $icono_post  = $_POST['estampa_icono'] ?? 'check';
+
+            $estampa_tema   = in_array($tema_post, $temas_validos, true) ? $tema_post : 'azul_institucional';
+            $estampa_fuente = in_array($fuente_post, $fuentes_validas, true) ? $fuente_post : 'segoeui';
+            $estampa_icono  = in_array($icono_post, $iconos_validos, true) ? $icono_post : 'check';
+
+            $estampa_titulo_texto = trim($_POST['estampa_titulo_texto'] ?? '');
+            if (empty($estampa_titulo_texto)) {
+                $estampa_titulo_texto = 'FIRMADO ELECTRÓNICAMENTE (FEA)';
+            }
+            if (mb_strlen($estampa_titulo_texto, 'UTF-8') > 50) {
+                $estampa_titulo_texto = mb_substr($estampa_titulo_texto, 0, 50, 'UTF-8');
             }
 
             $guardar = [
@@ -85,11 +115,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'opi_clausula1_texto'     => $clausula1_txt,
                 'opi_clausula2_texto'     => $clausula2_txt,
                 'opi_pie_legal'           => $pie_legal_txt,
-                'opi_firmas_linea_y'      => (string)$firmas_linea_y,
-                'estampa_tema'            => $_POST['estampa_tema'] ?? 'azul_institucional',
-                'estampa_fuente'          => $_POST['estampa_fuente'] ?? 'segoeui',
-                'estampa_titulo_texto'    => trim($_POST['estampa_titulo_texto'] ?? 'FIRMADO ELECTRÓNICAMENTE (FEA)'),
-                'estampa_icono'           => $_POST['estampa_icono'] ?? 'check',
+                'opi_firmas_linea_y'      => number_format($firmas_linea_y, 1, '.', ''),
+                'estampa_tema'            => $estampa_tema,
+                'estampa_fuente'          => $estampa_fuente,
+                'estampa_titulo_texto'    => $estampa_titulo_texto,
+                'estampa_icono'           => $estampa_icono,
                 'estampa_mostrar_run'     => isset($_POST['estampa_mostrar_run']) ? '1' : '0',
                 'estampa_mostrar_cargo'   => isset($_POST['estampa_mostrar_cargo']) ? '1' : '0',
                 'estampa_mostrar_fecha'   => isset($_POST['estampa_mostrar_fecha']) ? '1' : '0',
@@ -124,20 +154,60 @@ try {
 } catch (Exception $e) {
     // Usar defaults
 }
+
+// Preparar cálculo seguro de posición vertical según tamaño de hoja actual
+$tamano_actual = $configs['opi_tamano_papel'] ?? 'OFICIO';
+$es_oficio_actual = ($tamano_actual === 'OFICIO');
+$min_slider_y = $es_oficio_actual ? 275 : 235;
+$max_slider_y = $es_oficio_actual ? 318 : 265;
+$val_slider_y = floatval($configs['opi_firmas_linea_y'] ?? ($es_oficio_actual ? 306.0 : 256.0));
+if ($val_slider_y < $min_slider_y || $val_slider_y > $max_slider_y) {
+    $val_slider_y = $es_oficio_actual ? 306.0 : 256.0;
+}
+
+// Pre-calcular URL de vista previa con parámetros sincronizados para carga directa sin doble render
+$query_preview_inicial = http_build_query([
+    'opi_tamano_papel'        => $tamano_actual,
+    'opi_titulo_documento'    => $configs['opi_titulo_documento'] ?? 'ORDEN DE PEDIDO INTERNO',
+    'opi_clausula1_texto'     => $configs['opi_clausula1_texto'] ?? $defaults['opi_clausula1_texto'],
+    'opi_clausula2_texto'     => $configs['opi_clausula2_texto'] ?? $defaults['opi_clausula2_texto'],
+    'opi_pie_legal'           => $configs['opi_pie_legal'] ?? $defaults['opi_pie_legal'],
+    'opi_firmas_linea_y'      => number_format($val_slider_y, 1, '.', ''),
+    'simular_estampas'        => '1',
+    'estampa_tema'            => $configs['estampa_tema'] ?? 'azul_institucional',
+    'estampa_fuente'          => $configs['estampa_fuente'] ?? 'segoeui',
+    'estampa_titulo_texto'    => $configs['estampa_titulo_texto'] ?? 'FIRMADO ELECTRÓNICAMENTE (FEA)',
+    'estampa_icono'           => $configs['estampa_icono'] ?? 'check',
+    'estampa_mostrar_run'     => $configs['estampa_mostrar_run'] ?? '1',
+    'estampa_mostrar_cargo'   => $configs['estampa_mostrar_cargo'] ?? '1',
+    'estampa_mostrar_fecha'   => $configs['estampa_mostrar_fecha'] ?? '1',
+    'estampa_mostrar_entidad' => $configs['estampa_mostrar_entidad'] ?? '1',
+    'estampa_mostrar_ley'     => $configs['estampa_mostrar_ley'] ?? '1',
+    't'                       => time()
+]);
+$url_preview_inicial = 'preview_opi_diseno.php?' . $query_preview_inicial;
 ?>
 <!DOCTYPE html>
 <html lang="es" data-bs-theme="light">
 <head>
     <?php 
-    $titulo_pagina = "Disenador Visual de Plantilla OPI";
+    $titulo_pagina = "Diseñador Visual de Plantilla OPI";
     include __DIR__ . '/head.php'; 
     ?>
     <style>
-        .preview-pane {
-            position: sticky;
-            top: 20px;
-            height: calc(100vh - 100px);
-            min-height: 650px;
+        @media (min-width: 992px) {
+            .preview-pane {
+                position: sticky;
+                top: 20px;
+                height: calc(100vh - 100px);
+                min-height: 650px;
+            }
+        }
+        @media (max-width: 991.98px) {
+            .preview-pane {
+                position: relative;
+                height: 620px;
+            }
         }
         .preview-iframe {
             width: 100%;
@@ -274,17 +344,12 @@ try {
                             </span>
                         </div>
                         <div class="card-body p-3">
-                            <?php
-                            $min_slider_y = $es_oficio_actual ? 275 : 235;
-                            $max_slider_y = $es_oficio_actual ? 318 : 265;
-                            $val_slider_y = floatval($configs['opi_firmas_linea_y'] ?? ($es_oficio_actual ? 306.0 : 256.0));
-                            ?>
                             <div class="p-2.5 bg-light rounded-3 border mb-3">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <label class="form-label fw-bold text-dark small mb-0">Posición Vertical Y de las Líneas Base (mm)</label>
-                                    <span class="badge bg-primary range-value-badge" id="badgePosY"><?= htmlspecialchars((string)$val_slider_y) ?> mm</span>
+                                    <span class="badge bg-primary range-value-badge" id="badgePosY"><?= htmlspecialchars(number_format($val_slider_y, 1, '.', '')) ?> mm</span>
                                 </div>
-                                <input type="range" class="form-range" id="rangePosY" name="opi_firmas_linea_y" min="<?= $min_slider_y ?>" max="<?= $max_slider_y ?>" step="0.5" value="<?= htmlspecialchars((string)$val_slider_y) ?>">
+                                <input type="range" class="form-range" id="rangePosY" name="opi_firmas_linea_y" min="<?= $min_slider_y ?>" max="<?= $max_slider_y ?>" step="0.5" value="<?= htmlspecialchars(number_format($val_slider_y, 1, '.', '')) ?>">
                                 <div class="d-flex justify-content-between text-muted" style="font-size: 10px;">
                                     <span id="sliderHelpMin"><?= $es_oficio_actual ? '275 mm (Más arriba)' : '235 mm (Más arriba)' ?></span>
                                     <span id="sliderHelpOpt"><?= $es_oficio_actual ? '306 mm (Óptimo Oficio)' : '256 mm (Óptimo Carta)' ?></span>
@@ -338,7 +403,7 @@ try {
                             <div class="row g-2 mb-3">
                                 <div class="col-12 col-sm-7">
                                     <label class="form-label fw-bold text-secondary small mb-1">Texto Cabecera de la Estampa</label>
-                                    <input type="text" name="estampa_titulo_texto" id="inputEstampaTitulo" class="form-control form-control-sm fw-bold" value="<?= htmlspecialchars($configs['estampa_titulo_texto'] ?? 'FIRMADO ELECTRÓNICAMENTE (FEA)') ?>">
+                                    <input type="text" name="estampa_titulo_texto" id="inputEstampaTitulo" class="form-control form-control-sm fw-bold" maxlength="50" placeholder="Ej: FIRMADO ELECTRÓNICAMENTE (FEA)" value="<?= htmlspecialchars($configs['estampa_titulo_texto'] ?? 'FIRMADO ELECTRÓNICAMENTE (FEA)') ?>">
                                 </div>
                                 <div class="col-12 col-sm-5">
                                     <label class="form-label fw-bold text-secondary small mb-1">Icono / Distintivo</label>
@@ -416,13 +481,13 @@ try {
                             <button class="btn btn-sm btn-outline-secondary py-0.5 px-2" title="Recargar PDF" onclick="actualizarVistaPrevia()">
                                 <i class="bi bi-arrow-clockwise"></i>
                             </button>
-                            <a id="btnAbrirNuevaPestana" href="preview_opi_diseno.php" target="_blank" class="btn btn-sm btn-outline-primary py-0.5 px-2" title="Abrir PDF en pestaña independiente">
+                            <a id="btnAbrirNuevaPestana" href="<?= htmlspecialchars($url_preview_inicial) ?>" target="_blank" class="btn btn-sm btn-outline-primary py-0.5 px-2" title="Abrir PDF en pestaña independiente">
                                 <i class="bi bi-box-arrow-up-right me-1"></i> Abrir PDF
                             </a>
                         </div>
                     </div>
                     <div class="card-body p-0 flex-grow-1 bg-dark">
-                        <iframe id="previewIframe" src="preview_opi_diseno.php" class="preview-iframe" title="Vista Previa de la OPI"></iframe>
+                        <iframe id="previewIframe" src="<?= htmlspecialchars($url_preview_inicial) ?>" class="preview-iframe" title="Vista Previa de la OPI"></iframe>
                     </div>
                 </div>
             </div>
@@ -531,17 +596,40 @@ try {
         }
     });
 
+    // Auto-activar conmutador de simulación si se edita el diseño de la estampa
+    function asegurarEstampasActivas() {
+        const sw = document.getElementById('swSimularEstampas');
+        if (sw && !sw.checked) {
+            sw.checked = true;
+        }
+    }
+
+    // Escuchar texto de cabecera de estampa con auto-activación
+    const inputTituloEstampa = document.getElementById('inputEstampaTitulo');
+    if (inputTituloEstampa) {
+        inputTituloEstampa.addEventListener('input', () => {
+            asegurarEstampasActivas();
+            dispararActualizacionDebounce();
+        });
+    }
+
     // Escuchar cambios en selectores de estampa
     ['selectEstampaTema', 'selectEstampaFuente', 'selectEstampaIcono'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
-            el.addEventListener('change', actualizarVistaPrevia);
+            el.addEventListener('change', () => {
+                asegurarEstampasActivas();
+                actualizarVistaPrevia();
+            });
         }
     });
 
     // Escuchar checkboxes de metadatos de estampa
     document.querySelectorAll('.check-estampa-meta').forEach(cb => {
-        cb.addEventListener('change', actualizarVistaPrevia);
+        cb.addEventListener('change', () => {
+            asegurarEstampasActivas();
+            actualizarVistaPrevia();
+        });
     });
 
     // Escuchar toggle de estampas simuladas
@@ -557,9 +645,12 @@ try {
         }
     }
 
-    // Carga inicial
+    // Carga inicial: calibrar controles visuales (la vista previa ya cargó sincronizada desde PHP)
     document.addEventListener('DOMContentLoaded', () => {
-        actualizarVistaPrevia();
+        const selTam = document.getElementById('selectTamanoPapel');
+        if (selTam) {
+            adaptarControlesTamanoPapel(selTam.value, false);
+        }
     });
     </script>
 </body>

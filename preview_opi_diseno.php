@@ -17,6 +17,16 @@ if ($rol !== 'SYSADMIN' && $rol !== 'ADMIN_MUNICIPAL') {
     die("Acceso denegado. Se requieren privilegios de administracion.");
 }
 
+// Cargar configuraciones del sistema desde BD si no están inicializadas
+if (!isset($config_sistema) || empty($config_sistema)) {
+    try {
+        $stmtCfg = $pdo->query("SELECT clave, valor FROM configuraciones_sistema");
+        $config_sistema = $stmtCfg->fetchAll(PDO::FETCH_KEY_PAIR);
+    } catch (Exception $e) {
+        $config_sistema = [];
+    }
+}
+
 // 1. Obtener parametros desde GET/POST con fallback a $config_sistema de BD
 $tamano_papel   = isset($_REQUEST['opi_tamano_papel']) ? strtoupper(trim($_REQUEST['opi_tamano_papel'])) : ($config_sistema['opi_tamano_papel'] ?? 'OFICIO');
 $es_oficio      = ($tamano_papel === 'OFICIO');
@@ -25,9 +35,9 @@ $alto_pagina_mm = $es_oficio ? 330.2 : 279.4;
 $y_firmas_default = $es_oficio ? 306.0 : 256.0;
 
 $titulo_doc     = $_REQUEST['opi_titulo_documento'] ?? ($config_sistema['opi_titulo_documento'] ?? 'ORDEN DE PEDIDO INTERNO');
-$clausula1_txt  = $_REQUEST['opi_clausula1_texto'] ?? ($config_sistema['opi_clausula1_texto'] ?? '1. Agradecere a Usted, tenga a bien efectuar la adquisicion de los siguientes bienes y/o servicios:');
-$clausula2_txt  = $_REQUEST['opi_clausula2_texto'] ?? ($config_sistema['opi_clausula2_texto'] ?? '2. Los presentes bienes/servicios seran destinados a:');
-$pie_legal_txt  = $_REQUEST['opi_pie_legal'] ?? ($config_sistema['opi_pie_legal'] ?? 'Documento Oficial emitido por el Sistema Institucional OPI - Validez legal bajo Ley N° 19.799 de Firma Electronica');
+$clausula1_txt  = $_REQUEST['opi_clausula1_texto'] ?? ($config_sistema['opi_clausula1_texto'] ?? '1. Agradeceré a Usted, tenga a bien efectuar la adquisición de los siguientes bienes y/o servicios:');
+$clausula2_txt  = $_REQUEST['opi_clausula2_texto'] ?? ($config_sistema['opi_clausula2_texto'] ?? '2. Los presentes bienes/servicios serán destinados a:');
+$pie_legal_txt  = $_REQUEST['opi_pie_legal'] ?? ($config_sistema['opi_pie_legal'] ?? 'Documento Oficial emitido por el Sistema Institucional OPI - Validez legal bajo Ley N° 19.799 de Firma Electrónica');
 $firmas_linea_y = isset($_REQUEST['opi_firmas_linea_y']) ? floatval($_REQUEST['opi_firmas_linea_y']) : floatval($config_sistema['opi_firmas_linea_y'] ?? $y_firmas_default);
 $simular_estampas = isset($_REQUEST['simular_estampas']) ? (int)$_REQUEST['simular_estampas'] : 1;
 
