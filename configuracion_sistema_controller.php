@@ -101,7 +101,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // 4. ACCIÓN POR DEFECTO: GUARDAR PARÁMETROS GLOBALES DEL SISTEMA
+    // 4. ACCIÓN: ELIMINAR RANGO PERMANENTEMENTE
+    elseif ($accion === 'eliminar_rango') {
+        try {
+            $rango_id = intval($_POST['rango_id'] ?? 0);
+            if ($rango_id <= 0) throw new Exception("ID de rango inválido.");
+
+            // Desvincular de expedientes históricos si estuviese asignado
+            $stmtUnlink = $pdo->prepare("UPDATE expedientes SET rango_utm_id = NULL WHERE rango_utm_id = ?");
+            $stmtUnlink->execute([$rango_id]);
+
+            // Eliminar de rangos_utm
+            $stmtDel = $pdo->prepare("DELETE FROM rangos_utm WHERE id = ?");
+            $stmtDel->execute([$rango_id]);
+
+            $mensaje = "Rango de compra eliminado permanentemente de la base de datos.";
+            $tipo_mensaje = "success";
+        } catch (Exception $e) {
+            $mensaje = "Error al eliminar el rango: " . $e->getMessage();
+            $tipo_mensaje = "error";
+        }
+    }
+
+    // 5. ACCIÓN POR DEFECTO: GUARDAR PARÁMETROS GLOBALES DEL SISTEMA
     else {
         try {
             $limite_peso = max(1, min(200, intval($_POST['limite_peso_adjunto_mb'] ?? 10)));

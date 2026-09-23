@@ -300,12 +300,20 @@ require_once __DIR__ . '/configuracion_sistema_controller.php';
                                                         <button type="button" class="btn btn-outline-primary btn-sm px-2.5 py-1" onclick='abrirModalEditarRango(<?= json_encode($r) ?>)' title="Editar Rango">
                                                             <i class="bi bi-pencil-square"></i>
                                                         </button>
-                                                        <form method="POST" action="configuracion_sistema.php" class="d-inline" onsubmit="return confirm('¿Seguro que desea cambiar el estado de este rango?');">
+                                                        <form method="POST" action="configuracion_sistema.php" class="d-inline" onsubmit="return confirm('¿Desea cambiar el estado (Activo/Inactivo) de este rango?');">
                                                             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                                             <input type="hidden" name="accion" value="toggle_rango">
                                                             <input type="hidden" name="rango_id" value="<?= (int)$r['id'] ?>">
-                                                            <button type="submit" class="btn btn-outline-<?= ($r['activo'] == 1) ? 'danger' : 'success' ?> btn-sm px-2 py-1" title="<?= ($r['activo'] == 1) ? 'Desactivar' : 'Activar' ?>">
+                                                            <button type="submit" class="btn btn-outline-<?= ($r['activo'] == 1) ? 'secondary' : 'success' ?> btn-sm px-2 py-1" title="<?= ($r['activo'] == 1) ? 'Desactivar' : 'Activar' ?>">
                                                                 <i class="bi bi-<?= ($r['activo'] == 1) ? 'eye-slash' : 'check-lg' ?>"></i>
+                                                            </button>
+                                                        </form>
+                                                        <form method="POST" action="configuracion_sistema.php" class="d-inline" onsubmit="return confirm('¿Está seguro de que desea ELIMINAR permanentemente el rango \'<?= htmlspecialchars(addslashes($r['nombre'])) ?>\'?\n\nEsta acción borrará el registro de la base de datos de forma irreversible.');">
+                                                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                                            <input type="hidden" name="accion" value="eliminar_rango">
+                                                            <input type="hidden" name="rango_id" value="<?= (int)$r['id'] ?>">
+                                                            <button type="submit" class="btn btn-outline-danger btn-sm px-2 py-1" title="Eliminar permanentemente">
+                                                                <i class="bi bi-trash3-fill"></i>
                                                             </button>
                                                         </form>
                                                     </div>
@@ -400,9 +408,14 @@ require_once __DIR__ . '/configuracion_sistema_controller.php';
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer border-top py-2.5">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary btn-sm px-4 fw-bold">Guardar Rango</button>
+                    <div class="modal-footer border-top py-2.5 d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-danger btn-sm d-none" id="btnModalEliminarRango" onclick="eliminarRangoDesdeModal()">
+                            <i class="bi bi-trash3-fill me-1"></i> Eliminar Rango
+                        </button>
+                        <div class="d-flex gap-2 ms-auto">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary btn-sm px-4 fw-bold">Guardar Rango</button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -431,6 +444,9 @@ require_once __DIR__ . '/configuracion_sistema_controller.php';
             document.getElementById('inpModRangoRegla').value = '';
             document.getElementById('swModRangoActivo').checked = true;
 
+            const btnDel = document.getElementById('btnModalEliminarRango');
+            if (btnDel) btnDel.classList.add('d-none');
+
             if (modalRangoInstance) modalRangoInstance.show();
         }
 
@@ -443,7 +459,48 @@ require_once __DIR__ . '/configuracion_sistema_controller.php';
             document.getElementById('inpModRangoRegla').value = data.regla_cotizaciones || '';
             document.getElementById('swModRangoActivo').checked = (data.activo == 1);
 
+            const btnDel = document.getElementById('btnModalEliminarRango');
+            if (btnDel) {
+                btnDel.classList.remove('d-none');
+                btnDel.dataset.id = data.id;
+                btnDel.dataset.nombre = data.nombre;
+            }
+
             if (modalRangoInstance) modalRangoInstance.show();
+        }
+
+        function eliminarRangoDesdeModal() {
+            const btnDel = document.getElementById('btnModalEliminarRango');
+            const id = btnDel.dataset.id;
+            const nombre = btnDel.dataset.nombre || 'este rango';
+            if (!id || id <= 0) return;
+
+            if (confirm(`¿Está seguro de que desea ELIMINAR permanentemente el rango "${nombre}"?\n\nEsta acción borrará el registro de la base de datos de forma irreversible.`)) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'configuracion_sistema.php';
+
+                const csrf = document.createElement('input');
+                csrf.type = 'hidden';
+                csrf.name = 'csrf_token';
+                csrf.value = '<?= $_SESSION['csrf_token'] ?? '' ?>';
+                form.appendChild(csrf);
+
+                const accion = document.createElement('input');
+                accion.type = 'hidden';
+                accion.name = 'accion';
+                accion.value = 'eliminar_rango';
+                form.appendChild(accion);
+
+                const inpId = document.createElement('input');
+                inpId.type = 'hidden';
+                inpId.name = 'rango_id';
+                inpId.value = id;
+                form.appendChild(inpId);
+
+                document.body.appendChild(form);
+                form.submit();
+            }
         }
     </script>
 </body>
