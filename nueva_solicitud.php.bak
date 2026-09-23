@@ -140,23 +140,15 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
                         </div>
 
                         <div class="col-md-6">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <label class="form-label-saas mb-0">Rango de Monto Estimado (Art. 10) <span class="text-danger">*</span></label>
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-0.5" id="badgeUtmEnVivo" style="font-size: 11px;">
-                                    <i class="bi bi-calculator me-1"></i>0.00 UTM (Auto)
-                                </span>
-                            </div>
-                            <select name="rango_utm_id" id="selRangoUtm" required class="form-select-saas bg-light" style="pointer-events: none;" tabindex="-1">
-                                <option value="">-- Calculado automáticamente según monto --</option>
+                            <label class="form-label-saas">Rango de Monto Estimado (Art. 10) <span class="text-danger">*</span></label>
+                            <select name="rango_utm_id" id="selRangoUtm" required class="form-select-saas">
+                                <option value="">-- Seleccione el Rango UTM --</option>
                                 <?php foreach($rangos_utm as $r): ?>
                                     <option value="<?= $r['id'] ?>" <?= $post_rango_utm == $r['id'] ? 'selected' : '' ?>>
                                         <?= htmlspecialchars($r['nombre']) ?> (<?= $r['min_utm'] ?> - <?= $r['max_utm'] ? $r['max_utm'].' UTM' : 'y más' ?>)
                                     </option>
                                 <?php endforeach; ?>
                             </select>
-                            <div class="small text-muted mt-1" id="infoUtmVigente" style="font-size: 11px;">
-                                <i class="bi bi-info-circle me-1"></i>UTM Vigente: <strong>$<?= number_format(VALOR_UTM, 0, ',', '.') ?> CLP</strong> (Sincronizado vía mindicador.cl)
-                            </div>
                         </div>
 
                         <div class="col-12">
@@ -199,22 +191,6 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
                                             <span>IVA (19%): <strong id="dispPreviewIva">$ 0</strong></span>
                                             <span class="text-primary fw-bold">Total: <strong id="dispPreviewTotal">$ 0</strong></span>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- ALERTA DE TOPE DE COMPRA ÁGIL (Art. 10 bis Ley 19.886) -->
-                        <div class="col-12 d-none" id="alertaTopeCompraAgil">
-                            <div class="alert alert-danger d-flex align-items-start gap-3 p-3 rounded-3 shadow-sm border-danger mb-0" role="alert">
-                                <i class="bi bi-exclamation-octagon-fill fs-3 text-danger flex-shrink-0 mt-1"></i>
-                                <div>
-                                    <h6 class="fw-bold mb-1 text-danger">⚠️ Límite Excedido para Compra Ágil (Art. 10 bis Ley 19.886)</h6>
-                                    <div id="textoAlertaCompraAgil" class="small mb-1 text-danger-emphasis">
-                                        El monto ingresado excede el tope legal de <strong>100 UTM</strong> ($<?= number_format(100 * VALOR_UTM, 0, ',', '.') ?> CLP).
-                                    </div>
-                                    <div class="small fw-semibold text-danger">
-                                        <i class="bi bi-arrow-right-circle me-1"></i>Para continuar, reduzca el monto de cotización o cambie la Modalidad / Tipo de Compra a <strong>Licitación Pública</strong>.
                                     </div>
                                 </div>
                             </div>
@@ -518,11 +494,7 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
         const cuentasPresupuestarias = <?= json_encode($cuentas_disponibles) ?>;
         const itemsPrevios = <?= json_encode($items_old) ?>;
         const criteriosPrevios = <?= json_encode($criterios_old) ?>;
-        const rangosUtmData = <?= json_encode($rangos_utm) ?>;
-        const valorUtmVigente = <?= VALOR_UTM ?>;
 
-        let excedeCompraAgilGlobal = false;
-        let montoActualUtmGlobal = 0.0;
         let regimenActual = '<?= $post_tipo_impuesto ?>';
         let modalProvInstance = null;
         let modalCuentaInstance = null;
@@ -1066,63 +1038,6 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
             document.getElementById('lblSubtotalNeto').innerText = formatCLP(subtotalNeto);
             document.getElementById('lblIvaTotal').innerText = formatCLP(ivaTotal);
             document.getElementById('lblGranTotal').innerText = formatCLP(granTotal);
-
-            // CÁLCULO DE UTM Y ASIGNACIÓN AUTOMÁTICA DEL RANGO (Art. 10)
-            const montoEvaluarUtm = (regimenActual === 'EXENTO') ? granTotal : subtotalNeto;
-            montoActualUtmGlobal = (typeof valorUtmVigente !== 'undefined' && valorUtmVigente > 0) ? (montoEvaluarUtm / valorUtmVigente) : 0;
-
-            let rangoAsignado = null;
-            if (Array.isArray(rangosUtmData)) {
-                for (let i = 0; i < rangosUtmData.length; i++) {
-                    const r = rangosUtmData[i];
-                    const min = parseFloat(r.min_utm) || 0;
-                    const max = (r.max_utm !== null && r.max_utm !== undefined && r.max_utm !== '') ? parseFloat(r.max_utm) : 999999999;
-                    if (montoActualUtmGlobal >= min && montoActualUtmGlobal <= max) {
-                        rangoAsignado = r;
-                        break;
-                    }
-                }
-                if (!rangoAsignado && rangosUtmData.length > 0) {
-                    rangoAsignado = rangosUtmData[rangosUtmData.length - 1];
-                }
-            }
-
-            const selRango = document.getElementById('selRangoUtm');
-            if (selRango && rangoAsignado) {
-                selRango.value = rangoAsignado.id;
-            }
-            const badgeUtm = document.getElementById('badgeUtmEnVivo');
-            if (badgeUtm) {
-                const nombreRango = rangoAsignado ? escapeHtml(rangoAsignado.nombre) : 'Auto';
-                badgeUtm.innerHTML = `<i class="bi bi-calculator me-1"></i>${montoActualUtmGlobal.toFixed(2)} UTM (${nombreRango})`;
-            }
-
-            // VALIDACIÓN REACTIVA COMPRA ÁGIL (MÁXIMO 100 UTM)
-            const tcId = select ? select.value : '';
-            const tcCodigo = mapaTipos[tcId] || '';
-            const esCompraAgil = (tcCodigo === 'COMPRA_AGIL' || tcCodigo === 'AGIL');
-            const topeAgilUtm = 100.00;
-            const alertaAgil = document.getElementById('alertaTopeCompraAgil');
-            const txtAlerta = document.getElementById('textoAlertaCompraAgil');
-            const inpMontoCot = document.getElementById('inpMontoDisponible');
-
-            excedeCompraAgilGlobal = (esCompraAgil && montoActualUtmGlobal > topeAgilUtm);
-
-            if (alertaAgil) {
-                if (excedeCompraAgilGlobal) {
-                    alertaAgil.classList.remove('d-none');
-                    const topePesos = formatCLP(Math.round(topeAgilUtm * valorUtmVigente));
-                    if (txtAlerta) {
-                        txtAlerta.innerHTML = `El monto estimado de <strong>${formatCLP(montoEvaluarUtm)} CLP (${montoActualUtmGlobal.toFixed(2)} UTM)</strong> excede el tope legal de <strong>100 UTM (${topePesos})</strong> para Compra Ágil (Art. 10 bis Ley 19.886).`;
-                    }
-                    if (inpMontoCot) inpMontoCot.classList.add('is-invalid', 'border-danger');
-                } else {
-                    alertaAgil.classList.add('d-none');
-                    if (inpMontoCot) inpMontoCot.classList.remove('is-invalid', 'border-danger');
-                }
-            }
-
-            actualizarEstadoBotonSubmit();
         }
 
         function handleMontoInput(inp) {
@@ -1329,14 +1244,6 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
 
             if (!btn) return;
 
-            if (excedeCompraAgilGlobal) {
-                btn.disabled = true;
-                spinner.classList.add('d-none');
-                icon.classList.remove('d-none');
-                text.innerText = '⚠️ Monto supera 100 UTM (Compra Ágil)';
-                return;
-            }
-
             const cargando = archivosSubidos.filter(a => a.status === 'uploading');
             const conError = archivosSubidos.filter(a => a.status === 'error');
             const listos = archivosSubidos.filter(a => a.status === 'completed');
@@ -1369,14 +1276,6 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
 
             const divError = document.getElementById('errorTabla');
             divError.classList.add('d-none');
-
-            if (excedeCompraAgilGlobal) {
-                divError.innerText = 'No se puede emitir el requerimiento: El monto excede el tope legal de 100 UTM para Compra Ágil (Art. 10 bis Ley 19.886).';
-                divError.classList.remove('d-none');
-                alert('No es posible continuar:\n\nEl monto estimado supera el límite legal de 100 UTM para Compra Ágil.\nDebe reducir el monto o seleccionar otra modalidad (como Licitación Pública).');
-                e.preventDefault();
-                return false;
-            }
 
             const tcId = document.getElementById('selTipoCompra').value;
             const tcCodigo = mapaTipos[tcId] || '';

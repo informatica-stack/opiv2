@@ -77,21 +77,12 @@ try {
     die("Error crítico de conexión: No se pudo contactar con el servidor de base de datos.");
 }
 
-require_once __DIR__ . '/utm_helper.php';
-
 // 3.1 Cargar configuraciones globales desde la base de datos
 try {
     $stmtCfg = $pdo->query("SELECT clave, valor FROM configuraciones_sistema");
     $config_sistema = [];
     while ($row = $stmtCfg->fetch(PDO::FETCH_ASSOC)) {
         $config_sistema[$row['clave']] = $row['valor'];
-    }
-
-    // Sincronización mensual transparente de UTM con mindicador.cl
-    $mes_guardado = $config_sistema['valor_utm_mes'] ?? '';
-    if ($mes_guardado !== date('Y-m')) {
-        $utm_sincronizada = sincronizar_valor_utm($pdo);
-        $config_sistema['valor_utm'] = (string)$utm_sincronizada;
     }
 } catch (Exception $e) {
     $config_sistema = [

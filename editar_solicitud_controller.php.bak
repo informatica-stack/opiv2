@@ -252,56 +252,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
         $post_tipo_impuesto = in_array($_POST['tipo_impuesto'] ?? 'NETO', ['NETO', 'IVA_INCLUIDO', 'EXENTO']) ? $_POST['tipo_impuesto'] : 'NETO';
         $iva_pct = 1.19;
         $total_est_bruto = 0;
-        $subtotal_neto = 0;
 
         if ($requiere_cot) {
             $monto_raw = str_replace('.', '', $_POST['monto_disponible_neto'] ?? '0');
             $monto_disp = floatval($monto_raw);
             if ($post_tipo_impuesto === 'NETO') {
-                $subtotal_neto = $monto_disp;
                 $total_est_bruto = round($monto_disp * $iva_pct);
-            } elseif ($post_tipo_impuesto === 'EXENTO') {
-                $subtotal_neto = $monto_disp;
-                $total_est_bruto = round($monto_disp);
             } else {
                 $total_est_bruto = round($monto_disp);
-                $subtotal_neto = round($total_est_bruto / $iva_pct);
             }
         } else {
             foreach ($cant as $i => $c) {
                 $p_ingresado = floatval($prec[$i]);
-                $c_val = floatval($c);
                 if ($post_tipo_impuesto === 'NETO') {
-                    $subtotal_neto += ($c_val * $p_ingresado);
                     $p_unit = round($p_ingresado * $iva_pct, 2);
-                } elseif ($post_tipo_impuesto === 'EXENTO') {
-                    $subtotal_neto += ($c_val * $p_ingresado);
-                    $p_unit = round($p_ingresado, 2);
                 } else {
                     $p_unit = round($p_ingresado, 2);
-                    $subtotal_neto += round(($c_val * $p_unit) / $iva_pct);
                 }
-                $total_est_bruto += ($c_val * $p_unit);
+                $total_est_bruto += (floatval($c) * $p_unit);
             }
-        }
-
-        // CÁLCULO DE UTM Y VALIDACIÓN SEGÚN LEY DE COMPRAS PÚBLICAS
-        $monto_evaluar_utm = ($post_tipo_impuesto === 'EXENTO') ? $total_est_bruto : $subtotal_neto;
-        $monto_calculado_utm = VALOR_UTM > 0 ? round($monto_evaluar_utm / VALOR_UTM, 2) : 0;
-
-        // VALIDACIÓN: COMPRA ÁGIL NO PUEDE EXCEDER 100 UTM (Art. 10 bis Ley 19.886)
-        if (in_array($codigo_tc, ['AGIL', 'COMPRA_AGIL'])) {
-            if ($monto_calculado_utm > 100.00) {
-                $limite_pesos = number_format(round(100 * VALOR_UTM), 0, ',', '.');
-                $monto_format = number_format($monto_evaluar_utm, 0, ',', '.');
-                throw new Exception("El monto ingresado ($" . $monto_format . " CLP / " . $monto_calculado_utm . " UTM) excede el límite legal de 100 UTM ($" . $limite_pesos . " CLP) permitido para Compra Ágil (Art. 10 bis Ley 19.886). Debe seleccionar Licitación Pública u otra modalidad correspondiente.");
-            }
-        }
-
-        // ASIGNACIÓN AUTOMÁTICA DEL RANGO DE MONTO ESTIMADO (Art. 10)
-        $rango_calculado = calcular_rango_utm_automatico($pdo, $monto_evaluar_utm, VALOR_UTM);
-        if (!empty($rango_calculado['rango_id'])) {
-            $post_rango_utm = $rango_calculado['rango_id'];
         }
 
         // --- UPDATE CABECERA ---
