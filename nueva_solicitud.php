@@ -129,7 +129,7 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
                             <textarea name="motivo" id="inpMotivo" required rows="3" class="form-control-saas" placeholder="Indique el destino, uso y fundamentación técnica de los bienes o servicios solicitados..."><?= htmlspecialchars($post_motivo) ?></textarea>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-12">
                             <label class="form-label-saas">Modalidad / Tipo de Compra <span class="text-danger">*</span></label>
                             <select name="tipo_compra_id" id="selTipoCompra" required class="form-select-saas" onchange="evaluarFormularioReactivo()">
                                 <option value="">-- Seleccione Tipo de Compra --</option>
@@ -137,26 +137,7 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
                                     <option value="<?= $t['id'] ?>" <?= $post_tipo_compra == $t['id'] ? 'selected' : '' ?>><?= htmlspecialchars($t['nombre']) ?></option>
                                 <?php endforeach; ?>
                             </select>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <label class="form-label-saas mb-0">Rango de Monto Estimado (Art. 10) <span class="text-danger">*</span></label>
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-0.5" id="badgeUtmEnVivo" style="font-size: 11px;">
-                                    <i class="bi bi-calculator me-1"></i>0.00 UTM (Auto)
-                                </span>
-                            </div>
-                            <select name="rango_utm_id" id="selRangoUtm" required class="form-select-saas bg-light" style="pointer-events: none;" tabindex="-1">
-                                <option value="">-- Calculado automáticamente según monto --</option>
-                                <?php foreach($rangos_utm as $r): ?>
-                                    <option value="<?= $r['id'] ?>" <?= $post_rango_utm == $r['id'] ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($r['nombre']) ?> (<?= $r['min_utm'] ?> - <?= $r['max_utm'] ? $r['max_utm'].' UTM' : 'y más' ?>)
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                            <div class="small text-muted mt-1" id="infoUtmVigente" style="font-size: 11px;">
-                                <i class="bi bi-info-circle me-1"></i>UTM Vigente: <strong>$<?= number_format(VALOR_UTM, 0, ',', '.') ?> CLP</strong> (Sincronizado vía mindicador.cl)
-                            </div>
+                            <input type="hidden" name="rango_utm_id" id="selRangoUtm" value="<?= htmlspecialchars($post_rango_utm ?? '') ?>">
                         </div>
 
                         <div class="col-12">
@@ -177,13 +158,24 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
                         <!-- PANEL MONTO DISPONIBLE PARA COTIZACIÓN / LICITACIÓN -->
                         <div class="col-12 d-none" id="divMontoDisponible">
                             <div style="background: var(--primary-light); border: 1px solid #bfdbfe; border-radius: var(--radius-sm); padding: 18px;">
-                                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                                    <label class="form-label-saas" style="color: var(--primary); margin: 0;">
+                                <div class="d-flex justify-content-between align-items-center mb-2.5 flex-wrap gap-2">
+                                    <label class="form-label-saas fw-bold" style="color: var(--primary); margin: 0;">
                                         <i class="bi bi-cash-stack me-1"></i> Monto Máximo Estimado para Cotización <span class="text-danger">*</span>
                                     </label>
-                                    <span class="badge bg-white text-primary border px-2.5 py-1" id="badgeRegimenPaso1" style="font-size: 11px; font-weight: 700;">
-                                        Régimen: Valores Netos
-                                    </span>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="text-muted small fw-semibold" style="font-size: 11px;">Régimen de ingreso:</span>
+                                        <div class="btn-group btn-group-sm" role="group" aria-label="Régimen Monto Cotización">
+                                            <input type="radio" class="btn-check" name="tipo_impuesto_radio_p1" id="reg_neto_p1" value="NETO" <?= ($post_tipo_impuesto === 'NETO' || empty($post_tipo_impuesto)) ? 'checked' : '' ?> onchange="cambiarRegimenImpuesto('NETO')">
+                                            <label class="btn btn-outline-primary btn-sm py-1 px-2.5 fw-semibold" for="reg_neto_p1" style="font-size: 11px;">
+                                                <i class="bi bi-tag me-1"></i> Neto (Sin IVA)
+                                            </label>
+
+                                            <input type="radio" class="btn-check" name="tipo_impuesto_radio_p1" id="reg_iva_p1" value="IVA_INCLUIDO" <?= $post_tipo_impuesto === 'IVA_INCLUIDO' ? 'checked' : '' ?> onchange="cambiarRegimenImpuesto('IVA_INCLUIDO')">
+                                            <label class="btn btn-outline-primary btn-sm py-1 px-2.5 fw-semibold" for="reg_iva_p1" style="font-size: 11px;">
+                                                <i class="bi bi-receipt me-1"></i> Con IVA (Total)
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="row g-3 align-items-center">
@@ -200,6 +192,16 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
                                             <span class="text-primary fw-bold">Total: <strong id="dispPreviewTotal">$ 0</strong></span>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="mt-2.5 pt-2 border-top d-flex justify-content-between align-items-center flex-wrap gap-2 text-muted small" style="font-size: 11.5px;">
+                                    <span>
+                                        <i class="bi bi-diagram-3-fill text-primary me-1"></i>Tramo Art. 10 estimado: 
+                                        <strong class="text-primary" id="dispPreviewTramo">Bajo (0,00 - 3,00 UTM)</strong>
+                                    </span>
+                                    <span>
+                                        <i class="bi bi-calculator me-1"></i>Equivalente: 
+                                        <strong class="text-primary font-monospace" id="dispPreviewUtm">0.00 UTM</strong>
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -304,16 +306,17 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
                         </div>
                     </div>
 
-                    <!-- SELECTOR MAESTRO ÚNICO DE RÉGIMEN TRIBUTARIO -->
+                    <!-- SELECTOR MAESTRO DE RÉGIMEN TRIBUTARIO -->
                     <div class="d-flex align-items-center gap-2">
+                        <input type="hidden" name="tipo_impuesto" id="hiddenTipoImpuesto" value="<?= htmlspecialchars($post_tipo_impuesto ?? 'NETO') ?>">
                         <div class="btn-group btn-group-sm" role="group" aria-label="Régimen Tributario">
-                            <input type="radio" class="btn-check" name="tipo_impuesto" id="reg_neto" value="NETO" <?= ($post_tipo_impuesto === 'NETO' || empty($post_tipo_impuesto)) ? 'checked' : '' ?> onchange="cambiarRegimenImpuesto('NETO')">
-                            <label class="btn btn-outline-primary btn-sm py-1 px-2.5 fw-semibold" for="reg_neto" style="font-size: 11.5px;">
+                            <input type="radio" class="btn-check" name="tipo_impuesto_radio_p2" id="reg_neto_p2" value="NETO" <?= ($post_tipo_impuesto === 'NETO' || empty($post_tipo_impuesto)) ? 'checked' : '' ?> onchange="cambiarRegimenImpuesto('NETO')">
+                            <label class="btn btn-outline-primary btn-sm py-1 px-2.5 fw-semibold" for="reg_neto_p2" style="font-size: 11.5px;">
                                 <i class="bi bi-tag me-1"></i> Precios Sin IVA (Neto)
                             </label>
 
-                            <input type="radio" class="btn-check" name="tipo_impuesto" id="reg_iva" value="IVA_INCLUIDO" <?= $post_tipo_impuesto === 'IVA_INCLUIDO' ? 'checked' : '' ?> onchange="cambiarRegimenImpuesto('IVA_INCLUIDO')">
-                            <label class="btn btn-outline-primary btn-sm py-1 px-2.5 fw-semibold" for="reg_iva" style="font-size: 11.5px;">
+                            <input type="radio" class="btn-check" name="tipo_impuesto_radio_p2" id="reg_iva_p2" value="IVA_INCLUIDO" <?= $post_tipo_impuesto === 'IVA_INCLUIDO' ? 'checked' : '' ?> onchange="cambiarRegimenImpuesto('IVA_INCLUIDO')">
+                            <label class="btn btn-outline-primary btn-sm py-1 px-2.5 fw-semibold" for="reg_iva_p2" style="font-size: 11.5px;">
                                 <i class="bi bi-receipt me-1"></i> Precios Con IVA (Total)
                             </label>
                         </div>
@@ -345,21 +348,53 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
 
                     <div id="errorTabla" class="alert alert-danger m-3 d-none"></div>
 
-                    <!-- TOTALES RESUMEN -->
+                    <!-- TOTALES RESUMEN & SEGMENTACIÓN ART. 10 -->
                     <div class="p-4 bg-light border-top">
-                        <div class="row justify-content-end">
+                        <div class="row align-items-center">
+                            <!-- Indicador Informativo Contextual de Rango Art. 10 -->
+                            <div class="col-12 col-md-7 mb-3 mb-md-0" id="boxRangoUtmInfo">
+                                <div class="p-3 bg-white border rounded-3 shadow-sm h-100 d-flex flex-column justify-content-between">
+                                    <div class="d-flex align-items-center justify-content-between pb-2 border-bottom mb-2">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="bi bi-diagram-3-fill text-primary fs-5"></i>
+                                            <span class="fw-bold text-dark small">Segmentación de Compra (Art. 10 Ley 19.886)</span>
+                                        </div>
+                                        <span class="badge bg-primary text-white px-2.5 py-1 fw-bold font-monospace" id="lblUtmEnVivo" style="font-size: 12px;">
+                                            0.00 UTM
+                                        </span>
+                                    </div>
+                                    <div class="row g-2 align-items-center my-1">
+                                        <div class="col-sm-6">
+                                            <div class="small text-muted" style="font-size: 11px;">Tramo Normativo Asignado:</div>
+                                            <div class="fw-bold text-primary fs-6" id="lblNombreRangoUtm">-- Calculando según monto --</div>
+                                        </div>
+                                        <div class="col-sm-6 text-sm-end">
+                                            <div class="small text-muted" style="font-size: 11px;">Exigencia de Cotizaciones:</div>
+                                            <span class="badge bg-secondary-subtle text-secondary border px-2 py-1" id="lblReglaCotizaciones">Sin mínimos</span>
+                                        </div>
+                                    </div>
+                                    <div class="small text-muted mt-2 pt-2 border-top d-flex justify-content-between align-items-center" style="font-size: 11px;">
+                                        <span><i class="bi bi-info-circle me-1"></i>UTM Vigente: <strong>$<?= number_format(VALOR_UTM, 0, ',', '.') ?> CLP</strong></span>
+                                        <span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>Cálculo Automático</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Totales Numéricos -->
                             <div class="col-12 col-md-5">
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span class="text-muted">Subtotal Neto:</span>
-                                    <strong id="lblSubtotalNeto" style="font-weight: 700;">$ 0</strong>
-                                </div>
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span class="text-muted">IVA Estimado (19%):</span>
-                                    <strong id="lblIvaTotal" style="font-weight: 700;">$ 0</strong>
-                                </div>
-                                <div class="d-flex justify-content-between pt-2 border-top">
-                                    <span class="fw-bold fs-6">Total Solicitud:</span>
-                                    <strong class="fs-5 text-primary" id="lblGranTotal" style="font-weight: 800;">$ 0</strong>
+                                <div class="p-3 bg-white border rounded-3 shadow-sm">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted small">Subtotal Neto:</span>
+                                        <strong id="lblSubtotalNeto" style="font-weight: 700;">$ 0</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted small">IVA Estimado (19%):</span>
+                                        <strong id="lblIvaTotal" style="font-weight: 700;">$ 0</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between pt-2 border-top">
+                                        <span class="fw-bold text-dark fs-6">Total Solicitud:</span>
+                                        <strong class="fs-5 text-primary" id="lblGranTotal" style="font-weight: 800;">$ 0</strong>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -994,18 +1029,22 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
         // UNIFICACIÓN DEL SELECTOR DE RÉGIMEN NETO / IVA
         function cambiarRegimenImpuesto(reg) {
             regimenActual = reg;
-            const rNeto = document.getElementById('reg_neto');
-            const rIva = document.getElementById('reg_iva');
-            const badgePaso1 = document.getElementById('badgeRegimenPaso1');
+            const hidReg = document.getElementById('hiddenTipoImpuesto');
+            if (hidReg) hidReg.value = reg;
+
+            const rNetoP1 = document.getElementById('reg_neto_p1');
+            const rIvaP1 = document.getElementById('reg_iva_p1');
+            const rNetoP2 = document.getElementById('reg_neto_p2');
+            const rIvaP2 = document.getElementById('reg_iva_p2');
             const thPrecio = document.getElementById('thColPrecio');
 
             if (reg === 'NETO') {
-                if (rNeto) rNeto.checked = true;
-                if (badgePaso1) badgePaso1.innerText = 'Régimen: Valores Netos';
+                if (rNetoP1) rNetoP1.checked = true;
+                if (rNetoP2) rNetoP2.checked = true;
                 if (thPrecio) thPrecio.innerText = 'Precio Unit. (Neto)';
             } else {
-                if (rIva) rIva.checked = true;
-                if (badgePaso1) badgePaso1.innerText = 'Régimen: Valores Con IVA';
+                if (rIvaP1) rIvaP1.checked = true;
+                if (rIvaP2) rIvaP2.checked = true;
                 if (thPrecio) thPrecio.innerText = 'Precio Unit. (Con IVA)';
             }
             recalcularTotales();
@@ -1091,10 +1130,36 @@ $es_jefe = $_SESSION['es_jefe'] ?? 0;
             if (selRango && rangoAsignado) {
                 selRango.value = rangoAsignado.id;
             }
-            const badgeUtm = document.getElementById('badgeUtmEnVivo');
-            if (badgeUtm) {
-                const nombreRango = rangoAsignado ? escapeHtml(rangoAsignado.nombre) : 'Auto';
-                badgeUtm.innerHTML = `<i class="bi bi-calculator me-1"></i>${montoActualUtmGlobal.toFixed(2)} UTM (${nombreRango})`;
+
+            // Actualizar tarjeta informativa de Totales
+            const lblUtm = document.getElementById('lblUtmEnVivo');
+            const lblNombreRango = document.getElementById('lblNombreRangoUtm');
+            const lblRegla = document.getElementById('lblReglaCotizaciones');
+            
+            if (lblUtm) {
+                lblUtm.innerText = montoActualUtmGlobal.toFixed(2) + ' UTM';
+            }
+            if (lblNombreRango && rangoAsignado) {
+                const maxStr = (rangoAsignado.max_utm !== null && rangoAsignado.max_utm !== undefined && rangoAsignado.max_utm !== '') 
+                    ? rangoAsignado.max_utm + ' UTM' 
+                    : 'y más';
+                lblNombreRango.innerText = `${rangoAsignado.nombre} (${rangoAsignado.min_utm} - ${maxStr})`;
+            }
+            if (lblRegla && rangoAsignado) {
+                lblRegla.innerText = rangoAsignado.regla_cotizaciones || 'Sin regla especial';
+            }
+
+            // Actualizar preview en panel de Monto Disponible (Compra Ágil)
+            const dispTramo = document.getElementById('dispPreviewTramo');
+            const dispUtm = document.getElementById('dispPreviewUtm');
+            if (dispTramo && rangoAsignado) {
+                const maxStr = (rangoAsignado.max_utm !== null && rangoAsignado.max_utm !== undefined && rangoAsignado.max_utm !== '') 
+                    ? rangoAsignado.max_utm + ' UTM' 
+                    : 'y más';
+                dispTramo.innerText = `${rangoAsignado.nombre} (${rangoAsignado.min_utm} - ${maxStr})`;
+            }
+            if (dispUtm) {
+                dispUtm.innerText = montoActualUtmGlobal.toFixed(2) + ' UTM';
             }
 
             // VALIDACIÓN REACTIVA COMPRA ÁGIL (MÁXIMO 100 UTM EVALUADO POR EL TOTAL)

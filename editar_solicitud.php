@@ -131,33 +131,14 @@ foreach($otros_proveedores as $p) {
                             <textarea name="motivo" required rows="3" class="form-control"><?= htmlspecialchars($post_motivo) ?></textarea>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-12">
                             <label class="form-label fw-bold text-secondary small">Tipo de Compra</label>
                             <select name="tipo_compra_id" id="selTipoCompra" required class="form-select fw-bold text-primary" onchange="evaluarFormularioReactivo()">
                                 <?php foreach($tipos_compra as $t): ?>
                                     <option value="<?= $t['id'] ?>" <?= $t['id']==$post_tipo_compra?'selected':'' ?>><?= $t['nombre'] ?></option>
                                 <?php endforeach; ?>
                             </select>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <label class="form-label fw-bold text-secondary small mb-0">Rango de Monto (Art. 10)</label>
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-0.5" id="badgeUtmEnVivo" style="font-size: 11px;">
-                                    <i class="bi bi-calculator me-1"></i>0.00 UTM (Auto)
-                                </span>
-                            </div>
-                            <select name="rango_utm_id" id="selRangoUtm" required class="form-select bg-light" style="pointer-events: none;" tabindex="-1">
-                                <option value="">-- Calculado automáticamente según monto --</option>
-                                <?php foreach($rangos_utm as $r): ?>
-                                    <option value="<?= $r['id'] ?>" <?= $post_rango_utm == $r['id'] ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($r['nombre']) ?> (<?= $r['min_utm'] ?> - <?= $r['max_utm'] ? $r['max_utm'].' UTM' : 'y más' ?>)
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                            <div class="small text-muted mt-1" id="infoUtmVigente" style="font-size: 11px;">
-                                <i class="bi bi-info-circle me-1"></i>UTM Vigente: <strong>$<?= number_format(VALOR_UTM, 0, ',', '.') ?> CLP</strong> (Sincronizado vía mindicador.cl)
-                            </div>
+                            <input type="hidden" name="rango_utm_id" id="selRangoUtm" value="<?= htmlspecialchars($post_rango_utm ?? '') ?>">
                         </div>
                         
                         <div class="col-12">
@@ -208,6 +189,16 @@ foreach($otros_proveedores as $p) {
                                             <span class="text-primary fw-bold">Total: <strong class="text-primary fs-6" id="dispPreviewTotal">$ 0</strong></span>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="mt-2.5 pt-2 border-top d-flex justify-content-between align-items-center flex-wrap gap-2 text-muted small" style="font-size: 11.5px;">
+                                    <span>
+                                        <i class="bi bi-diagram-3-fill text-primary me-1"></i>Tramo Art. 10 estimado: 
+                                        <strong class="text-primary" id="dispPreviewTramo">Bajo (0,00 - 3,00 UTM)</strong>
+                                    </span>
+                                    <span>
+                                        <i class="bi bi-calculator me-1"></i>Equivalente: 
+                                        <strong class="text-primary font-monospace" id="dispPreviewUtm">0.00 UTM</strong>
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -480,6 +471,34 @@ foreach($otros_proveedores as $p) {
                             </tfoot>
                         </table>
                     </div>
+
+                    <!-- INDICADOR INFORMATIVO DE SEGMENTACIÓN ART. 10 -->
+                    <div class="mt-3 p-3 bg-light border rounded-3 shadow-sm" id="boxRangoUtmInfo">
+                        <div class="d-flex align-items-center justify-content-between pb-2 border-bottom mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-diagram-3-fill text-primary fs-5"></i>
+                                <span class="fw-bold text-dark small">Segmentación de Compra (Art. 10 Ley 19.886)</span>
+                            </div>
+                            <span class="badge bg-primary text-white px-2.5 py-1 fw-bold font-monospace" id="lblUtmEnVivo" style="font-size: 12px;">
+                                0.00 UTM
+                            </span>
+                        </div>
+                        <div class="row g-2 align-items-center my-1">
+                            <div class="col-sm-6">
+                                <div class="small text-muted" style="font-size: 11px;">Tramo Normativo Asignado:</div>
+                                <div class="fw-bold text-primary fs-6" id="lblNombreRangoUtm">-- Calculando según monto --</div>
+                            </div>
+                            <div class="col-sm-6 text-sm-end">
+                                <div class="small text-muted" style="font-size: 11px;">Exigencia de Cotizaciones:</div>
+                                <span class="badge bg-secondary-subtle text-secondary border px-2 py-1" id="lblReglaCotizaciones">Sin mínimos</span>
+                            </div>
+                        </div>
+                        <div class="small text-muted mt-2 pt-2 border-top d-flex justify-content-between align-items-center" style="font-size: 11px;">
+                            <span><i class="bi bi-info-circle me-1"></i>UTM Vigente: <strong>$<?= number_format(VALOR_UTM, 0, ',', '.') ?> CLP</strong></span>
+                            <span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>Cálculo Automático</span>
+                        </div>
+                    </div>
+
                     <div id="errorTabla" class="alert alert-danger mt-3 d-none"></div>
                 </div>
             </div>
@@ -1224,10 +1243,36 @@ foreach($otros_proveedores as $p) {
             if (selRango && rangoAsignado) {
                 selRango.value = rangoAsignado.id;
             }
-            const badgeUtm = document.getElementById('badgeUtmEnVivo');
-            if (badgeUtm) {
-                const nombreRango = rangoAsignado ? escapeHTML(rangoAsignado.nombre) : 'Auto';
-                badgeUtm.innerHTML = `<i class="bi bi-calculator me-1"></i>${montoActualUtmGlobal.toFixed(2)} UTM (${nombreRango})`;
+
+            // Actualizar tarjeta informativa de Totales
+            const lblUtm = document.getElementById('lblUtmEnVivo');
+            const lblNombreRango = document.getElementById('lblNombreRangoUtm');
+            const lblRegla = document.getElementById('lblReglaCotizaciones');
+            
+            if (lblUtm) {
+                lblUtm.innerText = montoActualUtmGlobal.toFixed(2) + ' UTM';
+            }
+            if (lblNombreRango && rangoAsignado) {
+                const maxStr = (rangoAsignado.max_utm !== null && rangoAsignado.max_utm !== undefined && rangoAsignado.max_utm !== '') 
+                    ? rangoAsignado.max_utm + ' UTM' 
+                    : 'y más';
+                lblNombreRango.innerText = `${rangoAsignado.nombre} (${rangoAsignado.min_utm} - ${maxStr})`;
+            }
+            if (lblRegla && rangoAsignado) {
+                lblRegla.innerText = rangoAsignado.regla_cotizaciones || 'Sin regla especial';
+            }
+
+            // Actualizar preview en widget de Monto Disponible (Compra Ágil)
+            const dispTramo = document.getElementById('dispPreviewTramo');
+            const dispUtm = document.getElementById('dispPreviewUtm');
+            if (dispTramo && rangoAsignado) {
+                const maxStr = (rangoAsignado.max_utm !== null && rangoAsignado.max_utm !== undefined && rangoAsignado.max_utm !== '') 
+                    ? rangoAsignado.max_utm + ' UTM' 
+                    : 'y más';
+                dispTramo.innerText = `${rangoAsignado.nombre} (${rangoAsignado.min_utm} - ${maxStr})`;
+            }
+            if (dispUtm) {
+                dispUtm.innerText = montoActualUtmGlobal.toFixed(2) + ' UTM';
             }
 
             // VALIDACIÓN REACTIVA COMPRA ÁGIL (MÁXIMO 100 UTM EVALUADO POR EL TOTAL)

@@ -132,13 +132,11 @@ CREATE TABLE `rangos_utm` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `rangos_utm` (`id`, `nombre`, `min_utm`, `max_utm`, `regla_cotizaciones`, `activo`) VALUES
-(1, 'Menor', 0.00, 3.00, 'Sin mínimos', 1),
-(2, 'Bajo', 3.01, 10.00, 'Mínimo 1 Cotización', 1),
-(3, 'Intermedio', 10.01, 100.00, 'Mínimo 3 Cotizaciones', 1),
+(1, 'Bajo', 0.00, 3.00, 'Sin mínimos', 1),
+(3, 'Medio', 3.01, 100.00, NULL, 1),
 (4, 'Alto', 100.01, 1000.00, 'Licitación / Gran Compra', 1),
-(5, 'Muy Alto', 1000.01, 2000.00, 'Mayores exigencias', 1),
-(6, 'Estratégico', 2000.01, 5000.00, 'Aprobación Concejo posible', 1),
-(7, 'Sin Limite', 5000.01, 999999.00, 'Sin Límite', 1);
+(5, 'Muy alto', 1000.01, 5000.00, 'Mayores exigencias', 1),
+(6, 'Sin límite', 5000.01, NULL, 'Aprobación Concejo posible', 1);
 
 -- --------------------------------------------------------
 
