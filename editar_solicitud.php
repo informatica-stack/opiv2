@@ -1200,8 +1200,8 @@ foreach($otros_proveedores as $p) {
             document.getElementById('tdIva').innerText = formatter.format(totalIva);
             document.getElementById('tdTotal').innerText = formatter.format(totalBruto);
 
-            // CÁLCULO DE UTM Y ASIGNACIÓN AUTOMÁTICA DEL RANGO (Art. 10)
-            const montoEvaluarUtm = (currentRegimenImpuesto === 'EXENTO') ? totalBruto : totalNeto;
+            // CÁLCULO DE UTM Y ASIGNACIÓN AUTOMÁTICA DEL RANGO (Art. 10) (EVALUADO POR EL TOTAL)
+            const montoEvaluarUtm = totalBruto;
             montoActualUtmGlobal = (typeof valorUtmVigente !== 'undefined' && valorUtmVigente > 0) ? (montoEvaluarUtm / valorUtmVigente) : 0;
 
             let rangoAsignado = null;
@@ -1230,7 +1230,7 @@ foreach($otros_proveedores as $p) {
                 badgeUtm.innerHTML = `<i class="bi bi-calculator me-1"></i>${montoActualUtmGlobal.toFixed(2)} UTM (${nombreRango})`;
             }
 
-            // VALIDACIÓN REACTIVA COMPRA ÁGIL (MÁXIMO 100 UTM)
+            // VALIDACIÓN REACTIVA COMPRA ÁGIL (MÁXIMO 100 UTM EVALUADO POR EL TOTAL)
             const selectTC = document.getElementById('selTipoCompra');
             const tcId = selectTC ? selectTC.value : '';
             const tcCodigo = mapaTiposCompra[tcId] || '';
@@ -1247,7 +1247,7 @@ foreach($otros_proveedores as $p) {
                     alertaAgil.classList.remove('d-none');
                     const topePesos = formatter.format(Math.round(topeAgilUtm * valorUtmVigente));
                     if (txtAlerta) {
-                        txtAlerta.innerHTML = `El monto estimado de <strong>${formatter.format(montoEvaluarUtm)} CLP (${montoActualUtmGlobal.toFixed(2)} UTM)</strong> excede el tope legal de <strong>100 UTM (${topePesos})</strong> para Compra Ágil (Art. 10 bis Ley 19.886).`;
+                        txtAlerta.innerHTML = `El monto total estimado de <strong>${formatter.format(montoEvaluarUtm)} CLP (${montoActualUtmGlobal.toFixed(2)} UTM)</strong> excede el tope legal de <strong>100 UTM (${topePesos})</strong> para Compra Ágil (Art. 10 bis Ley 19.886).`;
                     }
                     if (inpMontoCot) inpMontoCot.classList.add('is-invalid', 'border-danger');
                 } else {

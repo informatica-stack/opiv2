@@ -285,8 +285,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
             }
         }
 
-        // CÁLCULO DE UTM Y VALIDACIÓN SEGÚN LEY DE COMPRAS PÚBLICAS
-        $monto_evaluar_utm = ($post_tipo_impuesto === 'EXENTO') ? $total_est_bruto : $subtotal_neto;
+        // CÁLCULO DE UTM Y VALIDACIÓN SEGÚN LEY DE COMPRAS PÚBLICAS (EVALUADO POR EL TOTAL)
+        $monto_evaluar_utm = $total_est_bruto;
         $monto_calculado_utm = VALOR_UTM > 0 ? round($monto_evaluar_utm / VALOR_UTM, 2) : 0;
 
         // VALIDACIÓN: COMPRA ÁGIL NO PUEDE EXCEDER 100 UTM (Art. 10 bis Ley 19.886)
@@ -294,7 +294,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
             if ($monto_calculado_utm > 100.00) {
                 $limite_pesos = number_format(round(100 * VALOR_UTM), 0, ',', '.');
                 $monto_format = number_format($monto_evaluar_utm, 0, ',', '.');
-                throw new Exception("El monto ingresado ($" . $monto_format . " CLP / " . $monto_calculado_utm . " UTM) excede el límite legal de 100 UTM ($" . $limite_pesos . " CLP) permitido para Compra Ágil (Art. 10 bis Ley 19.886). Debe seleccionar Licitación Pública u otra modalidad correspondiente.");
+                throw new Exception("El monto total estimado ($" . $monto_format . " CLP / " . $monto_calculado_utm . " UTM) excede el límite legal de 100 UTM ($" . $limite_pesos . " CLP) permitido para Compra Ágil (Art. 10 bis Ley 19.886). Debe seleccionar Licitación Pública u otra modalidad correspondiente.");
             }
         }
 
