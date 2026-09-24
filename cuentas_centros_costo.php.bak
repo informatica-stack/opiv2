@@ -11,25 +11,9 @@ include __DIR__ . '/head.php';
     <div class="saas-container">
 
         <!-- ============================================================== -->
-        <!-- BREADCRUMBS SAAS                                               -->
-        <!-- ============================================================== -->
-        <nav class="saas-breadcrumb mb-3" aria-label="breadcrumb">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="index.php" class="text-decoration-none">Inicio</a></li>
-                <li class="breadcrumb-item"><a href="control_presupuestario.php" class="text-decoration-none">Control Presupuestario</a></li>
-                <?php if ($tab === 'detalle_centro' && $centro_actual): ?>
-                    <li class="breadcrumb-item"><a href="cuentas_centros_costo.php?tab=centros" class="text-decoration-none">Cuentas y Centros de Costo</a></li>
-                    <li class="breadcrumb-item active" aria-current="page"><?= htmlspecialchars($centro_actual['codigo_cuenta']) ?> - <?= htmlspecialchars($centro_actual['nombre']) ?></li>
-                <?php else: ?>
-                    <li class="breadcrumb-item active" aria-current="page">Cuentas y Centros de Costo</li>
-                <?php endif; ?>
-            </ol>
-        </nav>
-
-        <!-- ============================================================== -->
         <!-- CABECERA PRINCIPAL DEL MÓDULO                                   -->
         <!-- ============================================================== -->
-        <div class="module-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div class="module-header d-flex flex-wrap justify-content-between align-items-center gap-3">
             <div>
                 <div class="module-title">
                     <i class="bi bi-wallet2 text-primary"></i>
@@ -42,15 +26,12 @@ include __DIR__ . '/head.php';
             <div class="d-flex align-items-center gap-2">
                 <?php if ($tab === 'detalle_centro'): ?>
                     <a href="cuentas_centros_costo.php?tab=centros" class="btn btn-outline-secondary btn-sm px-3">
-                        <i class="bi bi-arrow-left me-1"></i> Volver a Centros
+                        <i class="bi bi-arrow-left me-1"></i> Volver a Centros de Costo
                     </a>
                     <button class="btn btn-primary btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAsignarCuenta">
-                        <i class="bi bi-plus-circle me-1"></i> Asignar / Crear Cuenta
+                        <i class="bi bi-plus-circle me-1"></i> Asignar Cuenta a este Centro
                     </button>
                 <?php elseif ($tab === 'cuentas'): ?>
-                    <button class="btn btn-outline-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#modalAsignacionMasiva">
-                        <i class="bi bi-distribute-vertical me-1"></i> Asignación Masiva
-                    </button>
                     <button class="btn btn-primary btn-sm px-3 shadow-sm" onclick="abrirModalCuenta()">
                         <i class="bi bi-plus-circle me-1"></i> Nueva Cuenta Maestra
                     </button>
@@ -59,9 +40,6 @@ include __DIR__ . '/head.php';
                         <i class="bi bi-plus-circle me-1"></i> Nueva Área de Gestión
                     </button>
                 <?php else: ?>
-                    <button class="btn btn-outline-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#modalAsignacionMasiva">
-                        <i class="bi bi-distribute-vertical me-1"></i> Asignación Masiva
-                    </button>
                     <button class="btn btn-primary btn-sm px-3 shadow-sm" onclick="abrirModalCC()">
                         <i class="bi bi-plus-circle me-1"></i> Nuevo Centro de Costo
                     </button>
@@ -81,55 +59,55 @@ include __DIR__ . '/head.php';
         <?php endif; ?>
 
         <!-- ============================================================== -->
-        <!-- TARJETAS DE MÉTRICAS KPI (INTERACTIVAS)                         -->
+        <!-- TARJETAS DE MÉTRICAS KPI                                       -->
         <!-- ============================================================== -->
-        <div class="metrics-grid mb-4">
-            <a href="cuentas_centros_costo.php?tab=centros" class="metric-card text-decoration-none <?= $tab === 'centros' ? 'active-metric' : '' ?>" title="Ver listado de centros de costo">
-                <div class="metric-icon primary"><i class="bi bi-building"></i></div>
-                <div class="metric-content">
-                    <div class="metric-label">Centros de Costo Activos</div>
-                    <div class="metric-value tabular-nums"><?= number_format($kpi_centros) ?></div>
+        <div class="kpi-grid mb-4">
+            <div class="kpi-card">
+                <div class="kpi-icon primary"><i class="bi bi-building"></i></div>
+                <div>
+                    <div class="kpi-label">Centros de Costo Activos</div>
+                    <div class="kpi-value tabular-nums"><?= number_format($kpi_centros) ?></div>
                 </div>
-            </a>
-            <a href="cuentas_centros_costo.php?tab=cuentas&tipo=PRESUPUESTARIA" class="metric-card text-decoration-none" title="Ver cuentas presupuestarias">
-                <div class="metric-icon info"><i class="bi bi-journal-bookmark-fill"></i></div>
-                <div class="metric-content">
-                    <div class="metric-label">Cuentas Presupuestarias</div>
-                    <div class="metric-value tabular-nums"><?= number_format($kpi_cuentas_presup) ?></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon info"><i class="bi bi-journal-bookmark-fill"></i></div>
+                <div>
+                    <div class="kpi-label">Cuentas Presupuestarias</div>
+                    <div class="kpi-value tabular-nums"><?= number_format($kpi_cuentas_presup) ?></div>
                 </div>
-            </a>
-            <a href="cuentas_centros_costo.php?tab=cuentas&tipo=COMPLEMENTARIA" class="metric-card text-decoration-none" title="Ver cuentas complementarias">
-                <div class="metric-icon warning"><i class="bi bi-bookmark-star-fill"></i></div>
-                <div class="metric-content">
-                    <div class="metric-label">Cuentas Complementarias</div>
-                    <div class="metric-value tabular-nums"><?= number_format($kpi_cuentas_complem) ?></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon warning"><i class="bi bi-bookmark-star-fill"></i></div>
+                <div>
+                    <div class="kpi-label">Cuentas Complementarias</div>
+                    <div class="kpi-value tabular-nums"><?= number_format($kpi_cuentas_complem) ?></div>
                 </div>
-            </a>
-            <a href="cuentas_centros_costo.php?tab=areas" class="metric-card text-decoration-none <?= $tab === 'areas' ? 'active-metric' : '' ?>" title="Ver áreas de gestión">
-                <div class="metric-icon success"><i class="bi bi-diagram-3-fill"></i></div>
-                <div class="metric-content">
-                    <div class="metric-label">Áreas de Gestión</div>
-                    <div class="metric-value tabular-nums"><?= number_format($kpi_areas) ?></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon success"><i class="bi bi-diagram-3-fill"></i></div>
+                <div>
+                    <div class="kpi-label">Áreas de Gestión</div>
+                    <div class="kpi-value tabular-nums"><?= number_format($kpi_areas) ?></div>
                 </div>
-            </a>
+            </div>
         </div>
 
         <!-- ============================================================== -->
         <!-- PESTAÑAS DE NAVEGACIÓN SAAS                                    -->
         <!-- ============================================================== -->
         <?php if ($tab !== 'detalle_centro'): ?>
-            <div class="saas-tab-nav mb-4">
-                <a href="cuentas_centros_costo.php?tab=centros" class="saas-tab-item <?= $tab === 'centros' ? 'active' : '' ?>">
+            <div class="d-flex align-items-center gap-2 border-bottom mb-4 pb-1">
+                <a href="cuentas_centros_costo.php?tab=centros" class="btn btn-sm <?= $tab === 'centros' ? 'btn-primary shadow-sm' : 'btn-ghost text-secondary' ?> rounded-pill px-3 py-1.5 fw-semibold d-flex align-items-center gap-1.5">
                     <i class="bi bi-building"></i> Centros de Costo
-                    <span class="saas-tab-badge"><?= count($centros) ?></span>
+                    <span class="badge <?= $tab === 'centros' ? 'bg-white text-primary' : 'bg-secondary-subtle text-secondary' ?> rounded-pill ms-1"><?= count($centros) ?></span>
                 </a>
-                <a href="cuentas_centros_costo.php?tab=cuentas" class="saas-tab-item <?= $tab === 'cuentas' ? 'active' : '' ?>">
+                <a href="cuentas_centros_costo.php?tab=cuentas" class="btn btn-sm <?= $tab === 'cuentas' ? 'btn-primary shadow-sm' : 'btn-ghost text-secondary' ?> rounded-pill px-3 py-1.5 fw-semibold d-flex align-items-center gap-1.5">
                     <i class="bi bi-list-columns-reverse"></i> Catálogo de Cuentas
-                    <span class="saas-tab-badge"><?= count($cuentas) ?></span>
+                    <span class="badge <?= $tab === 'cuentas' ? 'bg-white text-primary' : 'bg-secondary-subtle text-secondary' ?> rounded-pill ms-1"><?= count($cuentas) ?></span>
                 </a>
-                <a href="cuentas_centros_costo.php?tab=areas" class="saas-tab-item <?= $tab === 'areas' ? 'active' : '' ?>">
+                <a href="cuentas_centros_costo.php?tab=areas" class="btn btn-sm <?= $tab === 'areas' ? 'btn-primary shadow-sm' : 'btn-ghost text-secondary' ?> rounded-pill px-3 py-1.5 fw-semibold d-flex align-items-center gap-1.5">
                     <i class="bi bi-diagram-3"></i> Áreas de Gestión
-                    <span class="saas-tab-badge"><?= count($areas) ?></span>
+                    <span class="badge <?= $tab === 'areas' ? 'bg-white text-primary' : 'bg-secondary-subtle text-secondary' ?> rounded-pill ms-1"><?= count($areas) ?></span>
                 </a>
             </div>
         <?php endif; ?>
@@ -138,9 +116,9 @@ include __DIR__ . '/head.php';
         <!-- VISTA 1: LISTADO DE CENTROS DE COSTO                           -->
         <!-- ============================================================== -->
         <?php if ($tab === 'centros'): ?>
-            <div class="saas-panel">
-                <div class="saas-panel-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-                    <div class="saas-panel-title d-flex align-items-center gap-2">
+            <div class="panel-card">
+                <div class="panel-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div class="panel-title d-flex align-items-center gap-2">
                         <i class="bi bi-building text-primary"></i>
                         <span>Centros de Costo Municipales</span>
                     </div>
@@ -152,8 +130,8 @@ include __DIR__ . '/head.php';
                     </div>
                 </div>
                 
-                <div class="table-responsive-saas">
-                    <table class="saas-table align-middle" id="tablaCentros">
+                <div class="table-responsive">
+                    <table class="table-saas align-middle" id="tablaCentros">
                         <thead>
                             <tr>
                                 <th style="width: 120px;">Código</th>
@@ -215,7 +193,6 @@ include __DIR__ . '/head.php';
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
                                                 <form method="POST" class="d-inline" onsubmit="return confirm('¿Alternar estado activo/inactivo para este Centro de Costo?');">
-                                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                                     <input type="hidden" name="accion" value="toggle_cc">
                                                     <input type="hidden" name="id" value="<?= $c['id'] ?>">
                                                     <button type="submit" class="btn btn-ghost btn-sm <?= $c['activo'] ? 'text-warning' : 'text-success' ?>" title="<?= $c['activo'] ? 'Desactivar' : 'Activar' ?>">
@@ -224,7 +201,6 @@ include __DIR__ . '/head.php';
                                                 </form>
                                                 <?php if ($c['total_cuentas_asig'] == 0 && $c['total_items_compra'] == 0): ?>
                                                     <form method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar permanentemente este Centro de Costo?');">
-                                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                                         <input type="hidden" name="accion" value="eliminar_cc">
                                                         <input type="hidden" name="id" value="<?= $c['id'] ?>">
                                                         <button type="submit" class="btn btn-ghost btn-sm text-danger" title="Eliminar Centro">
@@ -247,40 +223,42 @@ include __DIR__ . '/head.php';
         <!-- ============================================================== -->
         <?php elseif ($tab === 'detalle_centro' && $centro_actual): ?>
             
-            <div class="saas-panel p-4 mb-4">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="bg-primary-subtle text-primary rounded-3 p-3 d-flex align-items-center justify-content-center" style="width: 52px; height: 52px;">
-                            <i class="bi bi-building fs-3"></i>
-                        </div>
-                        <div>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="badge bg-secondary-subtle text-secondary border fw-bold px-2 py-1 tabular-nums">
-                                    <?= htmlspecialchars($centro_actual['codigo_cuenta']) ?>
-                                </span>
-                                <h5 class="fw-bold mb-0 text-dark"><?= htmlspecialchars($centro_actual['nombre']) ?></h5>
-                                <?php if ($centro_actual['activo']): ?>
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle">Activo</span>
-                                <?php else: ?>
-                                    <span class="badge bg-secondary-subtle text-secondary border">Inactivo</span>
-                                <?php endif; ?>
+            <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+                <div class="card-body p-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-primary-subtle text-primary rounded-3 p-3 d-flex align-items-center justify-content-center" style="width: 52px; height: 52px;">
+                                <i class="bi bi-building fs-3"></i>
                             </div>
-                            <div class="text-muted small mt-1">
-                                <i class="bi bi-calendar3 me-1"></i> Año Fiscal: <b><?= htmlspecialchars($centro_actual['anio_fiscal']) ?></b> &bull; Total Asignaciones: <b><?= count($asignaciones_centro) ?></b> cuentas habilitadas
+                            <div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-secondary-subtle text-secondary border fw-bold px-2 py-1 tabular-nums">
+                                        <?= htmlspecialchars($centro_actual['codigo_cuenta']) ?>
+                                    </span>
+                                    <h5 class="fw-bold mb-0 text-dark"><?= htmlspecialchars($centro_actual['nombre']) ?></h5>
+                                    <?php if ($centro_actual['activo']): ?>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle">Activo</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-secondary-subtle text-secondary border">Inactivo</span>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="text-muted small mt-1">
+                                    <i class="bi bi-calendar3 me-1"></i> Año Fiscal: <b><?= htmlspecialchars($centro_actual['anio_fiscal']) ?></b> &bull; Total Asignaciones: <b><?= count($asignaciones_centro) ?></b> cuentas habilitadas
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-primary btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAsignarCuenta">
-                            <i class="bi bi-plus-lg me-1"></i> Asignar / Crear Cuenta
-                        </button>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAsignarCuenta">
+                                <i class="bi bi-plus-lg me-1"></i> Vincular Cuenta al Centro
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="saas-panel">
-                <div class="saas-panel-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-                    <div class="saas-panel-title d-flex align-items-center gap-2">
+            <div class="panel-card">
+                <div class="panel-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div class="panel-title d-flex align-items-center gap-2">
                         <i class="bi bi-link-45deg text-primary"></i>
                         <span>Cuentas Presupuestarias y Áreas de Gestión Habilitadas</span>
                     </div>
@@ -289,8 +267,8 @@ include __DIR__ . '/head.php';
                     </div>
                 </div>
 
-                <div class="table-responsive-saas">
-                    <table class="saas-table align-middle">
+                <div class="table-responsive">
+                    <table class="table-saas align-middle">
                         <thead>
                             <tr>
                                 <th style="width: 170px;">Código Cuenta</th>
@@ -347,7 +325,6 @@ include __DIR__ . '/head.php';
                                         <td class="text-end">
                                             <?php if ($asig['items_usados'] == 0): ?>
                                                 <form method="POST" class="d-inline" onsubmit="return confirm('¿Desvincular esta cuenta de este Centro de Costo?');">
-                                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                                     <input type="hidden" name="accion" value="eliminar_asignacion">
                                                     <input type="hidden" name="asignacion_id" value="<?= $asig['asignacion_id'] ?>">
                                                     <input type="hidden" name="centro_costo_id" value="<?= $centro_actual['id'] ?>">
@@ -373,9 +350,9 @@ include __DIR__ . '/head.php';
         <!-- VISTA 2: CATÁLOGO MAESTRO DE CUENTAS                           -->
         <!-- ============================================================== -->
         <?php elseif ($tab === 'cuentas'): ?>
-            <div class="saas-panel">
-                <div class="saas-panel-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-                    <div class="saas-panel-title d-flex align-items-center gap-2">
+            <div class="panel-card">
+                <div class="panel-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div class="panel-title d-flex align-items-center gap-2">
                         <i class="bi bi-list-columns-reverse text-primary"></i>
                         <span>Catálogo Global de Cuentas</span>
                     </div>
@@ -392,8 +369,8 @@ include __DIR__ . '/head.php';
                     </div>
                 </div>
 
-                <div class="table-responsive-saas">
-                    <table class="saas-table align-middle" id="tablaCuentas">
+                <div class="table-responsive">
+                    <table class="table-saas align-middle" id="tablaCuentas">
                         <thead>
                             <tr>
                                 <th style="width: 180px;">Código Cuenta</th>
@@ -458,7 +435,6 @@ include __DIR__ . '/head.php';
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
                                                 <form method="POST" class="d-inline" onsubmit="return confirm('¿Alternar estado de esta cuenta?');">
-                                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                                     <input type="hidden" name="accion" value="toggle_cuenta">
                                                     <input type="hidden" name="id" value="<?= $c['id'] ?>">
                                                     <button type="submit" class="btn btn-ghost btn-sm <?= $c['activo'] ? 'text-warning' : 'text-success' ?>" title="<?= $c['activo'] ? 'Desactivar' : 'Activar' ?>">
@@ -467,7 +443,6 @@ include __DIR__ . '/head.php';
                                                 </form>
                                                 <?php if ($c['total_centros_asig'] == 0 && $c['total_items_compra'] == 0): ?>
                                                     <form method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar permanentemente esta cuenta del catálogo?');">
-                                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                                         <input type="hidden" name="accion" value="eliminar_cuenta">
                                                         <input type="hidden" name="id" value="<?= $c['id'] ?>">
                                                         <button type="submit" class="btn btn-ghost btn-sm text-danger" title="Eliminar Cuenta">
@@ -489,9 +464,9 @@ include __DIR__ . '/head.php';
         <!-- VISTA 3: MANTENEDOR DE ÁREAS DE GESTIÓN                        -->
         <!-- ============================================================== -->
         <?php elseif ($tab === 'areas'): ?>
-            <div class="saas-panel">
-                <div class="saas-panel-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-                    <div class="saas-panel-title d-flex align-items-center gap-2">
+            <div class="panel-card">
+                <div class="panel-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div class="panel-title d-flex align-items-center gap-2">
                         <i class="bi bi-diagram-3 text-primary"></i>
                         <span>Catálogo de Áreas de Gestión</span>
                     </div>
@@ -503,8 +478,8 @@ include __DIR__ . '/head.php';
                     </div>
                 </div>
 
-                <div class="table-responsive-saas">
-                    <table class="saas-table align-middle" id="tablaAreas">
+                <div class="table-responsive">
+                    <table class="table-saas align-middle" id="tablaAreas">
                         <thead>
                             <tr>
                                 <th style="width: 140px;">Código</th>
@@ -557,7 +532,6 @@ include __DIR__ . '/head.php';
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
                                                 <form method="POST" class="d-inline" onsubmit="return confirm('¿Alternar estado de esta Área de Gestión?');">
-                                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                                     <input type="hidden" name="accion" value="toggle_area">
                                                     <input type="hidden" name="id" value="<?= $a['id'] ?>">
                                                     <button type="submit" class="btn btn-ghost btn-sm <?= $a['activo'] ? 'text-warning' : 'text-success' ?>" title="<?= $a['activo'] ? 'Desactivar' : 'Activar' ?>">
@@ -566,7 +540,6 @@ include __DIR__ . '/head.php';
                                                 </form>
                                                 <?php if ($a['total_asignaciones'] == 0 && $a['total_items_compra'] == 0): ?>
                                                     <form method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar permanentemente esta Área de Gestión?');">
-                                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                                         <input type="hidden" name="accion" value="eliminar_area">
                                                         <input type="hidden" name="id" value="<?= $a['id'] ?>">
                                                         <button type="submit" class="btn btn-ghost btn-sm text-danger" title="Eliminar Área">
@@ -595,7 +568,6 @@ include __DIR__ . '/head.php';
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 border-0 shadow-lg">
                 <form method="POST">
-                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                     <input type="hidden" name="accion" value="guardar_cc">
                     <input type="hidden" name="id" id="cc_id">
                     
@@ -640,141 +612,61 @@ include __DIR__ . '/head.php';
     </div>
 
     <!-- ============================================================== -->
-    <!-- MODAL: ASIGNAR / CREAR CUENTA DIRECTAMENTE EN EL CENTRO        -->
+    <!-- MODAL: ASIGNAR CUENTA A CENTRO DE COSTO                        -->
     <!-- ============================================================== -->
     <?php if ($tab === 'detalle_centro' && $centro_actual): ?>
     <div class="modal fade" id="modalAsignarCuenta" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 border-0 shadow-lg">
-                <div class="modal-header border-bottom py-3 px-4">
-                    <div>
-                        <h6 class="modal-title fw-bold text-dark d-flex align-items-center gap-2 mb-1">
-                            <i class="bi bi-wallet2 text-primary"></i>
-                            <span>Habilitar Cuenta en <?= htmlspecialchars($centro_actual['nombre']) ?></span>
+                <form method="POST">
+                    <input type="hidden" name="accion" value="asignar_cuenta">
+                    <input type="hidden" name="centro_costo_id" value="<?= $centro_actual['id'] ?>">
+                    
+                    <div class="modal-header border-bottom py-3 px-4">
+                        <h6 class="modal-title fw-bold text-dark d-flex align-items-center gap-2">
+                            <i class="bi bi-link-45deg text-primary"></i>
+                            <span>Vincular Cuenta al Centro de Costo</span>
                         </h6>
-                        <div class="text-muted small">
-                            Centro de Costo <b><?= htmlspecialchars($centro_actual['codigo_cuenta']) ?></b> (Año <?= htmlspecialchars($centro_actual['anio_fiscal']) ?>)
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Centro de Costo Destino</label>
+                            <input type="text" class="form-control bg-light" value="<?= htmlspecialchars($centro_actual['codigo_cuenta']) ?> - <?= htmlspecialchars($centro_actual['nombre']) ?>" readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Seleccionar Cuenta Maestra <span class="text-danger">*</span></label>
+                            <select name="cuenta_maestra_id" class="form-select" required>
+                                <option value="">-- Seleccionar Cuenta --</option>
+                                <?php foreach ($catalogo_cuentas_activas as $cta): ?>
+                                    <option value="<?= $cta['id'] ?>">
+                                        [<?= $cta['tipo_cuenta'] === 'COMPLEMENTARIA' ? 'COMPLEMENTARIA' : 'PRESUPUESTARIA' ?>] <?= htmlspecialchars($cta['codigo']) ?> - <?= htmlspecialchars($cta['nombre']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Área de Gestión (AG)</label>
+                            <select name="area_gestion_id" class="form-select">
+                                <option value="">-- Sin Imputación de Área / Ninguna --</option>
+                                <?php foreach ($catalogo_areas_activas as $ag): ?>
+                                    <option value="<?= $ag['id'] ?>">
+                                        <?= htmlspecialchars($ag['codigo']) ?> - <?= htmlspecialchars($ag['nombre']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="form-text small">Clasificación de destino (Gestión Interna, Servicios Comunitarios, etc.).</div>
                         </div>
                     </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-
-                <!-- Pestañas internas del Modal -->
-                <ul class="nav nav-tabs px-4 pt-2 border-bottom bg-light-subtle" id="tabModalAsignar" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active fw-semibold small py-2 px-3" id="tab-existente-btn" data-bs-toggle="tab" data-bs-target="#tab-existente" type="button" role="tab">
-                            <i class="bi bi-link-45deg me-1"></i> Vincular Cuenta Existente
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link fw-semibold small py-2 px-3 text-primary" id="tab-crear-btn" data-bs-toggle="tab" data-bs-target="#tab-crear" type="button" role="tab">
-                            <i class="bi bi-plus-circle-fill me-1"></i> Crear Nueva y Vincular (Rápido)
-                        </button>
-                    </li>
-                </ul>
-
-                <div class="tab-content">
-                    <!-- SUB-TAB 1: VINCULAR CUENTA EXISTENTE -->
-                    <div class="tab-pane fade show active" id="tab-existente" role="tabpanel">
-                        <form method="POST">
-                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                            <input type="hidden" name="accion" value="asignar_cuenta">
-                            <input type="hidden" name="centro_costo_id" value="<?= $centro_actual['id'] ?>">
-
-                            <div class="modal-body p-4">
-                                <div class="mb-3">
-                                    <label class="form-label small fw-bold text-dark">Buscar y Seleccionar Cuenta Maestra <span class="text-danger">*</span></label>
-                                    <div class="input-group input-group-sm mb-2">
-                                        <span class="input-group-text bg-white text-muted"><i class="bi bi-search"></i></span>
-                                        <input type="text" id="filtroSelectCuenta" class="form-control" placeholder="Escriba código o nombre para filtrar opciones...">
-                                    </div>
-                                    <select name="cuenta_maestra_id" id="selectCuentaMaestra" class="form-select" size="6" required>
-                                        <?php foreach ($catalogo_cuentas_activas as $cta): ?>
-                                            <option value="<?= $cta['id'] ?>">
-                                                [<?= $cta['tipo_cuenta'] === 'COMPLEMENTARIA' ? 'COMPLEMENTARIA' : 'PRESUPUESTARIA' ?>] <?= htmlspecialchars($cta['codigo']) ?> - <?= htmlspecialchars($cta['nombre']) ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <div class="form-text small">Haga clic en la cuenta deseada del catálogo.</div>
-                                </div>
-
-                                <div class="mb-2">
-                                    <label class="form-label small fw-bold text-dark">Área de Gestión (AG)</label>
-                                    <select name="area_gestion_id" class="form-select">
-                                        <option value="">-- Sin Imputación de Área / Ninguna --</option>
-                                        <?php foreach ($catalogo_areas_activas as $ag): ?>
-                                            <option value="<?= $ag['id'] ?>">
-                                                <?= htmlspecialchars($ag['codigo']) ?> - <?= htmlspecialchars($ag['nombre']) ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <div class="form-text small">Clasificación presupuestaria de destino.</div>
-                                </div>
-                            </div>
-
-                            <div class="modal-footer bg-light border-top py-2.5 px-4">
-                                <button type="button" class="btn btn-ghost btn-sm px-3" data-bs-dismiss="modal">Cancelar</button>
-                                <button type="submit" class="btn btn-primary btn-sm px-4 fw-bold">
-                                    <i class="bi bi-link-45deg me-1"></i> Vincular Cuenta Existente
-                                </button>
-                            </div>
-                        </form>
+                    
+                    <div class="modal-footer bg-light border-top py-2.5 px-4">
+                        <button type="button" class="btn btn-ghost btn-sm px-3" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary btn-sm px-4 fw-bold">Vincular Cuenta</button>
                     </div>
-
-                    <!-- SUB-TAB 2: CREACIÓN IN-SITU Y ASIGNACIÓN DIRECTA -->
-                    <div class="tab-pane fade" id="tab-crear" role="tabpanel">
-                        <form method="POST">
-                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                            <input type="hidden" name="accion" value="crear_y_asignar_cuenta">
-                            <input type="hidden" name="centro_costo_id" value="<?= $centro_actual['id'] ?>">
-
-                            <div class="modal-body p-4">
-                                <div class="alert alert-info border-0 shadow-sm d-flex align-items-start gap-2 mb-3 py-2 px-3 small">
-                                    <i class="bi bi-info-circle-fill text-info fs-6 mt-0.5"></i>
-                                    <div>
-                                        <b>Creación Rápida e Integrada:</b> La nueva cuenta se guardará en el catálogo global de cuentas y quedará inmediatamente vinculada a este Centro de Costo en un solo paso.
-                                    </div>
-                                </div>
-
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold text-dark">Código de la Cuenta <span class="text-danger">*</span></label>
-                                        <input type="text" name="codigo" class="form-control font-monospace" placeholder="Ej: 2152204001001" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold text-dark">Tipo de Cuenta <span class="text-danger">*</span></label>
-                                        <select name="tipo_cuenta" class="form-select fw-semibold" required>
-                                            <option value="PRESUPUESTARIA">Presupuestaria (Municipal)</option>
-                                            <option value="COMPLEMENTARIA">Complementaria (Fondos Ext.)</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label small fw-bold text-dark">Nombre / Descripción de la Cuenta <span class="text-danger">*</span></label>
-                                        <input type="text" name="nombre" class="form-control" placeholder="Ej: Adquisición de Equipos Computacionales" required>
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label small fw-bold text-dark">Área de Gestión (AG)</label>
-                                        <select name="area_gestion_id" class="form-select">
-                                            <option value="">-- Sin Imputación de Área / Ninguna --</option>
-                                            <?php foreach ($catalogo_areas_activas as $ag): ?>
-                                                <option value="<?= $ag['id'] ?>">
-                                                    <?= htmlspecialchars($ag['codigo']) ?> - <?= htmlspecialchars($ag['nombre']) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="modal-footer bg-light border-top py-2.5 px-4">
-                                <button type="button" class="btn btn-ghost btn-sm px-3" data-bs-dismiss="modal">Cancelar</button>
-                                <button type="submit" class="btn btn-success btn-sm px-4 fw-bold">
-                                    <i class="bi bi-check2-circle me-1"></i> Crear y Vincular Directamente
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                </form>
             </div>
         </div>
     </div>
@@ -784,10 +676,9 @@ include __DIR__ . '/head.php';
     <!-- MODAL: CREAR / EDITAR CUENTA MAESTRA                           -->
     <!-- ============================================================== -->
     <div class="modal fade" id="modalCuenta" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 border-0 shadow-lg">
                 <form method="POST">
-                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                     <input type="hidden" name="accion" value="guardar_cuenta">
                     <input type="hidden" name="id" id="cta_id">
                     
@@ -822,45 +713,6 @@ include __DIR__ . '/head.php';
                                     <label class="form-check-label small fw-semibold text-dark" for="cta_activo">Cuenta Activa en Catálogo</label>
                                 </div>
                             </div>
-
-                            <!-- Distribución Inmediata en Centros de Costo (Visible al Crear) -->
-                            <div class="col-12" id="cta_distribucion_wrap">
-                                <div class="border rounded-3 p-3 bg-light-subtle">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <label class="form-label small fw-bold text-dark mb-0">
-                                            <i class="bi bi-diagram-2 text-primary me-1"></i> Asignar Inmediatamente a Centros de Costo (Opcional)
-                                        </label>
-                                        <div class="btn-group btn-group-sm">
-                                            <button type="button" class="btn btn-outline-secondary py-0 px-2" style="font-size: 0.75rem;" onclick="marcarTodosCC(true)">Todos</button>
-                                            <button type="button" class="btn btn-outline-secondary py-0 px-2" style="font-size: 0.75rem;" onclick="marcarTodosCC(false)">Ninguno</button>
-                                        </div>
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label small text-muted mb-1">Área de Gestión para esta vinculación:</label>
-                                        <select name="area_gestion_id" class="form-select form-select-sm">
-                                            <option value="">-- Sin Imputación de Área / Ninguna --</option>
-                                            <?php foreach ($catalogo_areas_activas as $ag): ?>
-                                                <option value="<?= $ag['id'] ?>"><?= htmlspecialchars($ag['codigo']) ?> - <?= htmlspecialchars($ag['nombre']) ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                    <div class="border rounded bg-white p-2" style="max-height: 160px; overflow-y: auto;">
-                                        <div class="row g-2">
-                                            <?php foreach ($catalogo_centros_activos as $cc_act): ?>
-                                                <div class="col-md-6">
-                                                    <div class="form-check form-check-sm">
-                                                        <input class="form-check-input check-cc-modal" type="checkbox" name="centros_costo_ids[]" value="<?= $cc_act['id'] ?>" id="cc_chk_<?= $cc_act['id'] ?>">
-                                                        <label class="form-check-label small" for="cc_chk_<?= $cc_act['id'] ?>">
-                                                            <b><?= htmlspecialchars($cc_act['codigo_cuenta']) ?></b> - <?= htmlspecialchars($cc_act['nombre']) ?>
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    </div>
-                                    <div class="form-text small mt-1">Marque los centros donde desea habilitar esta cuenta automáticamente al crearla.</div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                     
@@ -874,92 +726,12 @@ include __DIR__ . '/head.php';
     </div>
 
     <!-- ============================================================== -->
-    <!-- MODAL: ASIGNACIÓN MASIVA (1 CUENTA -> MÚLTIPLES CENTROS)       -->
-    <!-- ============================================================== -->
-    <div class="modal fade" id="modalAsignacionMasiva" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content rounded-4 border-0 shadow-lg">
-                <form method="POST">
-                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
-                    <input type="hidden" name="accion" value="asignacion_masiva">
-                    
-                    <div class="modal-header border-bottom py-3 px-4">
-                        <div>
-                            <h6 class="modal-title fw-bold text-dark d-flex align-items-center gap-2 mb-1">
-                                <i class="bi bi-distribute-vertical text-primary"></i>
-                                <span>Asignación Masiva de Cuenta a Múltiples Centros</span>
-                            </h6>
-                            <div class="text-muted small">Distribuye una cuenta presupuestaria o complementaria a varios centros simultáneamente.</div>
-                        </div>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    
-                    <div class="modal-body p-4">
-                        <div class="row g-3">
-                            <div class="col-md-7">
-                                <label class="form-label small fw-bold text-dark">Cuenta Maestra a Distribuir <span class="text-danger">*</span></label>
-                                <select name="cuenta_maestra_id" class="form-select" required>
-                                    <option value="">-- Seleccionar Cuenta --</option>
-                                    <?php foreach ($catalogo_cuentas_activas as $cta): ?>
-                                        <option value="<?= $cta['id'] ?>">
-                                            [<?= $cta['tipo_cuenta'] === 'COMPLEMENTARIA' ? 'COMPLEMENTARIA' : 'PRESUPUESTARIA' ?>] <?= htmlspecialchars($cta['codigo']) ?> - <?= htmlspecialchars($cta['nombre']) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="col-md-5">
-                                <label class="form-label small fw-bold text-dark">Área de Gestión (Opcional)</label>
-                                <select name="area_gestion_id" class="form-select">
-                                    <option value="">-- Sin Imputación de Área --</option>
-                                    <?php foreach ($catalogo_areas_activas as $ag): ?>
-                                        <option value="<?= $ag['id'] ?>"><?= htmlspecialchars($ag['codigo']) ?> - <?= htmlspecialchars($ag['nombre']) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <label class="form-label small fw-bold text-dark mb-0">Seleccionar Centros de Costo de Destino <span class="text-danger">*</span></label>
-                                    <div class="btn-group btn-group-sm">
-                                        <button type="button" class="btn btn-outline-secondary py-0 px-2" style="font-size: 0.75rem;" onclick="marcarTodosCCMasivo(true)">Marcar Todos</button>
-                                        <button type="button" class="btn btn-outline-secondary py-0 px-2" style="font-size: 0.75rem;" onclick="marcarTodosCCMasivo(false)">Desmarcar</button>
-                                    </div>
-                                </div>
-                                <div class="border rounded bg-white p-3" style="max-height: 220px; overflow-y: auto;">
-                                    <div class="row g-2">
-                                        <?php foreach ($catalogo_centros_activos as $cc_act): ?>
-                                            <div class="col-md-6">
-                                                <div class="form-check form-check-sm">
-                                                    <input class="form-check-input check-cc-masivo" type="checkbox" name="centros_costo_ids[]" value="<?= $cc_act['id'] ?>" id="cc_masivo_<?= $cc_act['id'] ?>">
-                                                    <label class="form-check-label small" for="cc_masivo_<?= $cc_act['id'] ?>">
-                                                        <b><?= htmlspecialchars($cc_act['codigo_cuenta']) ?></b> - <?= htmlspecialchars($cc_act['nombre']) ?> <span class="text-muted">(<?= $cc_act['anio_fiscal'] ?>)</span>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </div>
-                                <div class="form-text small mt-1">La cuenta se vinculará a todos los centros marcados. Las asignaciones existentes no se duplicarán.</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="modal-footer bg-light border-top py-2.5 px-4">
-                        <button type="button" class="btn btn-ghost btn-sm px-3" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary btn-sm px-4 fw-bold">Ejecutar Asignación Masiva</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- ============================================================== -->
     <!-- MODAL: CREAR / EDITAR ÁREA DE GESTIÓN                          -->
     <!-- ============================================================== -->
     <div class="modal fade" id="modalArea" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 border-0 shadow-lg">
                 <form method="POST">
-                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                     <input type="hidden" name="accion" value="guardar_area">
                     <input type="hidden" name="id" id="area_id">
                     
@@ -1030,9 +802,6 @@ include __DIR__ . '/head.php';
         document.getElementById('cta_nombre').value = '';
         document.getElementById('cta_tipo').value = 'PRESUPUESTARIA';
         document.getElementById('cta_activo_wrap').style.display = 'none';
-        const distWrap = document.getElementById('cta_distribucion_wrap');
-        if (distWrap) distWrap.style.display = 'block';
-        marcarTodosCC(false);
         document.getElementById('modalCuentaTitle').innerHTML = '<i class="bi bi-list-columns-reverse text-primary"></i> <span>Nueva Cuenta Maestra</span>';
         new bootstrap.Modal(document.getElementById('modalCuenta')).show();
     }
@@ -1044,18 +813,8 @@ include __DIR__ . '/head.php';
         document.getElementById('cta_tipo').value = data.tipo_cuenta || 'PRESUPUESTARIA';
         document.getElementById('cta_activo').checked = (data.activo == 1);
         document.getElementById('cta_activo_wrap').style.display = 'block';
-        const distWrap = document.getElementById('cta_distribucion_wrap');
-        if (distWrap) distWrap.style.display = 'none'; // ocultar distribución masiva en modo edición
         document.getElementById('modalCuentaTitle').innerHTML = '<i class="bi bi-pencil text-primary"></i> <span>Editar Cuenta Maestra</span>';
         new bootstrap.Modal(document.getElementById('modalCuenta')).show();
-    }
-
-    function marcarTodosCC(estado) {
-        document.querySelectorAll('.check-cc-modal').forEach(chk => chk.checked = estado);
-    }
-
-    function marcarTodosCCMasivo(estado) {
-        document.querySelectorAll('.check-cc-masivo').forEach(chk => chk.checked = estado);
     }
 
     // 3. Modales de Áreas de Gestión
@@ -1128,39 +887,8 @@ include __DIR__ . '/head.php';
             });
         });
     }
-
-    // 7. Filtro en vivo para el select de Cuentas en Modal Asignar
-    const inputFiltroSelect = document.getElementById('filtroSelectCuenta');
-    if (inputFiltroSelect) {
-        inputFiltroSelect.addEventListener('input', function() {
-            const q = this.value.toLowerCase().trim();
-            const sel = document.getElementById('selectCuentaMaestra');
-            if (!sel) return;
-            for (let i = 0; i < sel.options.length; i++) {
-                const opt = sel.options[i];
-                if (!opt.value) continue;
-                const text = opt.textContent.toLowerCase();
-                opt.hidden = !text.includes(q);
-            }
-        });
-    }
-
-    // 8. Inicialización automática si viene parámetro URL ?tipo=
-    document.addEventListener('DOMContentLoaded', function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const tipoParam = urlParams.get('tipo');
-        if (tipoParam && document.getElementById('tablaCuentas')) {
-            const btnGroup = document.querySelectorAll('.btn-group button');
-            btnGroup.forEach(btn => {
-                if (btn.textContent.toUpperCase().includes(tipoParam.substring(0, 4))) {
-                    filtrarTipoCuenta(tipoParam, btn);
-                }
-            });
-        }
-    });
     </script>
 
     <?php include __DIR__ . '/footer.php'; ?>
 </body>
 </html>
-

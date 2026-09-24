@@ -136,87 +136,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $centro_id = $cc_id;
         }
 
-        // B.2 CREACIÓN RÁPIDA IN-SITU Y ASIGNACIÓN DIRECTA
-        elseif ($accion === 'crear_y_asignar_cuenta') {
-            $cc_id = (int)($_POST['centro_costo_id'] ?? 0);
-            $codigo = trim($_POST['codigo'] ?? '');
-            $nombre = trim($_POST['nombre'] ?? '');
-            $tipo_cuenta = in_array($_POST['tipo_cuenta'] ?? '', ['PRESUPUESTARIA', 'COMPLEMENTARIA']) ? $_POST['tipo_cuenta'] : 'PRESUPUESTARIA';
-            $ag_id = !empty($_POST['area_gestion_id']) ? (int)$_POST['area_gestion_id'] : null;
-
-            if (!$cc_id) {
-                throw new Exception("Centro de Costo no especificado.");
-            }
-            if (empty($codigo) || empty($nombre)) {
-                throw new Exception("El código y nombre de la nueva cuenta son obligatorios.");
-            }
-
-            // Verificar si la cuenta maestra ya existe o se crea nueva
-            $stmtCheck = $pdo->prepare("SELECT id, nombre FROM cuentas_maestras WHERE codigo = ?");
-            $stmtCheck->execute([$codigo]);
-            $cuentaExistente = $stmtCheck->fetch();
-
-            if ($cuentaExistente) {
-                $maestra_id = (int)$cuentaExistente['id'];
-            } else {
-                $stmtInsert = $pdo->prepare("INSERT INTO cuentas_maestras (codigo, nombre, tipo_cuenta, presupuesto_global_total, activo) VALUES (?, ?, ?, 0.0, 1)");
-                $stmtInsert->execute([$codigo, $nombre, $tipo_cuenta]);
-                $maestra_id = (int)$pdo->lastInsertId();
-            }
-
-            // Validar que no esté ya asignada con la misma AG
-            $checkAsig = $pdo->prepare("SELECT id FROM presupuestos_asignados WHERE centro_costo_id = ? AND cuenta_maestra_id = ? AND area_gestion_id <=> ?");
-            $checkAsig->execute([$cc_id, $maestra_id, $ag_id]);
-            if ($checkAsig->fetch()) {
-                throw new Exception("La cuenta '$codigo' ya está asignada a este Centro de Costo con la misma Área de Gestión.");
-            }
-
-            $stmtAsig = $pdo->prepare("INSERT INTO presupuestos_asignados (centro_costo_id, cuenta_maestra_id, area_gestion_id) VALUES (?, ?, ?)");
-            $stmtAsig->execute([$cc_id, $maestra_id, $ag_id]);
-
-            $mensaje = "Cuenta \"$codigo - $nombre\" creada y vinculada exitosamente a este Centro de Costo.";
-            $tipo_mensaje = 'success';
-            $tab = 'detalle_centro';
-            $centro_id = $cc_id;
-        }
-
-        // B.3 ASIGNACIÓN MASIVA DE 1 CUENTA A MÚLTIPLES CENTROS DE COSTO
-        elseif ($accion === 'asignacion_masiva') {
-            $maestra_id = (int)($_POST['cuenta_maestra_id'] ?? 0);
-            $ag_id = !empty($_POST['area_gestion_id']) ? (int)$_POST['area_gestion_id'] : null;
-            $centros_seleccionados = isset($_POST['centros_costo_ids']) && is_array($_POST['centros_costo_ids']) ? $_POST['centros_costo_ids'] : [];
-
-            if (!$maestra_id) {
-                throw new Exception("Debe seleccionar una Cuenta Maestra para la distribución.");
-            }
-            if (empty($centros_seleccionados)) {
-                throw new Exception("Debe seleccionar al menos un Centro de Costo de destino.");
-            }
-
-            $insertados = 0;
-            $ya_existian = 0;
-
-            $stmtCheck = $pdo->prepare("SELECT id FROM presupuestos_asignados WHERE centro_costo_id = ? AND cuenta_maestra_id = ? AND area_gestion_id <=> ?");
-            $stmtInsert = $pdo->prepare("INSERT INTO presupuestos_asignados (centro_costo_id, cuenta_maestra_id, area_gestion_id) VALUES (?, ?, ?)");
-
-            foreach ($centros_seleccionados as $cid) {
-                $cid = (int)$cid;
-                if ($cid <= 0) continue;
-
-                $stmtCheck->execute([$cid, $maestra_id, $ag_id]);
-                if ($stmtCheck->fetch()) {
-                    $ya_existian++;
-                } else {
-                    $stmtInsert->execute([$cid, $maestra_id, $ag_id]);
-                    $insertados++;
-                }
-            }
-
-            $mensaje = "Asignación masiva completada: $insertados centro(s) vinculado(s)" . ($ya_existian > 0 ? " ($ya_existian ya contaban con la asignación)." : ".");
-            $tipo_mensaje = 'success';
-            $tab = 'cuentas';
-        }
-
         elseif ($accion === 'eliminar_asignacion') {
             $asignacion_id = (int)$_POST['asignacion_id'];
             $cc_id = (int)$_POST['centro_costo_id'];
@@ -247,8 +166,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $tipo_cuenta = in_array($_POST['tipo_cuenta'] ?? '', ['PRESUPUESTARIA', 'COMPLEMENTARIA']) ? $_POST['tipo_cuenta'] : 'PRESUPUESTARIA';
             $presupuesto_global = !empty($_POST['presupuesto_global_total']) ? floatval($_POST['presupuesto_global_total']) : 0.0;
             $activo = isset($_POST['activo']) ? 1 : 0;
-            $centros_distribuir = isset($_POST['centros_costo_ids']) && is_array($_POST['centros_costo_ids']) ? $_POST['centros_costo_ids'] : [];
-            $ag_distribuir = !empty($_POST['area_gestion_id']) ? (int)$_POST['area_gestion_id'] : null;
 
             if (empty($codigo) || empty($nombre)) {
                 throw new Exception("El código y la descripción de la cuenta son obligatorios.");
@@ -263,7 +180,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $pdo->prepare("UPDATE cuentas_maestras SET codigo = ?, nombre = ?, tipo_cuenta = ?, presupuesto_global_total = ?, activo = ? WHERE id = ?");
                 $stmt->execute([$codigo, $nombre, $tipo_cuenta, $presupuesto_global, $activo, $id]);
                 $mensaje = "Cuenta \"$codigo - $nombre\" actualizada exitosamente.";
-                $maestra_id = $id;
             } else {
                 $stmtCheck = $pdo->prepare("SELECT id FROM cuentas_maestras WHERE codigo = ?");
                 $stmtCheck->execute([$codigo]);
@@ -271,30 +187,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $stmt = $pdo->prepare("INSERT INTO cuentas_maestras (codigo, nombre, tipo_cuenta, presupuesto_global_total, activo) VALUES (?, ?, ?, ?, 1)");
                 $stmt->execute([$codigo, $nombre, $tipo_cuenta, $presupuesto_global]);
-                $maestra_id = (int)$pdo->lastInsertId();
                 $mensaje = "Cuenta \"$codigo - $nombre\" registrada exitosamente.";
             }
-
-            // Distribuir a centros de costo seleccionados inmediatamente si aplica
-            if (!empty($centros_distribuir) && $maestra_id) {
-                $stmtCheckAsig = $pdo->prepare("SELECT id FROM presupuestos_asignados WHERE centro_costo_id = ? AND cuenta_maestra_id = ? AND area_gestion_id <=> ?");
-                $stmtInsertAsig = $pdo->prepare("INSERT INTO presupuestos_asignados (centro_costo_id, cuenta_maestra_id, area_gestion_id) VALUES (?, ?, ?)");
-                $asig_count = 0;
-
-                foreach ($centros_distribuir as $cid) {
-                    $cid = (int)$cid;
-                    if ($cid <= 0) continue;
-                    $stmtCheckAsig->execute([$cid, $maestra_id, $ag_distribuir]);
-                    if (!$stmtCheckAsig->fetch()) {
-                        $stmtInsertAsig->execute([$cid, $maestra_id, $ag_distribuir]);
-                        $asig_count++;
-                    }
-                }
-                if ($asig_count > 0) {
-                    $mensaje .= " Vinculada de inmediato a $asig_count Centro(s) de Costo.";
-                }
-            }
-
             $tipo_mensaje = 'success';
             $tab = 'cuentas';
         }
@@ -465,10 +359,9 @@ if ($tab === 'detalle_centro' && $centro_id) {
     }
 }
 
-// Cuentas, Áreas y Centros activos para los modales de asignación y distribución masiva
+// Cuentas y Áreas activas para los modales de asignación
 $catalogo_cuentas_activas = $pdo->query("SELECT id, codigo, nombre, COALESCE(tipo_cuenta, 'PRESUPUESTARIA') as tipo_cuenta FROM cuentas_maestras WHERE activo = 1 ORDER BY codigo ASC")->fetchAll();
 $catalogo_areas_activas = $pdo->query("SELECT id, codigo, nombre FROM areas_gestion WHERE activo = 1 ORDER BY codigo ASC")->fetchAll();
-$catalogo_centros_activos = $pdo->query("SELECT id, codigo_cuenta, nombre, anio_fiscal FROM centros_costo WHERE activo = 1 ORDER BY anio_fiscal DESC, nombre ASC")->fetchAll();
 
 function money($v) {
     if ($v === null || $v === '') return '$ 0';
