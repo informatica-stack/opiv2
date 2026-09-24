@@ -1,20 +1,20 @@
 <?php 
-// administrador.php - Vista Principal (V5.5 - Rediseño Homologado y Firma Avanzada)
+// administrador.php - Vista Principal (Diseño SaaS Clean Minimalist)
 require_once __DIR__ . '/admin_controller.php'; 
 ?>
 <!DOCTYPE html>
-<html lang="es" data-bs-theme="light">
+<html lang="es">
 <head>
     <?php 
-    $titulo_pagina = "Aprobación Administración Municipal";
+    $titulo_pagina = "Aprobación Administración Municipal - Sistema OPI";
     include __DIR__ . '/head.php'; 
     ?>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans d-flex flex-column min-vh-100">
+<body>
 
     <?php include __DIR__ . '/nav.php'; ?>
 
-    <div class="container-xl mt-4 px-3 px-md-4">
+    <div class="saas-container">
 
         <!-- MENSAJES DE ALERTA -->
         <?php if($mensaje): ?>
@@ -22,181 +22,183 @@ require_once __DIR__ . '/admin_controller.php';
             $alertClass = ($tipo_mensaje === 'error') ? 'danger' : (($tipo_mensaje === 'warning') ? 'warning' : 'success');
             $iconClass = ($tipo_mensaje === 'error') ? 'exclamation-triangle-fill' : (($tipo_mensaje === 'warning') ? 'arrow-counterclockwise' : 'check-circle-fill');
             ?>
-            <div class="alert alert-<?= $alertClass ?> d-flex align-items-center gap-2 mb-4 shadow-sm border" role="alert">
-                <i class="bi bi-<?= $iconClass ?> fs-5 shrink-0"></i>
+            <div class="alert alert-<?= $alertClass ?> d-flex align-items-center gap-2 mb-4 shadow-sm" role="alert">
+                <i class="bi bi-<?= $iconClass ?> shrink-0 fs-5"></i>
                 <div class="small fw-semibold"><?= htmlspecialchars($mensaje) ?></div>
             </div>
         <?php endif; ?>
 
-        <!-- VISTAS: BANDEJA DE LISTADOS -->
+        <!-- ============================================================== -->
+        <!-- VISTA A: BANDEJA DE LISTADOS (TABS, FILTROS Y TABLA)           -->
+        <!-- ============================================================== -->
         <?php if($vista !== 'revisar'): ?>
             
-            <!-- CABECERA PRINCIPAL -->
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <!-- HEADER Y TÍTULO -->
+            <div class="page-header-row">
                 <div>
-                    <h1 class="h3 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
-                        <i class="bi bi-bank text-primary"></i>
-                        Bandeja de Administración Municipal
-                    </h1>
-                    <p class="text-muted small mb-0">Gestión centralizada de autorizaciones de cotización y firmas definitivas de OPI (Fase 3/3).</p>
+                    <div class="breadcrumbs">
+                        <a href="index.php">Inicio</a>
+                        <i class="bi bi-chevron-right"></i>
+                        <span class="current">Administración Municipal</span>
+                    </div>
+                    <div class="page-title">
+                        <h2>Bandeja de Administración Municipal</h2>
+                        <p>Gestión centralizada de autorizaciones de cotización y firmas definitivas de OPI (Fase 3/3).</p>
+                    </div>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    <button onclick="toggleFiltros()" class="btn btn-outline-secondary btn-sm shadow-sm d-flex align-items-center gap-1.5">
+                    <button onclick="toggleFiltros()" class="btn-saas btn-saas-secondary">
                         <i class="bi bi-funnel"></i>
-                        Filtros
+                        <span>Filtros</span>
                     </button>
                 </div>
             </div>
 
-            <!-- KPI METRICS -->
-            <div class="row g-3 mb-4">
-                <div class="col-12 col-sm-6 col-lg-4">
-                    <div class="card card-dashboard p-3 shadow-sm h-100">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div>
-                                <span class="text-uppercase text-muted fw-bold" style="font-size: 11px; letter-spacing: 0.5px;">Autorizar Cotización</span>
-                                <h3 class="fw-bold text-dark mt-1 mb-0 tabular-nums"><?= number_format($count_cotizacion, 0, ',', '.') ?></h3>
-                                <small class="text-muted">Requerimientos en espera</small>
-                            </div>
-                            <div class="p-3 bg-primary-subtle text-primary rounded-3">
-                                <i class="bi bi-card-checklist fs-4"></i>
-                            </div>
+            <!-- TARJETAS KPI DE GESTIÓN (METRICS GRID) -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <h5>Autorizar Cotización</h5>
+                        <div class="metric-number"><?= number_format($count_cotizacion, 0, ',', '.') ?></div>
+                        <div class="metric-sub text-primary fw-bold">
+                            <i class="bi bi-card-checklist"></i> Requerimientos en espera
                         </div>
                     </div>
-                </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                    <div class="card card-dashboard p-3 shadow-sm h-100">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div>
-                                <span class="text-uppercase text-muted fw-bold" style="font-size: 11px; letter-spacing: 0.5px;">Firmar OPIs Definitivas</span>
-                                <h3 class="fw-bold text-dark mt-1 mb-0 tabular-nums"><?= number_format($count_opi, 0, ',', '.') ?></h3>
-                                <small class="text-muted">Firma Oficial 3/3</small>
-                            </div>
-                            <div class="p-3 bg-indigo-subtle text-indigo rounded-3" style="background-color: #e0e7ff; color: #4338ca;">
-                                <i class="bi bi-pen-fill fs-4"></i>
-                            </div>
-                        </div>
+                    <div class="metric-icon-box blue">
+                        <i class="bi bi-card-checklist"></i>
                     </div>
                 </div>
-                <div class="col-12 col-sm-6 col-lg-4">
-                    <div class="card card-dashboard p-3 shadow-sm h-100">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div>
-                                <span class="text-uppercase text-muted fw-bold" style="font-size: 11px; letter-spacing: 0.5px;">Procesados por Mí</span>
-                                <h3 class="fw-bold text-dark mt-1 mb-0 tabular-nums"><?= number_format($count_procesados, 0, ',', '.') ?></h3>
-                                <small class="text-muted">Historial de gestiones</small>
-                            </div>
-                            <div class="p-3 bg-success-subtle text-success rounded-3">
-                                <i class="bi bi-check2-circle fs-4"></i>
-                            </div>
+
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <h5>Firmar OPIs Definitivas</h5>
+                        <div class="metric-number"><?= number_format($count_opi, 0, ',', '.') ?></div>
+                        <div class="metric-sub" style="color: #6366f1; font-weight: 700;">
+                            <i class="bi bi-pen-fill"></i> Firma Oficial 3/3
                         </div>
+                    </div>
+                    <div class="metric-icon-box purple">
+                        <i class="bi bi-pen-fill"></i>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <h5>Procesados por Mí</h5>
+                        <div class="metric-number"><?= number_format($count_procesados, 0, ',', '.') ?></div>
+                        <div class="metric-sub text-success fw-bold">
+                            <i class="bi bi-check2-circle"></i> Historial de gestiones
+                        </div>
+                    </div>
+                    <div class="metric-icon-box green">
+                        <i class="bi bi-check2-circle"></i>
                     </div>
                 </div>
             </div>
 
-            <!-- PESTAÑAS NAVEGABLES (TABS) -->
-            <div class="d-flex border-bottom mb-4 overflow-x-auto">
-                <a href="administrador.php?tab=cotizaciones" class="px-4 py-2.5 text-decoration-none fw-bold small border-bottom border-2 <?= $tab === 'cotizaciones' ? 'border-primary text-primary bg-white rounded-top' : 'border-transparent text-secondary hover-text-dark' ?> text-nowrap d-flex align-items-center gap-2">
-                    <i class="bi bi-card-checklist text-primary"></i>
-                    Autorizar Cotizaciones
-                    <span class="badge rounded-pill <?= $tab === 'cotizaciones' ? 'bg-primary text-white' : 'bg-secondary-subtle text-secondary-emphasis' ?> tabular-nums"><?= $count_cotizacion ?></span>
-                </a>
-                <a href="administrador.php?tab=opis" class="px-4 py-2.5 text-decoration-none fw-bold small border-bottom border-2 <?= $tab === 'opis' ? 'border-primary text-primary bg-white rounded-top' : 'border-transparent text-secondary hover-text-dark' ?> text-nowrap d-flex align-items-center gap-2">
-                    <i class="bi bi-pen-fill" style="color: #6366f1;"></i>
-                    Firmar OPIs Definitivas
-                    <span class="badge rounded-pill <?= $tab === 'opis' ? 'bg-primary text-white' : 'bg-secondary-subtle text-secondary-emphasis' ?> tabular-nums"><?= $count_opi ?></span>
-                </a>
-                <a href="administrador.php?tab=procesados" class="px-4 py-2.5 text-decoration-none fw-bold small border-bottom border-2 <?= $tab === 'procesados' ? 'border-primary text-primary bg-white rounded-top' : 'border-transparent text-secondary hover-text-dark' ?> text-nowrap d-flex align-items-center gap-2">
-                    <i class="bi bi-check2-square text-success"></i>
-                    Procesados por Mí / Historial
-                    <span class="badge rounded-pill <?= $tab === 'procesados' ? 'bg-primary text-white' : 'bg-secondary-subtle text-secondary-emphasis' ?> tabular-nums"><?= $count_procesados ?></span>
-                </a>
-            </div>
+            <!-- PANEL PRINCIPAL CON TABS, FILTROS Y TABLA -->
+            <div class="saas-panel">
+                
+                <!-- PESTAÑAS NAVEGABLES (TABS) -->
+                <div class="saas-tab-nav">
+                    <a href="administrador.php?tab=cotizaciones" class="saas-tab-item <?= $tab === 'cotizaciones' ? 'active' : '' ?>">
+                        <i class="bi bi-card-checklist"></i>
+                        <span>Autorizar Cotizaciones</span>
+                        <span class="saas-tab-badge"><?= $count_cotizacion ?></span>
+                    </a>
+                    <a href="administrador.php?tab=opis" class="saas-tab-item <?= $tab === 'opis' ? 'active' : '' ?>">
+                        <i class="bi bi-pen-fill"></i>
+                        <span>Firmar OPIs Definitivas</span>
+                        <span class="saas-tab-badge"><?= $count_opi ?></span>
+                    </a>
+                    <a href="administrador.php?tab=procesados" class="saas-tab-item <?= $tab === 'procesados' ? 'active' : '' ?>">
+                        <i class="bi bi-check2-square"></i>
+                        <span>Procesados por Mí / Historial</span>
+                        <span class="saas-tab-badge"><?= $count_procesados ?></span>
+                    </a>
+                </div>
 
-            <!-- PANEL DE FILTROS -->
-            <div id="filtroPanel" class="card shadow-sm mb-4 <?= ($f_q || $f_tipo || $f_desde || $f_hasta) ? '' : 'd-none' ?>">
-                <div class="card-body p-3">
+                <!-- TOOLBAR Y PANEL DE FILTROS INTEGRADO -->
+                <div id="filtroPanel" class="p-3 bg-light border-bottom <?= ($f_q || $f_tipo || $f_desde || $f_hasta) ? '' : 'd-none' ?>">
                     <form method="GET" action="administrador.php">
                         <input type="hidden" name="tab" value="<?= htmlspecialchars($tab) ?>">
-                        <div class="row g-3 align-items-end">
-                            <div class="col-12 col-sm-6 col-lg-4">
-                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Buscar (Código, Folio, Título o Motivo)</label>
-                                <input type="text" name="f_q" value="<?= htmlspecialchars($f_q) ?>" class="form-control form-control-sm" placeholder="Ej: OPI-2026-0001...">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-12 col-md-4">
+                                <label class="form-label-saas mb-1" style="font-size: 11px;">Buscar (Código / Folio / Título / Motivo)</label>
+                                <input type="text" name="f_q" value="<?= htmlspecialchars($f_q) ?>" class="form-control-saas py-1.5" placeholder="Ej: OPI-2026-0001...">
                             </div>
-                            <div class="col-12 col-sm-6 col-lg-3">
-                                <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Tipo de Compra</label>
-                                <select name="f_tipo" class="form-select form-select-sm bg-white">
+                            <div class="col-12 col-sm-6 col-md-3">
+                                <label class="form-label-saas mb-1" style="font-size: 11px;">Tipo de Compra</label>
+                                <select name="f_tipo" class="form-control-saas py-1.5">
                                     <option value="">Todos los tipos</option>
                                     <?php foreach($tipos_compra_filtro as $t): ?>
                                         <option value="<?= $t['id'] ?>" <?= $f_tipo==$t['id']?'selected':'' ?>><?= htmlspecialchars($t['nombre']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-12 col-sm-6 col-lg-3">
-                                <div class="row g-2">
+                            <div class="col-12 col-sm-6 col-md-3">
+                                <div class="row g-1">
                                     <div class="col-6">
-                                        <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Desde</label>
-                                        <input type="date" name="f_desde" value="<?= htmlspecialchars($f_desde) ?>" class="form-control form-control-sm text-secondary">
+                                        <label class="form-label-saas mb-1" style="font-size: 11px;">Desde</label>
+                                        <input type="date" name="f_desde" value="<?= htmlspecialchars($f_desde) ?>" class="form-control-saas py-1.5">
                                     </div>
                                     <div class="col-6">
-                                        <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Hasta</label>
-                                        <input type="date" name="f_hasta" value="<?= htmlspecialchars($f_hasta) ?>" class="form-control form-control-sm text-secondary">
+                                        <label class="form-label-saas mb-1" style="font-size: 11px;">Hasta</label>
+                                        <input type="date" name="f_hasta" value="<?= htmlspecialchars($f_hasta) ?>" class="form-control-saas py-1.5">
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-12 col-lg-2 d-flex gap-2 justify-content-end mt-2 mt-lg-0">
-                                <a href="administrador.php?tab=<?= htmlspecialchars($tab) ?>" class="btn btn-light btn-sm w-100 fw-bold border">Limpiar</a>
-                                <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold shadow-sm">Aplicar</button>
+                            <div class="col-12 col-md-2 d-flex gap-2 justify-content-end">
+                                <a href="administrador.php?tab=<?= htmlspecialchars($tab) ?>" class="btn-saas btn-saas-secondary w-100 justify-content-center">Limpiar</a>
+                                <button type="submit" class="btn-saas btn-saas-primary w-100 justify-content-center">Filtrar</button>
                             </div>
                         </div>
                     </form>
                 </div>
-            </div>
 
-            <!-- TABLA PRINCIPAL DE SOLICITUDES -->
-            <div class="card shadow-sm border-light mb-4 overflow-hidden">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0" style="min-width: 1000px;">
-                        <thead class="table-light text-uppercase small text-secondary">
+                <!-- TABLA PRINCIPAL DE SOLICITUDES -->
+                <div class="table-responsive-saas">
+                    <table class="saas-table align-middle">
+                        <thead>
                             <tr>
-                                <th class="p-3 text-nowrap" style="width: 180px;">ID / Fecha / Prioridad</th>
-                                <th class="p-3" style="min-width: 250px;">Trámite / Solicitante / CC</th>
-                                <th class="p-3 text-nowrap" style="width: 170px;">Clasificación / Proveedor</th>
-                                <th class="p-3 text-nowrap" style="width: 180px;">Fase / Estado Actual</th>
-                                <th class="p-3 text-end text-nowrap" style="width: 150px;">Monto Total</th>
-                                <th class="p-3 text-center text-nowrap" style="width: 170px;">Gestión</th>
+                                <th style="width: 170px;">ID / Fecha / Prioridad</th>
+                                <th style="min-width: 250px;">Trámite / Solicitante / CC</th>
+                                <th style="width: 170px;">Clasificación / Proveedor</th>
+                                <th style="width: 170px;">Fase / Estado Actual</th>
+                                <th class="text-end" style="width: 140px;">Monto Total</th>
+                                <th class="text-center" style="width: 170px;">Gestión</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y">
+                        <tbody>
                             <?php if(!empty($solicitudes)): ?>
                                 <?php foreach($solicitudes as $row): ?>
                                 <tr>
-                                    <td class="p-3 text-nowrap">
-                                        <button type="button" onclick="abrirModalVerItems(<?= htmlspecialchars(json_encode($row['items_detalle']), ENT_QUOTES, 'UTF-8') ?>, '<?= $row['codigo_interno'] ?>')" class="btn btn-link p-0 text-start font-monospace fw-bold text-primary text-decoration-underline mb-1">
+                                    <td>
+                                        <button type="button" onclick="abrirModalVerItems(<?= htmlspecialchars(json_encode($row['items_detalle']), ENT_QUOTES, 'UTF-8') ?>, '<?= $row['codigo_interno'] ?>')" class="saas-code-btn mb-1 d-block text-start">
                                             <?= htmlspecialchars($row['codigo_interno']) ?>
                                         </button>
                                         <?php if(!empty($row['folio_opi'])): ?>
-                                            <div class="badge bg-dark text-white font-monospace d-block mb-1" style="font-size: 10px; width: fit-content;">
+                                            <span class="badge bg-dark text-white font-monospace d-inline-block mb-1" style="font-size: 10px;">
                                                 <?= htmlspecialchars($row['folio_opi']) ?>
-                                            </div>
+                                            </span>
                                         <?php endif; ?>
-                                        <div class="text-muted small" style="font-size: 11px;">
+                                        <div class="text-muted" style="font-size: 11px;">
                                             <i class="bi bi-clock me-1"></i>
                                             <?= date('d/m/Y H:i', strtotime($row['created_at'])) ?>
                                         </div>
-                                        <span class="badge border mt-2 d-inline-block <?= $row['prioridad_css'] ?>" style="font-size: 10px;">
+                                        <span class="badge border mt-1.5 d-inline-block <?= $row['prioridad_css'] ?>" style="font-size: 10px;">
                                             <?= htmlspecialchars($row['prioridad_nom']) ?>
                                         </span>
                                     </td>
 
-                                    <td class="p-3">
-                                        <div class="fw-bold text-dark mb-1 leading-snug" style="max-width: 420px;">
+                                    <td>
+                                        <div class="row-title mb-1" style="max-width: 420px;">
                                             <?= htmlspecialchars($row['titulo_compra'] ?? 'Sin Título') ?>
                                         </div>
-                                        <div class="text-secondary small mb-1" style="max-width: 420px; font-size: 11px; line-height: 1.4;">
+                                        <div class="row-sub mb-1" style="max-width: 420px; font-size: 11.5px; line-height: 1.4;">
                                             <i class="bi bi-person me-1"></i><?= htmlspecialchars($row['solicitante']) ?> (<?= htmlspecialchars($row['unidad_nombre']) ?>)
                                         </div>
-                                        <div class="text-uppercase text-muted fw-bold mb-2" style="font-size: 9px; letter-spacing: 0.5px;">
+                                        <div class="text-uppercase text-muted fw-bold mb-1" style="font-size: 9.5px; letter-spacing: 0.5px;">
                                             <i class="bi bi-tag-fill me-1"></i>
                                             CC: <?= htmlspecialchars($row['centro_costo']) ?>
                                         </div>
@@ -206,30 +208,30 @@ require_once __DIR__ . '/admin_controller.php';
                                             $docs_count = count($docs_array);
                                             $docs_json = htmlspecialchars(json_encode($docs_array), ENT_QUOTES, 'UTF-8');
                                         ?>
-                                            <div class="mt-2">
-                                                <button type="button" onclick="abrirModalAdjuntos(<?= $docs_json ?>, '<?= htmlspecialchars($row['codigo_interno']) ?>', <?= $row['id'] ?>)" class="btn btn-outline-primary btn-sm py-1 px-2.5 d-inline-flex align-items-center gap-1.5 font-bold" style="font-size: 10px;">
+                                            <div class="mt-1.5">
+                                                <button type="button" onclick="abrirModalAdjuntos(<?= $docs_json ?>, '<?= htmlspecialchars($row['codigo_interno']) ?>', <?= $row['id'] ?>)" class="btn-saas btn-saas-secondary btn-saas-sm">
                                                     <i class="bi bi-paperclip"></i>
-                                                    Ver Archivos (<?= $docs_count ?>)
+                                                    <span>Archivos (<?= $docs_count ?>)</span>
                                                 </button>
                                             </div>
                                         <?php endif; ?>
                                     </td>
 
-                                    <td class="p-3">
-                                        <span class="badge bg-light text-dark border px-2 py-1.5 fw-bold d-block mb-1.5" style="font-size: 11px; width: fit-content;">
+                                    <td>
+                                        <span class="saas-badge saas-badge-neutral d-inline-block mb-1.5">
                                             <?= htmlspecialchars($row['tipo_compra_nom']) ?>
                                         </span>
                                         <?php if($row['proveedor']): ?>
-                                            <div class="text-success font-monospace fw-bold small" style="font-size: 11px;">
+                                            <div class="text-success font-monospace fw-bold" style="font-size: 11.5px;">
                                                 <i class="bi bi-building me-1"></i><?= htmlspecialchars($row['proveedor']) ?>
                                             </div>
                                         <?php else: ?>
-                                            <span class="text-muted small fst-italic" style="font-size: 11px;">Sin adjudicar</span>
+                                            <span class="text-muted fst-italic" style="font-size: 11.5px;">Sin adjudicar</span>
                                         <?php endif; ?>
                                     </td>
 
-                                    <td class="p-3 text-nowrap">
-                                        <span class="badge <?= color_estado($row['estado_actual']) ?> px-2.5 py-1.5 rounded-2 d-inline-block text-wrap" style="font-size: 10px; max-width: 180px;">
+                                    <td>
+                                        <span class="badge <?= color_estado($row['estado_actual']) ?> px-2 py-1 rounded-2 d-inline-block text-wrap" style="font-size: 10px; max-width: 170px;">
                                             <?= htmlspecialchars($row['estado_nombre']) ?>
                                         </span>
                                         <div class="mt-1.5">
@@ -240,27 +242,27 @@ require_once __DIR__ . '/admin_controller.php';
                                         </div>
                                     </td>
 
-                                    <td class="p-3 text-end text-nowrap">
-                                        <div class="fw-bold text-dark tabular-nums" style="font-size: 13px;">
+                                    <td class="text-end">
+                                        <div class="price-text" style="font-size: 13.5px;">
                                             <?= money($row['monto_definitivo'] ?? $row['monto_estimado']) ?>
                                         </div>
                                     </td>
 
-                                    <td class="p-3 text-center text-nowrap">
+                                    <td class="text-center">
                                         <?php if ($tab === 'cotizaciones'): ?>
-                                            <a href="administrador.php?view=revisar&id=<?= $row['id'] ?>" class="btn btn-primary btn-sm px-3 fw-bold shadow-sm d-inline-flex align-items-center gap-1">
+                                            <a href="administrador.php?view=revisar&id=<?= $row['id'] ?>" class="btn-saas btn-saas-primary btn-saas-sm">
                                                 <i class="bi bi-check2-square"></i>
-                                                Revisar y Autorizar
+                                                <span>Autorizar</span>
                                             </a>
                                         <?php elseif ($tab === 'opis'): ?>
-                                            <a href="administrador.php?view=revisar&id=<?= $row['id'] ?>" class="btn btn-dark btn-sm px-3 fw-bold shadow-sm d-inline-flex align-items-center gap-1" style="background-color: #4f46e5; border-color: #4f46e5;">
+                                            <a href="administrador.php?view=revisar&id=<?= $row['id'] ?>" class="btn-saas btn-saas-primary btn-saas-sm">
                                                 <i class="bi bi-pen-fill"></i>
-                                                Revisar y Firmar OPI
+                                                <span>Firmar OPI</span>
                                             </a>
                                         <?php else: ?>
-                                            <a href="administrador.php?view=revisar&id=<?= $row['id'] ?>" class="btn btn-outline-primary btn-sm px-3 fw-bold shadow-sm d-inline-flex align-items-center gap-1">
+                                            <a href="administrador.php?view=revisar&id=<?= $row['id'] ?>" class="btn-saas btn-saas-secondary btn-saas-sm">
                                                 <i class="bi bi-eye"></i>
-                                                Ver Detalle
+                                                <span>Ver Detalle</span>
                                             </a>
                                         <?php endif; ?>
                                     </td>
@@ -269,39 +271,61 @@ require_once __DIR__ . '/admin_controller.php';
                             <?php else: ?>
                                 <tr>
                                     <td colspan="6" class="p-5 text-center text-muted">
-                                        <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
-                                        <p class="mb-0 fw-semibold">No se encontraron solicitudes registradas en esta bandeja de Administración Municipal.</p>
+                                        <div class="d-flex flex-column align-items-center justify-content-center py-4">
+                                            <i class="bi bi-inbox fs-1 text-slate-300 mb-2"></i>
+                                            <p class="mb-0 fw-semibold text-secondary">No se encontraron solicitudes registradas en esta bandeja de Administración Municipal.</p>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
+
+                <!-- PANEL FOOTER -->
+                <div class="panel-footer">
+                    <div>
+                        Total en bandeja: <b><?= count($solicitudes ?? []) ?></b> requerimientos
+                    </div>
+                </div>
+
             </div>
         <?php endif; ?>
 
-        <!-- VISTA: REVISIÓN DE EXPEDIENTE -->
+        <!-- ============================================================== -->
+        <!-- VISTA B: REVISIÓN DE EXPEDIENTE                                 -->
+        <!-- ============================================================== -->
         <?php if($vista === 'revisar' && isset($exp)): ?>
             <?php $es_etapa_cotizacion = ($exp['estado_actual'] === 'EN_AUTORIZACION_COTIZACION'); ?>
             
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <div class="page-header-row mb-4">
                 <div>
-                    <?php if($es_etapa_cotizacion): ?>
-                        <span class="badge bg-primary text-uppercase tracking-wider mb-1.5" style="font-size: 9px; letter-spacing: 0.5px;">📋 Autorización de Cotización Inicial</span>
-                    <?php else: ?>
-                        <span class="badge bg-indigo text-uppercase tracking-wider mb-1.5" style="font-size: 9px; letter-spacing: 0.5px; background-color: #6366f1 !important;">✍️ Firma y Emisión de OPI Final</span>
-                    <?php endif; ?>
-
-                    <h1 class="h3 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
-                        Expediente: <span class="text-primary tabular-nums">#<?= htmlspecialchars($exp['codigo_interno']) ?></span>
-                        <button type="button" onclick="verTrazabilidad(<?= (int)$exp['id'] ?>)" class="btn btn-outline-primary btn-sm px-2.5 py-1 fw-bold shadow-sm d-inline-flex align-items-center gap-1.5" style="font-size: 11px;">
-                            <i class="bi bi-clock-history"></i> Ver Historial
-                        </button>
-                    </h1>
+                    <div class="breadcrumbs">
+                        <a href="index.php">Inicio</a>
+                        <i class="bi bi-chevron-right"></i>
+                        <a href="administrador.php?tab=<?= $es_etapa_cotizacion ? 'cotizaciones' : 'opis' ?>">Administración Municipal</a>
+                        <i class="bi bi-chevron-right"></i>
+                        <span class="current">Revisión #<?= htmlspecialchars($exp['codigo_interno']) ?></span>
+                    </div>
+                    <div class="page-title">
+                        <div class="d-flex align-items-center gap-2.5 flex-wrap">
+                            <h2>
+                                Expediente: <span class="text-primary font-monospace">#<?= htmlspecialchars($exp['codigo_interno']) ?></span>
+                            </h2>
+                            <?php if($es_etapa_cotizacion): ?>
+                                <span class="saas-badge saas-badge-info">📋 Autorización de Cotización Inicial</span>
+                            <?php else: ?>
+                                <span class="saas-badge saas-badge-warning" style="background-color: #e0e7ff; color: #4338ca; border-color: #c7d2fe;">✍️ Firma y Emisión de OPI Final</span>
+                            <?php endif; ?>
+                            <button type="button" onclick="verTrazabilidad(<?= (int)$exp['id'] ?>)" class="btn-saas btn-saas-secondary btn-saas-sm">
+                                <i class="bi bi-clock-history text-primary"></i> Ver Historial
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="text-start text-md-end">
-                    <a href="administrador.php?tab=<?= $es_etapa_cotizacion ? 'cotizaciones' : 'opis' ?>" class="btn btn-outline-secondary btn-sm px-3 shadow-sm">
-                        <i class="bi bi-arrow-left me-1"></i> Volver a la Bandeja
+                <div>
+                    <a href="administrador.php?tab=<?= $es_etapa_cotizacion ? 'cotizaciones' : 'opis' ?>" class="btn-saas btn-saas-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver a la Bandeja
                     </a>
                 </div>
             </div>
@@ -309,35 +333,38 @@ require_once __DIR__ . '/admin_controller.php';
             <div class="row g-4">
                 
                 <!-- COLUMNA IZQUIERDA: RESUMEN Y ARCHIVOS -->
-                <div class="col-lg-4 space-y-4">
+                <div class="col-lg-4">
                     
                     <!-- CONTEXTO -->
-                    <div class="card shadow-sm border-light">
-                        <div class="card-header bg-white py-3">
-                            <h6 class="fw-bold mb-0 text-dark uppercase tracking-wider" style="font-size: 11px; letter-spacing: 0.5px;">Contexto de la Solicitud</h6>
+                    <div class="saas-card mb-4">
+                        <div class="saas-card-header">
+                            <h6 class="fw-bold mb-0 text-dark" style="font-size: 13px;">
+                                <i class="bi bi-info-circle text-primary me-1.5"></i>
+                                Contexto de la Solicitud
+                            </h6>
                         </div>
-                        <div class="card-body p-3">
+                        <div class="saas-card-body p-3">
                             <div class="d-flex flex-column gap-3 small">
                                 <?php if($exp['titulo_compra']): ?>
                                     <div>
-                                        <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 9px;">Título Compra:</span>
-                                        <span class="fw-bold text-dark fs-6"><?= htmlspecialchars($exp['titulo_compra']) ?></span>
+                                        <span class="form-label-saas mb-1">Título Compra:</span>
+                                        <div class="fw-bold text-dark fs-6"><?= htmlspecialchars($exp['titulo_compra']) ?></div>
                                     </div>
                                 <?php endif; ?>
                                 
                                 <div class="row g-3">
                                     <div class="col-6">
-                                        <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 9px;">Unidad Solicitante:</span>
-                                        <span class="text-secondary fw-semibold"><?= htmlspecialchars($exp['unidad']) ?></span>
+                                        <span class="form-label-saas mb-1">Unidad Solicitante:</span>
+                                        <div class="text-secondary fw-semibold"><?= htmlspecialchars($exp['unidad']) ?></div>
                                     </div>
                                     <div class="col-6">
-                                        <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 9px;">Tipo de Compra:</span>
-                                        <span class="text-secondary fw-semibold"><?= htmlspecialchars($exp['tipo_compra_nom']) ?></span>
+                                        <span class="form-label-saas mb-1">Tipo de Compra:</span>
+                                        <div class="text-secondary fw-semibold"><?= htmlspecialchars($exp['tipo_compra_nom']) ?></div>
                                     </div>
                                 </div>
                                 
                                 <div>
-                                    <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 9px;">Centro de Costo:</span>
+                                    <span class="form-label-saas mb-1">Centro de Costo:</span>
                                     <span class="badge bg-primary-subtle text-primary fw-bold text-wrap text-start mt-1 px-2.5 py-1.5 fs-6" style="border: 1px solid rgba(13,110,253,0.1);"><?= htmlspecialchars($exp['centro_costo']) ?></span>
                                 </div>
 
@@ -366,15 +393,15 @@ require_once __DIR__ . '/admin_controller.php';
 
                                 <?php if($exp['proveedor_adjudicado_id']): ?>
                                     <div class="bg-success-subtle border border-success-subtle p-3 rounded-3 mt-1 text-success-emphasis">
-                                        <span class="fw-bold d-block text-uppercase mb-1" style="font-size: 9px;">Proveedor Adjudicado</span>
-                                        <p class="font-bold mb-1 leading-tight fs-6"><?= htmlspecialchars($exp['proveedor_nombre']) ?></p>
+                                        <span class="form-label-saas text-success-emphasis mb-1">Proveedor Adjudicado</span>
+                                        <p class="fw-bold mb-1 leading-tight fs-6"><?= htmlspecialchars($exp['proveedor_nombre']) ?></p>
                                         <p class="font-monospace small mb-0 text-muted">RUT: <?= htmlspecialchars($exp['proveedor_rut']) ?></p>
                                     </div>
                                 <?php endif; ?>
 
                                 <div class="pt-2 border-top mt-2">
-                                    <span class="text-muted fw-bold d-block text-uppercase mb-1" style="font-size: 9px;">Justificación Técnica:</span>
-                                    <div class="bg-light p-2.5 rounded border small text-secondary leading-relaxed" style="max-height: 180px; overflow-y: auto; font-size: 11px;">
+                                    <span class="form-label-saas mb-1">Justificación Técnica:</span>
+                                    <div class="bg-light p-2.5 rounded border small text-secondary leading-relaxed" style="max-height: 180px; overflow-y: auto; font-size: 11.5px;">
                                         <?= nl2br(htmlspecialchars($exp['motivo_compra'])) ?>
                                     </div>
                                 </div>
@@ -383,19 +410,22 @@ require_once __DIR__ . '/admin_controller.php';
                     </div>
 
                     <!-- ARCHIVOS DE RESPALDO Y DOCUMENTOS CLAVE -->
-                    <div class="card shadow-sm border-light">
-                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                            <h6 class="fw-bold mb-0 text-dark uppercase tracking-wider" style="font-size: 11px; letter-spacing: 0.5px;">Archivos del Expediente (<?= count($docs) ?>)</h6>
+                    <div class="saas-card mb-4">
+                        <div class="saas-card-header">
+                            <h6 class="fw-bold mb-0 text-dark" style="font-size: 13px;">
+                                <i class="bi bi-paperclip text-primary me-1.5"></i>
+                                Archivos del Expediente (<?= count($docs) ?>)
+                            </h6>
                             <?php if(!empty($docs)): ?>
-                                <a href="?descargar_zip=<?= $exp['id'] ?>" class="btn btn-outline-primary btn-sm py-1 px-2 fw-bold" style="font-size: 10px;">
-                                    <i class="bi bi-download me-1"></i> Bajar ZIP
+                                <a href="?descargar_zip=<?= $exp['id'] ?>" class="btn-saas btn-saas-secondary btn-saas-sm">
+                                    <i class="bi bi-download"></i> Bajar ZIP
                                 </a>
                             <?php endif; ?>
                         </div>
-                        <div class="card-body p-3">
+                        <div class="saas-card-body p-3">
                             <?php if(empty($docs)): ?>
                                 <div class="text-center py-4 bg-light border border-dashed rounded-3">
-                                    <p class="text-muted small mb-0 italic">No hay documentos cargados en el expediente.</p>
+                                    <p class="text-muted small mb-0 fst-italic">No hay documentos cargados en el expediente.</p>
                                 </div>
                             <?php else: ?>
                                 <div class="d-flex flex-column gap-2">
@@ -422,21 +452,21 @@ require_once __DIR__ . '/admin_controller.php';
                 </div>
 
                 <!-- COLUMNA DERECHA: TABLA Y FORMULARIO DE ACCIÓN -->
-                <div class="col-lg-8 space-y-4">
+                <div class="col-lg-8">
                     
                     <!-- TABLA DETALLE PRODUCTOS -->
-                    <div class="card shadow-sm border-light">
-                        <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
-                            <h6 class="fw-bold mb-0 text-dark">
-                                <i class="bi bi-cart3 text-secondary me-1"></i>
+                    <div class="saas-card mb-4">
+                        <div class="saas-card-header">
+                            <h6 class="fw-bold mb-0 text-dark" style="font-size: 13px;">
+                                <i class="bi bi-cart3 text-primary me-1.5"></i>
                                 Detalle de Productos / Servicios
                             </h6>
                             <div class="text-end">
-                                <span class="text-muted text-uppercase fw-bold" style="font-size: 8px;">Monto Total</span>
-                                <div class="h5 fw-bold text-success tabular-nums mb-0"><?= money($exp['monto_definitivo'] ?? $exp['monto_estimado']) ?></div>
+                                <span class="form-label-saas mb-0 text-muted" style="font-size: 9px;">Monto Total</span>
+                                <div class="price-text fs-5 text-success mb-0"><?= money($exp['monto_definitivo'] ?? $exp['monto_estimado']) ?></div>
                             </div>
                         </div>
-                        <div class="card-body bg-slate-50 p-3">
+                        <div class="saas-card-body bg-light p-3">
                             <div class="d-flex flex-column gap-3">
                                 <?php foreach($items as $it): 
                                     $costo_linea = $it['cantidad'] * $it['precio_unitario'];
@@ -449,7 +479,7 @@ require_once __DIR__ . '/admin_controller.php';
                                                 <div class="d-flex align-items-center gap-2 flex-wrap">
                                                     <span class="text-dark fw-bold small tabular-nums" style="font-size: 12px;"><?= $it['cuenta_codigo'] ?: 'Sin imputación' ?></span>
                                                     <?php if(!empty($it['ag_codigo'])): ?>
-                                                        <span class="badge bg-secondary-subtle text-secondary-emphasis" style="font-size: 8px;">AG: <?= $it['ag_codigo'] ?></span>
+                                                        <span class="saas-badge saas-badge-neutral" style="font-size: 9px;">AG: <?= $it['ag_codigo'] ?></span>
                                                     <?php endif; ?>
                                                 </div>
                                             </div>
@@ -494,29 +524,29 @@ require_once __DIR__ . '/admin_controller.php';
 
                     <!-- CRITERIOS EVALUACIÓN LICITACIÓN -->
                     <?php if(!empty($criterios)): ?>
-                    <div class="card border-purple bg-purple-subtle shadow-sm">
-                        <div class="card-header bg-white border-purple text-purple-emphasis py-3">
-                            <h6 class="fw-bold mb-0 d-flex align-items-center gap-2">
-                                <i class="bi bi-ui-checks text-purple"></i>
+                    <div class="saas-card mb-4 border-purple">
+                        <div class="saas-card-header bg-purple-subtle text-purple-emphasis">
+                            <h6 class="fw-bold mb-0 d-flex align-items-center gap-2" style="font-size: 13px;">
+                                <i class="bi bi-ui-checks"></i>
                                 Criterios de Evaluación Licitación
                             </h6>
                         </div>
-                        <div class="card-body p-3">
-                            <div class="table-responsive rounded-3 border border-purple-subtle">
-                                <table class="table table-sm table-striped align-middle mb-0 bg-white">
-                                    <thead class="table-light text-uppercase" style="font-size: 10px;">
+                        <div class="saas-card-body p-3">
+                            <div class="table-responsive rounded-3 border">
+                                <table class="saas-table align-middle mb-0 bg-white">
+                                    <thead>
                                         <tr>
-                                            <th class="p-2 text-center" style="width: 60px;">N°</th>
-                                            <th class="p-2">Descripción del Criterio</th>
-                                            <th class="p-2 text-center" style="width: 120px;">Ponderación</th>
+                                            <th class="text-center" style="width: 60px;">N°</th>
+                                            <th>Descripción del Criterio</th>
+                                            <th class="text-center" style="width: 120px;">Ponderación</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-purple-50">
+                                    <tbody>
                                         <?php foreach($criterios as $cr): ?>
                                         <tr>
-                                            <td class="p-2 text-center fw-bold text-muted"><?= $cr['numero_criterio'] ?></td>
-                                            <td class="p-2 text-dark small fw-medium"><?= htmlspecialchars($cr['descripcion']) ?></td>
-                                            <td class="p-2 text-center fw-bold text-primary tabular-nums"><?= floatval($cr['porcentaje']) ?>%</td>
+                                            <td class="text-center fw-bold text-muted"><?= $cr['numero_criterio'] ?></td>
+                                            <td class="text-dark small fw-medium"><?= htmlspecialchars($cr['descripcion']) ?></td>
+                                            <td class="text-center fw-bold text-primary tabular-nums"><?= floatval($cr['porcentaje']) ?>%</td>
                                         </tr>
                                         <?php endforeach; ?>
                                     </tbody>
@@ -528,36 +558,36 @@ require_once __DIR__ . '/admin_controller.php';
 
                     <!-- VISOR DE DOCUMENTO OPI A FIRMAR (FASE 3 / FIRMA 3/3) -->
                     <?php if(!$es_etapa_cotizacion): ?>
-                    <div class="card shadow-sm border-light mb-4">
-                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                    <div class="saas-card mb-4">
+                        <div class="saas-card-header">
+                            <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2" style="font-size: 13px;">
                                 <i class="bi bi-file-earmark-pdf-fill text-danger fs-5"></i>
                                 <span>Vista Previa: OPI Oficial a Firmar (Visaciones 1/3 y 2/3)</span>
                             </h6>
                             <div class="d-flex gap-2">
-                                <a href="imprimir_opi.php?id=<?= $exp['id'] ?>" target="_blank" class="btn btn-outline-primary btn-sm py-1 px-2.5 fw-bold d-inline-flex align-items-center gap-1" style="font-size: 11px;">
-                                    <i class="bi bi-box-arrow-up-right"></i> Abrir en Pestaña Nueva
+                                <a href="imprimir_opi.php?id=<?= $exp['id'] ?>" target="_blank" class="btn-saas btn-saas-secondary btn-saas-sm">
+                                    <i class="bi bi-box-arrow-up-right"></i> Nueva Pestaña
                                 </a>
-                                <a href="imprimir_opi.php?id=<?= $exp['id'] ?>&auto_download=1" target="_blank" class="btn btn-outline-secondary btn-sm py-1 px-2.5 fw-bold d-inline-flex align-items-center gap-1" style="font-size: 11px;">
+                                <a href="imprimir_opi.php?id=<?= $exp['id'] ?>&auto_download=1" target="_blank" class="btn-saas btn-saas-secondary btn-saas-sm">
                                     <i class="bi bi-download"></i> Descargar PDF
                                 </a>
                             </div>
                         </div>
-                        <div class="card-body p-0 bg-secondary-subtle">
+                        <div class="saas-card-body p-0 bg-secondary-subtle">
                             <iframe src="imprimir_opi.php?id=<?= $exp['id'] ?>#toolbar=1&view=FitH" class="w-100 border-0 rounded-bottom" style="height: 540px; background-color: #525659;"></iframe>
                         </div>
                     </div>
                     <?php endif; ?>
 
                     <!-- TARJETA DE RESOLUCIÓN UNIFICADA (HOMOLOGADA) -->
-                    <div class="card shadow-sm border-light">
-                        <div class="card-header bg-white border-bottom py-3">
-                            <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                    <div class="saas-card mb-4">
+                        <div class="saas-card-header">
+                            <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2" style="font-size: 13px;">
                                 <i class="bi bi-bank text-primary"></i>
                                 <?= $es_etapa_cotizacion ? 'Resolución: Autorización de Cotización' : 'Resolución y Firma de OPI' ?>
-                            </h5>
+                            </h6>
                         </div>
-                        <div class="card-body p-4">
+                        <div class="saas-card-body p-4">
                             <?php if (!empty($es_accionable)): ?>
                                 <p class="text-secondary small mb-4">Seleccione una de las acciones autorizadas por el flujo para proceder con el requerimiento.</p>
                                 
@@ -591,9 +621,9 @@ require_once __DIR__ . '/admin_controller.php';
                                             <input type="hidden" name="transicion_id" value="<?= $t_aprobar['id'] ?>">
                                             <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
                                             
-                                            <button type="submit" onclick="return confirm('¿Confirma autorizar el inicio de cotización para este expediente?')" class="btn btn-primary py-2.5 w-100 mb-4 fw-bold shadow d-flex justify-content-center align-items-center gap-2">
-                                                <i class="bi bi-check-circle-fill"></i>
-                                                <?= htmlspecialchars($t_aprobar['accion_label']) ?>
+                                            <button type="submit" onclick="return confirm('¿Confirma autorizar el inicio de cotización para este expediente?')" class="btn-saas btn-saas-primary w-100 py-3 mb-4 fs-6 justify-content-center">
+                                                <i class="bi bi-check-circle-fill fs-5"></i>
+                                                <span><?= htmlspecialchars($t_aprobar['accion_label']) ?></span>
                                             </button>
                                         </form>
                                     <?php endif; ?>
@@ -601,37 +631,37 @@ require_once __DIR__ . '/admin_controller.php';
                                 <?php else: ?>
                                     <!-- EN_APROBACION_ADMINISTRADOR: FIRMA DIGITAL FIRMAGOB 3/3 -->
                                     <?php if ($t_aprobar): ?>
-                                        <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $exp['id'] ?>, transicion_id: <?= $t_aprobar['id'] ?>, etapa: 'ADMIN_MUNICIPAL', codigo_interno: '<?= htmlspecialchars($exp['codigo_interno']) ?>', monto: '<?= $exp['monto_definitivo'] ?: $exp['monto_estimado'] ?>', doc_titulo: 'OPI Oficial Definitiva (Firma 3/3)', titulo_compra: '<?= htmlspecialchars(addslashes($exp['titulo_compra'] ?? '')) ?>', proveedor: '<?= htmlspecialchars(addslashes(($exp['proveedor_rut'] ? $exp['proveedor_rut'].' - ' : '').($exp['proveedor_nombre'] ?? ''))) ?>', firmante_nombre: '<?= htmlspecialchars(addslashes($firmante_activo['nombre'] ?? $_SESSION['user_nombre'] ?? '')) ?>', firmante_rut: '<?= htmlspecialchars(addslashes($firmante_activo['rut'] ?? $_SESSION['user_rut'] ?? '')) ?>', firmante_cargo: '<?= htmlspecialchars(addslashes($firmante_activo['cargo'] ?? 'ADMINISTRADOR MUNICIPAL')) ?>'})" class="btn btn-primary py-3 w-100 mb-4 fs-6 fw-bold shadow d-flex justify-content-center align-items-center gap-2" style="background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%);">
+                                        <button type="button" onclick="abrirModalFirmaGob({expediente_id: <?= $exp['id'] ?>, transicion_id: <?= $t_aprobar['id'] ?>, etapa: 'ADMIN_MUNICIPAL', codigo_interno: '<?= htmlspecialchars($exp['codigo_interno']) ?>', monto: '<?= $exp['monto_definitivo'] ?: $exp['monto_estimado'] ?>', doc_titulo: 'OPI Oficial Definitiva (Firma 3/3)', titulo_compra: '<?= htmlspecialchars(addslashes($exp['titulo_compra'] ?? '')) ?>', proveedor: '<?= htmlspecialchars(addslashes(($exp['proveedor_rut'] ? $exp['proveedor_rut'].' - ' : '').($exp['proveedor_nombre'] ?? ''))) ?>', firmante_nombre: '<?= htmlspecialchars(addslashes($firmante_activo['nombre'] ?? $_SESSION['user_nombre'] ?? '')) ?>', firmante_rut: '<?= htmlspecialchars(addslashes($firmante_activo['rut'] ?? $_SESSION['user_rut'] ?? '')) ?>', firmante_cargo: '<?= htmlspecialchars(addslashes($firmante_activo['cargo'] ?? 'ADMINISTRADOR MUNICIPAL')) ?>'})" class="btn-saas btn-saas-primary w-100 py-3 mb-4 fs-6 justify-content-center">
                                             <i class="bi bi-pen-fill fs-5"></i>
-                                            Firmar y Emitir OPI Oficial con FirmaGob (3/3)
+                                            <span>Firmar y Emitir OPI Oficial con FirmaGob (3/3)</span>
                                         </button>
                                     <?php endif; ?>
                                 <?php endif; ?>
 
                                 <!-- ÁREA DE OBSERVACIONES UNIFICADA (PARA DEVOLVER O RECHAZAR) -->
-                                <div class="border-top pt-3.5">
+                                <div class="border-top pt-3">
                                     <form method="POST">
                                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                         <input type="hidden" name="expediente_id" value="<?= $exp['id'] ?>">
 
-                                        <label class="form-label fw-bold text-secondary small text-uppercase" style="font-size: 10px;">Comentario / Motivo de la Observación (Obligatorio para Devolver/Rechazar)</label>
-                                        <textarea name="motivo_rechazo" rows="3" class="form-control text-sm mb-3 bg-light" placeholder="Escriba aquí los detalles de la observación o causa de rechazo..."></textarea>
+                                        <label class="form-label-saas mb-1">Comentario / Motivo de la Observación (Obligatorio para Devolver/Rechazar)</label>
+                                        <textarea name="motivo_rechazo" rows="3" class="form-control-saas text-sm mb-3 bg-light" placeholder="Escriba aquí los detalles de la observación o causa de rechazo..."></textarea>
                                         
                                         <div class="row g-2">
                                             <?php if ($t_devolver): ?>
                                                 <div class="col-sm-6">
-                                                    <button type="submit" name="transicion_id" value="<?= $t_devolver['id'] ?>" onclick="return confirm('¿Confirma la acción de: <?= htmlspecialchars($t_devolver['accion_label']) ?>?')" class="btn btn-outline-secondary w-100 py-2 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
+                                                    <button type="submit" name="transicion_id" value="<?= $t_devolver['id'] ?>" onclick="return confirm('¿Confirma la acción de: <?= htmlspecialchars($t_devolver['accion_label']) ?>?')" class="btn-saas btn-saas-secondary w-100 py-2 justify-content-center">
                                                         <i class="bi bi-arrow-counterclockwise"></i>
-                                                        <?= htmlspecialchars($t_devolver['accion_label']) ?>
+                                                        <span><?= htmlspecialchars($t_devolver['accion_label']) ?></span>
                                                     </button>
                                                 </div>
                                             <?php endif; ?>
 
                                             <?php if ($t_rechazar): ?>
                                                 <div class="col-sm-6">
-                                                    <button type="submit" name="transicion_id" value="<?= $t_rechazar['id'] ?>" onclick="return confirm('¿Confirma la acción de: <?= htmlspecialchars($t_rechazar['accion_label']) ?>?')" class="btn btn-outline-danger w-100 py-2 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-1.5">
+                                                    <button type="submit" name="transicion_id" value="<?= $t_rechazar['id'] ?>" onclick="return confirm('¿Confirma la acción de: <?= htmlspecialchars($t_rechazar['accion_label']) ?>?')" class="btn-saas btn-saas-danger w-100 py-2 justify-content-center">
                                                         <i class="bi bi-x-circle"></i>
-                                                        <?= htmlspecialchars($t_rechazar['accion_label']) ?>
+                                                        <span><?= htmlspecialchars($t_rechazar['accion_label']) ?></span>
                                                     </button>
                                                 </div>
                                             <?php endif; ?>
@@ -649,9 +679,9 @@ require_once __DIR__ . '/admin_controller.php';
                                     <p class="text-secondary small mb-4">El requerimiento ha sido procesado por la Administración Municipal en esta etapa.</p>
                                     
                                     <div class="bg-light rounded-3 p-3 border d-inline-block text-start mx-auto" style="min-width: 280px;">
-                                        <span class="text-muted fw-bold d-block text-uppercase mb-1" style="font-size: 8px;">Estado Actual del Expediente</span>
+                                        <span class="form-label-saas text-muted mb-1" style="font-size: 9px;">Estado Actual del Expediente</span>
                                         <span class="fw-bold text-dark fs-6 d-block"><?= htmlspecialchars($exp['estado_nombre'] ?? $exp['estado_actual']) ?></span>
-                                        <span class="badge bg-primary-subtle text-primary-emphasis mt-2 px-2 py-1 fs-6" style="font-size: 9px; font-weight: bold;">
+                                        <span class="saas-badge saas-badge-info mt-2">
                                             Cargo Responsable: <?= htmlspecialchars($exp['rol_responsable'] ?? 'Siguiente Etapa') ?>
                                         </span>
                                     </div>
@@ -681,16 +711,16 @@ require_once __DIR__ . '/admin_controller.php';
                             <span class="text-uppercase text-muted fw-bold" style="font-size: 9px; letter-spacing: 0.5px;">Expediente:</span>
                             <div id="modalAdjuntosCodigo" class="fw-bold text-dark tabular-nums"></div>
                         </div>
-                        <a id="btnDescargarZip" href="#" class="btn btn-primary btn-sm fw-bold shadow-sm d-flex align-items-center gap-1.5 w-100 w-sm-auto justify-content-center">
+                        <a id="btnDescargarZip" href="#" class="btn-saas btn-saas-primary btn-saas-sm w-100 w-sm-auto justify-content-center">
                             <i class="bi bi-download"></i>
-                            Bajar ZIP
+                            <span>Bajar ZIP</span>
                         </a>
                     </div>
                     
                     <div id="modalAdjuntosLista" class="d-flex flex-column gap-2 overflow-y-auto" style="max-height: 350px;"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar Visor</button>
+                    <button type="button" class="btn-saas btn-saas-secondary btn-saas-sm" data-bs-dismiss="modal">Cerrar Visor</button>
                 </div>
             </div>
         </div>
@@ -711,13 +741,13 @@ require_once __DIR__ . '/admin_controller.php';
                     </div>
                     
                     <div class="table-responsive rounded-3 border">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light text-uppercase small text-secondary">
+                        <table class="saas-table align-middle mb-0">
+                            <thead>
                                 <tr>
-                                    <th class="p-3">Descripción del Producto/Servicio</th>
-                                    <th class="p-3 text-center" style="width: 100px;">Cant.</th>
-                                    <th class="p-3 text-end" style="width: 150px;">Valor Unit. Ingresado</th>
-                                    <th class="p-3 text-end" style="width: 160px;">Total Línea</th>
+                                    <th>Descripción del Producto/Servicio</th>
+                                    <th class="text-center" style="width: 100px;">Cant.</th>
+                                    <th class="text-end" style="width: 150px;">Valor Unit. Ingresado</th>
+                                    <th class="text-end" style="width: 160px;">Total Línea</th>
                                 </tr>
                             </thead>
                             <tbody id="modalVerItemsBody"></tbody>
@@ -725,7 +755,7 @@ require_once __DIR__ . '/admin_controller.php';
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar Visor</button>
+                    <button type="button" class="btn-saas btn-saas-secondary btn-saas-sm" data-bs-dismiss="modal">Cerrar Visor</button>
                 </div>
             </div>
         </div>
@@ -831,4 +861,4 @@ require_once __DIR__ . '/admin_controller.php';
 
 <?php include __DIR__ . '/footer.php'; ?>
 </body>
-</html>
+</html>
