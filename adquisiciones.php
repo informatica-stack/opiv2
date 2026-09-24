@@ -48,10 +48,10 @@ require_once __DIR__ . '/adquisiciones_controller.php';
                 </div>
             </div>
 
-            <!-- KPI METRICS -->
+            <!-- KPI METRICS (INTERACTIVO) -->
             <div class="row g-3 mb-4">
                 <div class="col-12 col-sm-6 col-lg-4">
-                    <div class="card card-dashboard p-3 shadow-sm h-100">
+                    <a href="adquisiciones.php?view=pendientes" class="card card-dashboard p-3 shadow-sm h-100 text-decoration-none text-reset d-block <?= ($vista === 'pendientes' || $vista === 'lista' || empty($vista)) ? 'border-primary shadow' : '' ?>" style="transition: transform 0.18s ease, box-shadow 0.18s ease;">
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
                                 <span class="text-uppercase text-muted fw-bold" style="font-size: 11px; letter-spacing: 0.5px;">Pendientes de Gestión</span>
@@ -62,10 +62,10 @@ require_once __DIR__ . '/adquisiciones_controller.php';
                                 <i class="bi bi-clock-history fs-4"></i>
                             </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
                 <div class="col-12 col-sm-6 col-lg-4">
-                    <div class="card card-dashboard p-3 shadow-sm h-100">
+                    <a href="adquisiciones.php?view=procesadas" class="card card-dashboard p-3 shadow-sm h-100 text-decoration-none text-reset d-block <?= $vista === 'procesadas' ? 'border-primary shadow' : '' ?>" style="transition: transform 0.18s ease, box-shadow 0.18s ease;">
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
                                 <span class="text-uppercase text-muted fw-bold" style="font-size: 11px; letter-spacing: 0.5px;">Procesadas por Mí</span>
@@ -76,10 +76,10 @@ require_once __DIR__ . '/adquisiciones_controller.php';
                                 <i class="bi bi-check2-circle fs-4"></i>
                             </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
                 <div class="col-12 col-sm-6 col-lg-4">
-                    <div class="card card-dashboard p-3 shadow-sm h-100">
+                    <a href="adquisiciones.php?view=todas" class="card card-dashboard p-3 shadow-sm h-100 text-decoration-none text-reset d-block <?= $vista === 'todas' ? 'border-primary shadow' : '' ?>" style="transition: transform 0.18s ease, box-shadow 0.18s ease;">
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
                                 <span class="text-uppercase text-muted fw-bold" style="font-size: 11px; letter-spacing: 0.5px;">Total Solicitudes</span>
@@ -90,7 +90,7 @@ require_once __DIR__ . '/adquisiciones_controller.php';
                                 <i class="bi bi-diagram-3 fs-4"></i>
                             </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
             </div>
 

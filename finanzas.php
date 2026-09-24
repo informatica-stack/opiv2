@@ -57,9 +57,9 @@ $user_depto = $_SESSION['user_depto_nombre'] ?? 'Dirección de Finanzas';
                 </div>
             </div>
 
-            <!-- TARJETAS KPI DE GESTIÓN -->
+            <!-- TARJETAS KPI DE GESTIÓN (METRICS GRID INTERACTIVO) -->
             <div class="metrics-grid">
-                <div class="metric-card">
+                <a href="finanzas.php?view=pendientes" class="metric-card <?= ($vista === 'pendientes' || $vista === 'lista' || empty($vista)) ? 'active' : '' ?>">
                     <div class="metric-info">
                         <h5>Pendientes de Certificado</h5>
                         <div class="metric-number"><?= number_format($count_pendientes, 0, ',', '.') ?></div>
@@ -70,9 +70,9 @@ $user_depto = $_SESSION['user_depto_nombre'] ?? 'Dirección de Finanzas';
                     <div class="metric-icon-box yellow">
                         <i class="bi bi-file-earmark-check"></i>
                     </div>
-                </div>
+                </a>
 
-                <div class="metric-card">
+                <a href="finanzas.php?view=procesados" class="metric-card <?= $vista === 'procesados' ? 'active' : '' ?>">
                     <div class="metric-info">
                         <h5>Procesados por Mí</h5>
                         <div class="metric-number"><?= number_format($count_procesados, 0, ',', '.') ?></div>
@@ -83,9 +83,9 @@ $user_depto = $_SESSION['user_depto_nombre'] ?? 'Dirección de Finanzas';
                     <div class="metric-icon-box green">
                         <i class="bi bi-shield-check"></i>
                     </div>
-                </div>
+                </a>
 
-                <div class="metric-card">
+                <a href="finanzas.php?view=todas" class="metric-card <?= $vista === 'todas' ? 'active' : '' ?>">
                     <div class="metric-info">
                         <h5>Total de Solicitudes</h5>
                         <div class="metric-number"><?= number_format($count_todas, 0, ',', '.') ?></div>
@@ -96,7 +96,7 @@ $user_depto = $_SESSION['user_depto_nombre'] ?? 'Dirección de Finanzas';
                     <div class="metric-icon-box purple">
                         <i class="bi bi-folder2-open"></i>
                     </div>
-                </div>
+                </a>
             </div>
 
             <!-- PANEL PRINCIPAL CON TABS Y TABLA -->

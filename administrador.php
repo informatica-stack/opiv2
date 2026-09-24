@@ -54,9 +54,9 @@ require_once __DIR__ . '/admin_controller.php';
                 </div>
             </div>
 
-            <!-- TARJETAS KPI DE GESTIÓN (METRICS GRID) -->
+            <!-- TARJETAS KPI DE GESTIÓN (METRICS GRID INTERACTIVO) -->
             <div class="metrics-grid">
-                <div class="metric-card">
+                <a href="administrador.php?tab=cotizaciones" class="metric-card <?= $tab === 'cotizaciones' ? 'active' : '' ?>">
                     <div class="metric-info">
                         <h5>Autorizar Cotización</h5>
                         <div class="metric-number"><?= number_format($count_cotizacion, 0, ',', '.') ?></div>
@@ -67,9 +67,9 @@ require_once __DIR__ . '/admin_controller.php';
                     <div class="metric-icon-box blue">
                         <i class="bi bi-card-checklist"></i>
                     </div>
-                </div>
+                </a>
 
-                <div class="metric-card">
+                <a href="administrador.php?tab=opis" class="metric-card <?= $tab === 'opis' ? 'active' : '' ?>">
                     <div class="metric-info">
                         <h5>Firmar OPIs Definitivas</h5>
                         <div class="metric-number"><?= number_format($count_opi, 0, ',', '.') ?></div>
@@ -80,9 +80,9 @@ require_once __DIR__ . '/admin_controller.php';
                     <div class="metric-icon-box purple">
                         <i class="bi bi-pen-fill"></i>
                     </div>
-                </div>
+                </a>
 
-                <div class="metric-card">
+                <a href="administrador.php?tab=procesados" class="metric-card <?= $tab === 'procesados' ? 'active' : '' ?>">
                     <div class="metric-info">
                         <h5>Procesados por Mí</h5>
                         <div class="metric-number"><?= number_format($count_procesados, 0, ',', '.') ?></div>
@@ -93,7 +93,7 @@ require_once __DIR__ . '/admin_controller.php';
                     <div class="metric-icon-box green">
                         <i class="bi bi-check2-circle"></i>
                     </div>
-                </div>
+                </a>
             </div>
 
             <!-- PANEL PRINCIPAL CON TABS, FILTROS Y TABLA -->

@@ -57,9 +57,9 @@ $user_depto = $_SESSION['user_depto_nombre'] ?? 'Control Presupuestario';
                 </div>
             </div>
 
-            <!-- TARJETAS KPI DE GESTIÓN -->
+            <!-- TARJETAS KPI DE GESTIÓN (METRICS GRID INTERACTIVO) -->
             <div class="metrics-grid">
-                <div class="metric-card">
+                <a href="control_presupuestario.php?view=pendientes_inicial" class="metric-card <?= ($vista === 'pendientes_inicial' || $vista === 'pendientes' || empty($vista)) ? 'active' : '' ?>">
                     <div class="metric-info">
                         <h5>Visación Inicial (Saldo)</h5>
                         <div class="metric-number"><?= number_format($count_pendientes_inicial, 0, ',', '.') ?></div>
@@ -70,9 +70,9 @@ $user_depto = $_SESSION['user_depto_nombre'] ?? 'Control Presupuestario';
                     <div class="metric-icon-box blue">
                         <i class="bi bi-wallet2"></i>
                     </div>
-                </div>
+                </a>
 
-                <div class="metric-card">
+                <a href="control_presupuestario.php?view=pendientes_final" class="metric-card <?= $vista === 'pendientes_final' ? 'active' : '' ?>">
                     <div class="metric-info">
                         <h5>Visación Final (Firma 2/3)</h5>
                         <div class="metric-number"><?= number_format($count_pendientes_final, 0, ',', '.') ?></div>
@@ -83,9 +83,9 @@ $user_depto = $_SESSION['user_depto_nombre'] ?? 'Control Presupuestario';
                     <div class="metric-icon-box yellow">
                         <i class="bi bi-pen"></i>
                     </div>
-                </div>
+                </a>
 
-                <div class="metric-card">
+                <a href="control_presupuestario.php?view=procesados" class="metric-card <?= $vista === 'procesados' ? 'active' : '' ?>">
                     <div class="metric-info">
                         <h5>Procesados por Mí</h5>
                         <div class="metric-number"><?= number_format($count_procesados, 0, ',', '.') ?></div>
@@ -96,9 +96,9 @@ $user_depto = $_SESSION['user_depto_nombre'] ?? 'Control Presupuestario';
                     <div class="metric-icon-box green">
                         <i class="bi bi-shield-check"></i>
                     </div>
-                </div>
+                </a>
 
-                <div class="metric-card">
+                <a href="control_presupuestario.php?view=todas" class="metric-card <?= $vista === 'todas' ? 'active' : '' ?>">
                     <div class="metric-info">
                         <h5>Total Requerimientos</h5>
                         <div class="metric-number"><?= number_format($count_todas, 0, ',', '.') ?></div>
@@ -109,7 +109,7 @@ $user_depto = $_SESSION['user_depto_nombre'] ?? 'Control Presupuestario';
                     <div class="metric-icon-box purple">
                         <i class="bi bi-folder2-open"></i>
                     </div>
-                </div>
+                </a>
             </div>
 
             <!-- PANEL PRINCIPAL CON TABS Y TABLA -->

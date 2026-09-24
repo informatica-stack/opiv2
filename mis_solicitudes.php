@@ -74,18 +74,18 @@ $pagina_actual = basename($_SERVER['PHP_SELF']);
             </div>
         <?php endif; ?>
 
-        <!-- TARJETAS DE MÉTRICAS KPI (DINÁMICAS DEL USUARIO) -->
+        <!-- TARJETAS DE MÉTRICAS KPI (DINÁMICAS DEL USUARIO - INTERACTIVAS) -->
         <div class="metrics-grid">
-            <div class="metric-card">
+            <a href="mis_solicitudes.php" class="metric-card <?= (empty($f_estado) && empty($f_q) && empty($f_tipo) && empty($f_desde) && empty($f_hasta)) ? 'active' : '' ?>">
                 <div class="metric-info">
                     <h5>Total Solicitudes</h5>
                     <div class="metric-number"><?= $kpi_total_user ?></div>
                     <div class="metric-sub"><i class="bi bi-folder2-open text-primary"></i> En su historial personal</div>
                 </div>
                 <div class="metric-icon-box blue"><i class="bi bi-file-earmark-text"></i></div>
-            </div>
+            </a>
 
-            <div class="metric-card">
+            <a href="mis_solicitudes.php?f_estado=EN_REVISION_JEFATURA" class="metric-card <?= $f_estado === 'EN_REVISION_JEFATURA' ? 'active' : '' ?>">
                 <div class="metric-info">
                     <h5>Pendiente Jefatura</h5>
                     <div class="metric-number"><?= $kpi_pend_user ?></div>
@@ -94,25 +94,25 @@ $pagina_actual = basename($_SERVER['PHP_SELF']);
                     </div>
                 </div>
                 <div class="metric-icon-box yellow"><i class="bi bi-pen"></i></div>
-            </div>
+            </a>
 
-            <div class="metric-card">
+            <a href="mis_solicitudes.php?f_estado=VB_PRESUPUESTO" class="metric-card <?= $f_estado === 'VB_PRESUPUESTO' ? 'active' : '' ?>">
                 <div class="metric-info">
                     <h5>Validación Presupuesto</h5>
                     <div class="metric-number"><?= $kpi_pres_count ?></div>
                     <div class="metric-sub"><i class="bi bi-cash-stack text-info"></i> <?= money($kpi_pres_monto) ?> comprometidos</div>
                 </div>
                 <div class="metric-icon-box cyan"><i class="bi bi-calculator"></i></div>
-            </div>
+            </a>
 
-            <div class="metric-card">
+            <a href="mis_solicitudes.php?f_estado=EN_GESTION_ADQUISICIONES" class="metric-card <?= $f_estado === 'EN_GESTION_ADQUISICIONES' ? 'active' : '' ?>">
                 <div class="metric-info">
                     <h5>En Adquisiciones / Listas</h5>
                     <div class="metric-number"><?= $kpi_adq_user ?></div>
                     <div class="metric-sub" style="color: var(--success);"><i class="bi bi-check2-circle"></i> Trámite avanzado</div>
                 </div>
                 <div class="metric-icon-box green"><i class="bi bi-bag-check"></i></div>
-            </div>
+            </a>
         </div>
 
         <!-- PANEL DE TABLA Y FILTROS -->

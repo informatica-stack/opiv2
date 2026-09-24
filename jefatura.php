@@ -62,9 +62,9 @@ $es_subrogante = isset($_SESSION['es_subrogante']) && $_SESSION['es_subrogante']
                 </div>
             </div>
 
-            <!-- TARJETAS KPI DE GESTIÓN -->
+            <!-- TARJETAS KPI DE GESTIÓN (METRICS GRID INTERACTIVO) -->
             <div class="metrics-grid">
-                <div class="metric-card">
+                <a href="jefatura.php?view=pendientes" class="metric-card <?= ($vista === 'pendientes' || $vista === 'lista' || empty($vista)) ? 'active' : '' ?>">
                     <div class="metric-info">
                         <h5>Pendientes de Visación / Firma</h5>
                         <div class="metric-number"><?= number_format($count_pendientes, 0, ',', '.') ?></div>
@@ -75,9 +75,9 @@ $es_subrogante = isset($_SESSION['es_subrogante']) && $_SESSION['es_subrogante']
                     <div class="metric-icon-box blue">
                         <i class="bi bi-hourglass-split"></i>
                     </div>
-                </div>
+                </a>
 
-                <div class="metric-card">
+                <a href="jefatura.php?view=procesadas" class="metric-card <?= $vista === 'procesadas' ? 'active' : '' ?>">
                     <div class="metric-info">
                         <h5>Procesadas por Mí</h5>
                         <div class="metric-number"><?= number_format($count_procesadas, 0, ',', '.') ?></div>
@@ -88,9 +88,9 @@ $es_subrogante = isset($_SESSION['es_subrogante']) && $_SESSION['es_subrogante']
                     <div class="metric-icon-box green">
                         <i class="bi bi-shield-check"></i>
                     </div>
-                </div>
+                </a>
 
-                <div class="metric-card">
+                <a href="jefatura.php?view=todas" class="metric-card <?= $vista === 'todas' ? 'active' : '' ?>">
                     <div class="metric-info">
                         <h5>Total Requerimientos Unidad</h5>
                         <div class="metric-number"><?= number_format($count_todas, 0, ',', '.') ?></div>
@@ -101,7 +101,7 @@ $es_subrogante = isset($_SESSION['es_subrogante']) && $_SESSION['es_subrogante']
                     <div class="metric-icon-box purple">
                         <i class="bi bi-folder2-open"></i>
                     </div>
-                </div>
+                </a>
             </div>
 
             <!-- PANEL PRINCIPAL CON TABS Y TABLA -->
