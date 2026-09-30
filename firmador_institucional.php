@@ -143,7 +143,74 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
             padding: 3px 8px;
             border-radius: 5px;
         }
-    </style>
+        @keyframes pulseSign {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.7); }
+            50% { transform: scale(1.03); box-shadow: 0 0 0 8px rgba(13, 110, 253, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(13, 110, 253, 0); }
+        }
+        .pulse-anim {
+            animation: pulseSign 0.6s ease-in-out 2;
+        }
+        /* Barra Flotante de Acción Inferior en Móviles */
+        .mobile-floating-sign-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid #dee2e6;
+            padding: 10px 16px;
+            z-index: 1040;
+            box-shadow: 0 -4px 16px rgba(0,0,0,0.12);
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Optimizaciones Específicas para Pantallas Móviles (< 768px) */
+        @media (max-width: 768px) {
+            .saas-container {
+                padding-left: 12px !important;
+                padding-right: 12px !important;
+            }
+            .page-header-row {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 10px;
+            }
+            .pdf-viewer-card {
+                min-height: 380px !important;
+                max-height: 60vh !important;
+            }
+            .pdf-canvas-wrapper {
+                margin: 8px auto !important;
+            }
+            .stamp-box-draggable {
+                min-width: 140px !important;
+                min-height: 66px !important;
+                padding: 4px 6px !important;
+            }
+            .stamp-header-badge {
+                font-size: 7.5px !important;
+            }
+            .stamp-name {
+                font-size: 9.5px !important;
+            }
+            .stamp-meta {
+                font-size: 7.2px !important;
+            }
+            .stamp-coords-pill {
+                font-size: 6.5px !important;
+                padding: 0 3px !important;
+            }
+            .btn-pos-quick {
+                font-size: 10px !important;
+                padding: 2px 6px !important;
+            }
+            body.has-mobile-bar {
+                padding-bottom: 70px;
+            }
+        }
 </head>
 <body class="bg-light">
 
@@ -181,18 +248,18 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
 
         <!-- PASO 1: ZONA DE CARGA INICIAL (DROPZONE) -->
         <div id="seccionCarga" class="card border-0 shadow-sm rounded-4 mb-4">
-            <div class="card-body p-4 p-md-5">
-                <div class="dropzone-firmador p-5 text-center" id="dropzoneFirmador">
+            <div class="card-body p-3 p-md-5">
+                <div class="dropzone-firmador p-3 p-sm-4 p-md-5 text-center" id="dropzoneFirmador">
                     <input type="file" id="inputArchivoPdf" accept="application/pdf" class="d-none">
                     <div class="mb-3">
-                        <div class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle shadow-xs" style="width: 76px; height: 76px;">
-                            <i class="bi bi-cloud-arrow-up-fill fs-1"></i>
+                        <div class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle shadow-xs" style="width: 64px; height: 64px;">
+                            <i class="bi bi-cloud-arrow-up-fill fs-2"></i>
                         </div>
                     </div>
-                    <h4 class="fw-bold text-dark mb-1">Arrastra aquí tu documento PDF o haz clic para explorar</h4>
+                    <h4 class="fw-bold text-dark mb-1 fs-5 fs-md-4">Arrastra aquí tu documento PDF o haz clic para explorar</h4>
                     <p class="text-secondary small mb-3">Soporta cualquier documento oficial (Decretos, Resoluciones, Informes, Certificados, etc.)</p>
                     
-                    <div class="d-inline-flex align-items-center gap-2 mb-2">
+                    <div class="d-flex flex-wrap align-items-center justify-content-center gap-2 mb-2">
                         <span class="badge bg-light text-dark border px-2.5 py-1.5 small fw-normal">
                             <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i> Formato: PDF
                         </span>
@@ -255,49 +322,49 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
                     <div class="card border-0 shadow-sm rounded-4 h-100">
                         
                         <!-- Barra de Herramientas del Visor -->
-                        <div class="card-header bg-white border-bottom py-2.5 px-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                        <div class="card-header bg-white border-bottom py-2 px-2.5 px-md-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
                             
                             <!-- Paginación -->
-                            <div class="d-flex align-items-center gap-1.5">
-                                <button class="btn btn-outline-secondary btn-sm" id="btnPaginaPrimera" title="Ir a la Primera Página">
+                            <div class="d-flex align-items-center gap-1">
+                                <button class="btn btn-outline-secondary btn-sm px-1.5 py-1" id="btnPaginaPrimera" title="Primera Página">
                                     <i class="bi bi-chevron-double-left"></i>
                                 </button>
-                                <button class="btn btn-outline-secondary btn-sm" id="btnPaginaAnterior" title="Página Anterior">
+                                <button class="btn btn-outline-secondary btn-sm px-1.5 py-1" id="btnPaginaAnterior" title="Página Anterior">
                                     <i class="bi bi-chevron-left"></i>
                                 </button>
-                                <select id="selectPaginaDirecta" class="form-select form-select-sm py-1 px-2 fw-semibold border-secondary-subtle" style="width: auto; font-size: 12px; cursor: pointer;"></select>
-                                <button class="btn btn-outline-secondary btn-sm" id="btnPaginaSiguiente" title="Página Siguiente">
+                                <select id="selectPaginaDirecta" class="form-select form-select-sm py-1 px-1.5 fw-semibold border-secondary-subtle" style="width: auto; min-width: 105px; max-width: 135px; font-size: 11px; cursor: pointer;"></select>
+                                <button class="btn btn-outline-secondary btn-sm px-1.5 py-1" id="btnPaginaSiguiente" title="Página Siguiente">
                                     <i class="bi bi-chevron-right"></i>
                                 </button>
-                                <button class="btn btn-outline-secondary btn-sm" id="btnPaginaUltima" title="Ir a la Última Página">
+                                <button class="btn btn-outline-secondary btn-sm px-1.5 py-1" id="btnPaginaUltima" title="Última Página">
                                     <i class="bi bi-chevron-double-right"></i>
                                 </button>
                             </div>
 
-                            <!-- Botones de Alineación Rápida de Estampa -->
-                            <div class="d-none d-sm-flex align-items-center gap-1" id="grupoPosicionesRapidas">
-                                <span class="text-muted text-xs fw-semibold me-1">Posición:</span>
-                                <button type="button" class="btn btn-light btn-pos-quick border" onclick="posicionarEstampa('bottom-right')" title="Inferior Derecha">
+                            <!-- Botones de Alineación Rápida de Estampa (Visibles en Móvil y Desktop) -->
+                            <div class="d-flex align-items-center gap-1 overflow-x-auto py-0.5" id="grupoPosicionesRapidas">
+                                <span class="text-muted text-xs fw-semibold me-1 d-none d-md-inline">Posición:</span>
+                                <button type="button" class="btn btn-light btn-pos-quick border text-nowrap" onclick="posicionarEstampa('bottom-right')" title="Inferior Derecha">
                                     <i class="bi bi-arrow-down-right"></i> Inf. Der.
                                 </button>
-                                <button type="button" class="btn btn-light btn-pos-quick border" onclick="posicionarEstampa('bottom-center')" title="Inferior Centro">
+                                <button type="button" class="btn btn-light btn-pos-quick border text-nowrap" onclick="posicionarEstampa('bottom-center')" title="Inferior Centro">
                                     <i class="bi bi-arrow-down"></i> Centro
                                 </button>
-                                <button type="button" class="btn btn-light btn-pos-quick border" onclick="posicionarEstampa('bottom-left')" title="Inferior Izquierda">
+                                <button type="button" class="btn btn-light btn-pos-quick border text-nowrap" onclick="posicionarEstampa('bottom-left')" title="Inferior Izquierda">
                                     <i class="bi bi-arrow-down-left"></i> Inf. Izq.
                                 </button>
                             </div>
 
                             <!-- Controles de Zoom -->
                             <div class="d-flex align-items-center gap-1">
-                                <button class="btn btn-outline-secondary btn-sm" id="btnZoomOut" title="Reducir">
+                                <button class="btn btn-outline-secondary btn-sm px-1.5 py-1" id="btnZoomOut" title="Reducir">
                                     <i class="bi bi-zoom-out"></i>
                                 </button>
-                                <span class="small fw-semibold px-1 text-muted" id="labelZoom">100%</span>
-                                <button class="btn btn-outline-secondary btn-sm" id="btnZoomIn" title="Aumentar">
+                                <span class="small fw-semibold px-1 text-muted" id="labelZoom" style="font-size: 11px;">100%</span>
+                                <button class="btn btn-outline-secondary btn-sm px-1.5 py-1" id="btnZoomIn" title="Aumentar">
                                     <i class="bi bi-zoom-in"></i>
                                 </button>
-                                <button class="btn btn-outline-secondary btn-sm" id="btnAjustarAncho" title="Ajustar al Ancho">
+                                <button class="btn btn-outline-secondary btn-sm px-1.5 py-1" id="btnAjustarAncho" title="Ajustar al Ancho">
                                     <i class="bi bi-arrows-expand"></i>
                                 </button>
                             </div>
@@ -535,6 +602,19 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
                 </div>
             </div>
         </div>
+    <!-- BARRA FLOTANTE DE ACCIÓN RÁPIDA PARA CELULARES -->
+    <div id="mobileBottomBar" class="d-lg-none mobile-floating-sign-bar d-none">
+        <div class="overflow-hidden me-2">
+            <div class="fw-bold text-dark text-truncate text-xs" id="mobileDocNombre">Documento listo</div>
+            <div class="text-primary text-xs d-flex align-items-center gap-1" style="font-size: 11px;">
+                <i class="bi bi-geo-alt-fill"></i>
+                <span id="mobilePillPos">Pág. 1 (Estampa lista)</span>
+            </div>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm px-3 py-2 rounded-pill fw-bold shadow-sm d-flex align-items-center gap-1.5 shrink-0" onclick="irAFormularioFirma()">
+            <i class="bi bi-shield-check fs-6"></i>
+            <span>Firmar Documento</span>
+        </button>
     </div>
 
     <?php include __DIR__ . '/footer.php'; ?>
@@ -637,6 +717,15 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
                 document.getElementById('seccionCarga').classList.add('d-none');
                 document.getElementById('seccionTaller').classList.remove('d-none');
 
+                // Activar barra flotante en celulares
+                const mobileBar = document.getElementById('mobileBottomBar');
+                if (mobileBar && window.innerWidth < 992) {
+                    mobileBar.classList.remove('d-none');
+                    document.body.classList.add('has-mobile-bar');
+                    const lblDocMob = document.getElementById('mobileDocNombre');
+                    if (lblDocMob) lblDocMob.innerText = data.nombre;
+                }
+
                 // Breve pausa para asegurar que el navegador aplique los estilos de visualización
                 await new Promise(r => setTimeout(r, 80));
 
@@ -662,7 +751,7 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
                     for (let p = 1; p <= totalPaginas; p++) {
                         const opt = document.createElement('option');
                         opt.value = p;
-                        opt.innerText = `Página ${p} de ${totalPaginas}`;
+                        opt.innerText = `Pág. ${p} de ${totalPaginas}`;
                         selectPagina.appendChild(opt);
                     }
                 }
@@ -702,10 +791,14 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
                 pdfDimensiones.widthPt = unscaledViewport.width;
                 pdfDimensiones.heightPt = unscaledViewport.height;
 
-                // Escalar para ajustarse al contenedor con precisión
+                // Escalar para ajustarse al contenedor con precisión (responsivo móvil / desktop)
                 const viewerCard = document.getElementById('pdfViewerCard');
+                const isMobile = window.innerWidth < 768;
+                const margin = isMobile ? 12 : 48;
+                const minWidth = isMobile ? 260 : 500;
                 const clientW = viewerCard ? viewerCard.clientWidth : 0;
-                const containerWidth = Math.max(500, (clientW > 100 ? clientW - 48 : 800));
+                const availableWidth = clientW > 80 ? (clientW - margin) : (isMobile ? 320 : 800);
+                const containerWidth = Math.max(minWidth, availableWidth);
                 escalaOriginal = containerWidth / unscaledViewport.width;
                 
                 const finalScale = escalaOriginal * escalaActual;
@@ -746,9 +839,13 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
             let boxWidthPx = Math.round(stampDimensionesPt.widthPt * scaleX);
             let boxHeightPx = Math.round(stampDimensionesPt.heightPt * scaleY);
 
-            // Límites para garantizar máxima legibilidad en pantalla
-            boxWidthPx = Math.max(190, Math.min(320, boxWidthPx));
-            boxHeightPx = Math.max(85, Math.min(130, boxHeightPx));
+            const isMobile = window.innerWidth < 768;
+            const minW = isMobile ? 140 : 190;
+            const minH = isMobile ? 66 : 85;
+
+            // Límites adaptativos para garantizar máxima legibilidad en pantalla sin desbordar
+            boxWidthPx = Math.max(minW, Math.min(320, boxWidthPx));
+            boxHeightPx = Math.max(minH, Math.min(130, boxHeightPx));
 
             stampBox.style.width = boxWidthPx + 'px';
             stampBox.style.height = boxHeightPx + 'px';
@@ -783,13 +880,33 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
 
             document.getElementById('stampCoordsPill').innerText = `Pág ${paginaActual} | X: ${llx}, Y: ${lly}`;
             document.getElementById('infoCoordenadasCalculadas').innerText = `Coordenadas PDF: llx: ${llx}, lly: ${lly}, urx: ${urx}, ury: ${ury} (Pág. ${paginaActual})`;
+
+            // Actualizar indicador en la barra móvil
+            const mobilePos = document.getElementById('mobilePillPos');
+            if (mobilePos) {
+                mobilePos.innerText = `Pág. ${paginaActual} (X: ${llx}, Y: ${lly})`;
+            }
+        }
+
+        // Función para scroll rápido al formulario desde la barra móvil
+        function irAFormularioFirma() {
+            const target = document.getElementById('formFirmarDocumento');
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const btn = document.getElementById('btnEjecutarFirma');
+                if (btn) {
+                    btn.classList.add('pulse-anim');
+                    setTimeout(() => btn.classList.remove('pulse-anim'), 1400);
+                }
+            }
         }
 
         // Posicionamiento Rápido de la Estampa
         function posicionarEstampa(pos) {
             const boxW = stampBox.offsetWidth || 190;
             const boxH = stampBox.offsetHeight || 85;
-            const margin = 25;
+            const isMobile = window.innerWidth < 768;
+            const margin = isMobile ? 12 : 25;
 
             switch (pos) {
                 case 'bottom-right':
@@ -1000,6 +1117,11 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
 
                 const modalExito = new bootstrap.Modal(document.getElementById('modalExitoFirma'));
                 modalExito.show();
+
+                // Ocultar barra flotante móvil para no obstaculizar botones de descarga
+                const mobBar = document.getElementById('mobileBottomBar');
+                if (mobBar) mobBar.classList.add('d-none');
+                document.body.classList.remove('has-mobile-bar');
 
             } catch (err) {
                 modalProc.hide();
