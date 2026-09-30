@@ -120,18 +120,23 @@ $user_name = $_SESSION['user_name'] ?? 'Usuario';
         </div>
 
         <!-- 2. Visaciones y Firmas -->
-        <?php if($es_jefe == 1 || $rol === 'JEFE_UNIDAD' || $rol === 'ADMIN_MUNICIPAL' || $rol === 'SYSADMIN'): ?>
+        <?php if($es_jefe == 1 || $rol === 'JEFE_UNIDAD' || $rol === 'ADMIN_MUNICIPAL' || $rol === 'SYSADMIN' || $rol === 'FINANZAS' || $rol === 'PRESUPUESTO'): ?>
             <div class="mb-3.5">
                 <div class="text-uppercase text-secondary fw-bold px-2 mb-2" style="font-size: 9.5px; letter-spacing: 0.6px;">Visaciones y Firmas</div>
                 <div class="d-flex flex-column gap-1">
-                    <a class="offcanvas-link <?= ($pagina_actual === 'jefatura.php') ? 'active' : '' ?>" href="jefatura.php">
-                        <i class="bi bi-shield-check text-primary"></i> V°B° Jefatura
-                    </a>
+                    <?php if($es_jefe == 1 || $rol === 'JEFE_UNIDAD' || $rol === 'ADMIN_MUNICIPAL' || $rol === 'SYSADMIN'): ?>
+                        <a class="offcanvas-link <?= ($pagina_actual === 'jefatura.php') ? 'active' : '' ?>" href="jefatura.php">
+                            <i class="bi bi-shield-check text-primary"></i> V°B° Jefatura
+                        </a>
+                    <?php endif; ?>
                     <?php if($rol === 'ADMIN_MUNICIPAL' || $rol === 'SYSADMIN'): ?>
                         <a class="offcanvas-link <?= ($pagina_actual === 'administrador.php') ? 'active' : '' ?>" href="administrador.php">
                             <i class="bi bi-pencil-square text-primary"></i> Administrador
                         </a>
                     <?php endif; ?>
+                    <a class="offcanvas-link <?= ($pagina_actual === 'firmador_institucional.php') ? 'active' : '' ?>" href="firmador_institucional.php">
+                        <i class="bi bi-pen-fill text-primary"></i> Firmador Institucional
+                    </a>
                 </div>
             </div>
         <?php endif; ?>

@@ -649,3 +649,224 @@ if (!function_exists('firmagob_obtener_firmante_activo')) {
         return null;
     }
 }
+
+if (!function_exists('firmagob_obtener_layout_xml_libre')) {
+    /**
+     * Genera la configuración de layout XML de AgileSignerConfig para estampar la firma visible
+     * en coordenadas arbitrarias y página específica del PDF.
+     * Si $coordenadas es null o vacío, retorna null (indicando firma invisible).
+     *
+     * @param array|null $coordenadas ['page' => 1, 'llx' => 40, 'lly' => 50, 'urx' => 210, 'ury' => 130]
+     * @param string|null $imagen_base64
+     * @param string $nombre
+     * @param string $run
+     * @param string $cargo
+     * @param array $opciones_estampa
+     * @return string|null XML de AgileSignerConfig o null si es firma invisible
+     */
+    function firmagob_obtener_layout_xml_libre($coordenadas = null, $imagen_base64 = null, $nombre = '', $run = '', $cargo = '', $opciones_estampa = []) {
+        if (empty($coordenadas) || !is_array($coordenadas)) {
+            return null; // Firma invisible / puramente criptográfica
+        }
+
+        $page = isset($coordenadas['page']) ? $coordenadas['page'] : 'LAST';
+        $llx  = isset($coordenadas['llx']) ? round(floatval($coordenadas['llx'])) : 40;
+        $lly  = isset($coordenadas['lly']) ? round(floatval($coordenadas['lly'])) : 50;
+        $urx  = isset($coordenadas['urx']) ? round(floatval($coordenadas['urx'])) : 210;
+        $ury  = isset($coordenadas['ury']) ? round(floatval($coordenadas['ury'])) : 130;
+
+        // Asegurar que urx > llx y ury > lly
+        if ($urx <= $llx) $urx = $llx + 170;
+        if ($ury <= $lly) $ury = $lly + 80;
+
+        // Si no se provee imagen fija, generar la estampa dinámica en memoria con GD
+        if (empty($imagen_base64)) {
+            $imagen_base64 = firmagob_generar_estampa_dinamica_base64($nombre, $run, $cargo, null, $opciones_estampa);
+        }
+
+        $xml = '<AgileSignerConfig>' .
+               '<Application id="THIS-CONFIG">' .
+               '<pdfPassword/>' .
+               '<Signature>' .
+               '<Visible active="true" layer2="false" label="true" pos="1">' .
+               "<llx>{$llx}</llx>" .
+               "<lly>{$lly}</lly>" .
+               "<urx>{$urx}</urx>" .
+               "<ury>{$ury}</ury>" .
+               "<page>{$page}</page>" .
+               '<image>BASE64</image>' .
+               "<BASE64VALUE>{$imagen_base64}</BASE64VALUE>" .
+               '</Visible>' .
+               '</Signature>' .
+               '</Application>' .
+               '</AgileSignerConfig>';
+
+        return $xml;
+    }
+}
+
+if (!function_exists('firmagob_firmar_documento_libre')) {
+    /**
+     * Firma cualquier documento PDF con FirmaGob v2 permitiendo libertad total de ubicación
+     * de estampa o firma invisible. Acepta contenido binario o ruta en disco.
+     *
+     * @param string $pdf_content_o_ruta Contenido binario del PDF o ruta absoluta al archivo.
+     * @param string $run_firmante RUN del firmante habilitado en la RA.
+     * @param string $descripcion Descripción del documento.
+     * @param array|null $coordenadas Coordenadas ['page'=>int, 'llx'=>float, 'lly'=>float, 'urx'=>float, 'ury'=>float] o null para firma invisible.
+     * @param string|null $otp Código OTP de 6 dígitos si aplica para modo atendido.
+     * @param string|null $nombre_firmante Nombre del firmante para la estampa.
+     * @param string|null $cargo_firmante Cargo del firmante para la estampa.
+     * @param array $opciones_estampa Opciones de personalización de la estampa GD.
+     * @param string|null $purpose Propósito específico si difiere del configurado.
+     * @return array ['success' => bool, 'content_binary' => string, 'id_solicitud' => string, 'checksum_original' => string, 'checksum_signed' => string]
+     * @throws Exception
+     */
+    function firmagob_firmar_documento_libre($pdf_content_o_ruta, $run_firmante, $descripcion, $coordenadas = null, $otp = null, $nombre_firmante = null, $cargo_firmante = null, $opciones_estampa = [], $purpose = null) {
+        // Detectar si es ruta a archivo o binario directo en memoria
+        if (is_string($pdf_content_o_ruta) && strlen($pdf_content_o_ruta) < 4096 && file_exists($pdf_content_o_ruta)) {
+            $filesize = filesize($pdf_content_o_ruta);
+            if ($filesize > 5 * 1024 * 1024) {
+                throw new Exception("El archivo excede el tamaño máximo permitido por FirmaGob (5 MB). Tamaño actual: " . round($filesize / 1024 / 1024, 2) . " MB");
+            }
+            $pdf_content = file_get_contents($pdf_content_o_ruta);
+        } else {
+            $pdf_content = (string)$pdf_content_o_ruta;
+            $filesize = strlen($pdf_content);
+            if ($filesize > 5 * 1024 * 1024) {
+                throw new Exception("El documento excede el tamaño máximo permitido por FirmaGob (5 MB). Tamaño actual: " . round($filesize / 1024 / 1024, 2) . " MB");
+            }
+        }
+
+        if (empty($pdf_content) || substr($pdf_content, 0, 4) !== '%PDF') {
+            throw new Exception("El archivo proporcionado no es un documento PDF válido.");
+        }
+
+        $pdf_base64 = base64_encode($pdf_content);
+        $checksum_sha256 = hash('sha256', $pdf_content);
+
+        // MODO SIMULACIÓN LOCAL: Permite pruebas completas mientras se esperan credenciales
+        if (defined('FIRMAGOB_AMBIENTE') && FIRMAGOB_AMBIENTE === 'SIMULADO') {
+            return [
+                'success'           => true,
+                'content_binary'    => $pdf_content,
+                'id_solicitud'      => 'SIM_LIBRE_' . strtoupper(uniqid()),
+                'checksum_original' => $checksum_sha256,
+                'checksum_signed'   => hash('sha256', $pdf_content . microtime()),
+                'otp_expired'       => false
+            ];
+        }
+
+        if (empty(FIRMAGOB_API_TOKEN_KEY) || empty(FIRMAGOB_SECRET)) {
+            throw new Exception("FirmaGob no está configurado: Por favor revise las credenciales en el sistema.");
+        }
+
+        $purpose_usar = $purpose ?: (
+            (FIRMAGOB_MODO === 'DESATENDIDA') ? 'Desatendido' : FIRMAGOB_PURPOSE
+        );
+
+        if (empty($nombre_firmante)) {
+            $nombre_firmante = $_SESSION['user_nombre'] ?? ($_SESSION['user_name'] ?? 'Funcionario Autorizado');
+        }
+        if (empty($cargo_firmante)) {
+            $cargo_firmante = $_SESSION['user_cargo'] ?? ($_SESSION['user_rol'] ?? 'Funcionario Autorizado');
+        }
+
+        // Generar JWT oficial
+        $jwt = firmagob_generar_jwt($run_firmante, FIRMAGOB_ENTITY, $purpose_usar, FIRMAGOB_SECRET);
+
+        // Generar Layout XML (o null si es firma invisible)
+        $layout_xml = firmagob_obtener_layout_xml_libre($coordenadas, null, $nombre_firmante, $run_firmante, $cargo_firmante, $opciones_estampa);
+
+        $file_item = [
+            'content-type' => 'application/pdf',
+            'content'      => $pdf_base64,
+            'description'  => $descripcion,
+            'checksum'     => $checksum_sha256
+        ];
+
+        // Regla de Oro FirmaGob: Si es firma invisible, omitir completamente el atributo 'layout'
+        if (!empty($layout_xml)) {
+            $file_item['layout'] = $layout_xml;
+        }
+
+        $payload = [
+            'token'         => $jwt,
+            'api_token_key' => FIRMAGOB_API_TOKEN_KEY,
+            'files'         => [ $file_item ]
+        ];
+
+        $headers = [
+            'Content-Type: application/json',
+            'Accept: application/json'
+        ];
+
+        if (!empty($otp) && FIRMAGOB_MODO !== 'DESATENDIDA') {
+            $headers[] = 'OTP: ' . trim($otp);
+        }
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, FIRMAGOB_API_URL);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 50);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+
+        $response_body = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($ch);
+        curl_close($ch);
+
+        if ($curl_error) {
+            throw new Exception("Error de comunicación de red con FirmaGob: $curl_error");
+        }
+
+        $data = json_decode($response_body, true);
+
+        if ($http_code === 200 && isset($data['files'][0])) {
+            $file_res = $data['files'][0];
+
+            if (isset($file_res['status']) && $file_res['status'] !== 'OK') {
+                throw new Exception("FirmaGob rechazó el documento: " . ($file_res['status'] ?? 'Error desconocido'));
+            }
+
+            $signed_binary = base64_decode($file_res['content']);
+            if (!$signed_binary) {
+                throw new Exception("La respuesta de FirmaGob no contiene un archivo firmado válido.");
+            }
+
+            return [
+                'success'           => true,
+                'content_binary'    => $signed_binary,
+                'id_solicitud'      => $data['idSolicitud'] ?? null,
+                'checksum_original' => $file_res['checksum_original'] ?? $checksum_sha256,
+                'checksum_signed'   => $file_res['checksum_signed'] ?? hash('sha256', $signed_binary),
+                'otp_expired'       => $data['metadata']['otpExpired'] ?? false
+            ];
+        }
+
+        // Manejo de errores
+        $msg_error = "Error al conectar con FirmaGob (HTTP $http_code)";
+        if (isset($data['error'])) {
+            $msg_error = $data['error'];
+        } elseif (isset($data['message'])) {
+            $msg_error = $data['message'];
+        }
+
+        if ($http_code === 400) {
+            throw new Exception("FirmaGob (400 - Solicitud inválida): $msg_error");
+        } elseif ($http_code === 404) {
+            throw new Exception("FirmaGob (404 - Certificado o datos no encontrados): $msg_error. Verifique que el RUN ($run_firmante) y la entidad ('" . FIRMAGOB_ENTITY . "') coincidan exactamente con la RA.");
+        } elseif ($http_code === 412) {
+            throw new Exception("FirmaGob (412 - Verificación OTP fallida): $msg_error. Por favor revise el código OTP de su aplicación e intente nuevamente.");
+        } elseif ($http_code === 429) {
+            throw new Exception("FirmaGob (429 - Límite de intentos excedido): Ha excedido el número máximo de intentos de OTP (5 intentos). Su acceso está bloqueado temporalmente por seguridad. Intente más tarde.");
+        } elseif (in_array($http_code, [500, 502, 503, 504])) {
+            throw new Exception("FirmaGob ($http_code - Servidor no disponible): El servicio de Gobierno Digital está temporalmente no disponible o en mantención.");
+        } else {
+            throw new Exception("FirmaGob ($http_code): $msg_error");
+        }
+    }
+}
