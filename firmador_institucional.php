@@ -211,6 +211,7 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
                 padding-bottom: 70px;
             }
         }
+    </style>
 </head>
 <body class="bg-light">
 
