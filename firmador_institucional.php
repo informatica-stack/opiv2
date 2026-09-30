@@ -80,9 +80,9 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
             position: absolute;
             cursor: grab;
             border: 2px dashed #0d6efd;
-            background: rgba(13, 110, 253, 0.08);
+            background: rgba(255, 255, 255, 0.94);
             border-radius: 6px;
-            box-shadow: 0 4px 14px rgba(13, 110, 253, 0.25);
+            box-shadow: 0 4px 18px rgba(13, 110, 253, 0.3);
             touch-action: none;
             z-index: 50;
             display: flex;
@@ -90,13 +90,15 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
             justify-content: space-between;
             padding: 8px 10px;
             box-sizing: border-box;
-            backdrop-filter: blur(2px);
+            min-width: 190px;
+            min-height: 85px;
+            backdrop-filter: blur(4px);
             transition: border-color 0.15s, box-shadow 0.15s;
         }
         .stamp-box-draggable:active {
             cursor: grabbing;
             border-color: #ff9800;
-            box-shadow: 0 6px 18px rgba(255, 152, 0, 0.35);
+            box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
         }
         .stamp-box-draggable.hidden-stamp {
             display: none !important;
@@ -257,14 +259,18 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
                             
                             <!-- Paginación -->
                             <div class="d-flex align-items-center gap-1.5">
+                                <button class="btn btn-outline-secondary btn-sm" id="btnPaginaPrimera" title="Ir a la Primera Página">
+                                    <i class="bi bi-chevron-double-left"></i>
+                                </button>
                                 <button class="btn btn-outline-secondary btn-sm" id="btnPaginaAnterior" title="Página Anterior">
                                     <i class="bi bi-chevron-left"></i>
                                 </button>
-                                <span class="small fw-bold px-2 text-dark">
-                                    Página <span id="numPaginaActual">1</span> de <span id="totalPaginas">1</span>
-                                </span>
+                                <select id="selectPaginaDirecta" class="form-select form-select-sm py-1 px-2 fw-semibold border-secondary-subtle" style="width: auto; font-size: 12px; cursor: pointer;"></select>
                                 <button class="btn btn-outline-secondary btn-sm" id="btnPaginaSiguiente" title="Página Siguiente">
                                     <i class="bi bi-chevron-right"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" id="btnPaginaUltima" title="Ir a la Última Página">
+                                    <i class="bi bi-chevron-double-right"></i>
                                 </button>
                             </div>
 
@@ -546,7 +552,8 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
         let escalaOriginal = 1.0;
         let docToken = null;
         let pdfDimensiones = { widthPt: 612, heightPt: 792 }; // Puntos PostScript nativos del PDF
-        let stampDimensionesPt = { widthPt: 170, heightPt: 80 }; // Dimensiones físicas de la estampa
+        let stampDimensionesPt = { widthPt: 170, heightPt: 80 }; // Dimensiones físicas de la estampa en puntos PDF
+        let currentRenderTask = null; // Control de renderizado concurrente
 
         // Coordenadas locales de la estampa en píxeles sobre el canvas
         let stampPosPx = { left: 40, top: 40 };
@@ -557,6 +564,7 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
         const ctx = canvas.getContext('2d');
         const wrapper = document.getElementById('pdfCanvasWrapper');
         const stampBox = document.getElementById('stampBox');
+        const selectPagina = document.getElementById('selectPaginaDirecta');
 
         // Inicialización de Eventos Dropzone
         const dropzone = document.getElementById('dropzoneFirmador');
@@ -625,12 +633,15 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
                 document.getElementById('docInfoHash').innerText = 'SHA256: ' + data.checksum;
                 document.getElementById('inputDescripcion').value = 'Firma Documento: ' + data.nombre;
 
-                // Cargar documento en PDF.js
-                await cargarPdfEnVisor(`firmador_institucional_controller.php?action=obtener_preview_pdf&token_doc=${docToken}`);
-
-                // Cambiar vista
+                // CRÍTICO: Primero hacer visible la sección del taller para que el contenedor calcule correctamente su clientWidth
                 document.getElementById('seccionCarga').classList.add('d-none');
                 document.getElementById('seccionTaller').classList.remove('d-none');
+
+                // Breve pausa para asegurar que el navegador aplique los estilos de visualización
+                await new Promise(r => setTimeout(r, 80));
+
+                // Ahora cargar documento en PDF.js
+                await cargarPdfEnVisor(`firmador_institucional_controller.php?action=obtener_preview_pdf&token_doc=${docToken}`);
 
             } catch (err) {
                 alert('Error: ' + err.message);
@@ -644,9 +655,21 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
                 const loadingTask = pdfjsLib.getDocument(urlPdf);
                 pdfDoc = await loadingTask.promise;
                 totalPaginas = pdfDoc.numPages;
-                document.getElementById('totalPaginas').innerText = totalPaginas;
-                paginaActual = totalPaginas; // Por defecto situar en la última hoja
-                document.getElementById('numPaginaActual').innerText = paginaActual;
+
+                // Poblar selector directo de páginas
+                if (selectPagina) {
+                    selectPagina.innerHTML = '';
+                    for (let p = 1; p <= totalPaginas; p++) {
+                        const opt = document.createElement('option');
+                        opt.value = p;
+                        opt.innerText = `Página ${p} de ${totalPaginas}`;
+                        selectPagina.appendChild(opt);
+                    }
+                }
+
+                // Por defecto situar en la última página (habitual en decretos/oficios/informes)
+                paginaActual = totalPaginas;
+                if (selectPagina) selectPagina.value = paginaActual;
                 document.getElementById('pageHidden').value = paginaActual;
 
                 await renderizarPagina(paginaActual);
@@ -661,47 +684,71 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
         }
 
         async function renderizarPagina(numPag) {
-            const page = await pdfDoc.getPage(numPag);
-            
-            // Obtener dimensiones reales del PDF en puntos
-            const view = page.view; // [x1, y1, x2, y2]
-            pdfDimensiones.widthPt = view[2] - view[0];
-            pdfDimensiones.heightPt = view[3] - view[1];
+            if (!pdfDoc) return;
 
-            // Escalar para ajustarse al contenedor con nitidez
-            const containerWidth = document.getElementById('pdfViewerCard').clientWidth - 60;
-            const unscaledViewport = page.getViewport({ scale: 1.0 });
-            escalaOriginal = containerWidth / unscaledViewport.width;
-            
-            // Mantener factor de escala óptimo
-            const viewport = page.getViewport({ scale: escalaOriginal * escalaActual });
+            // Si hay un renderizado en curso, cancelarlo limpiamente antes de iniciar el siguiente
+            if (currentRenderTask) {
+                try {
+                    currentRenderTask.cancel();
+                } catch(e) {}
+                currentRenderTask = null;
+            }
 
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            canvas.style.width = viewport.width + 'px';
-            canvas.style.height = viewport.height + 'px';
-            wrapper.style.width = viewport.width + 'px';
-            wrapper.style.height = viewport.height + 'px';
+            try {
+                const page = await pdfDoc.getPage(numPag);
+                
+                // Obtener dimensiones reales del PDF en puntos tipográficos
+                const unscaledViewport = page.getViewport({ scale: 1.0 });
+                pdfDimensiones.widthPt = unscaledViewport.width;
+                pdfDimensiones.heightPt = unscaledViewport.height;
 
-            const renderContext = {
-                canvasContext: ctx,
-                viewport: viewport
-            };
+                // Escalar para ajustarse al contenedor con precisión
+                const viewerCard = document.getElementById('pdfViewerCard');
+                const clientW = viewerCard ? viewerCard.clientWidth : 0;
+                const containerWidth = Math.max(500, (clientW > 100 ? clientW - 48 : 800));
+                escalaOriginal = containerWidth / unscaledViewport.width;
+                
+                const finalScale = escalaOriginal * escalaActual;
+                const viewport = page.getViewport({ scale: finalScale });
 
-            await page.render(renderContext).promise;
+                canvas.width = Math.floor(viewport.width);
+                canvas.height = Math.floor(viewport.height);
+                canvas.style.width = Math.floor(viewport.width) + 'px';
+                canvas.style.height = Math.floor(viewport.height) + 'px';
+                wrapper.style.width = Math.floor(viewport.width) + 'px';
+                wrapper.style.height = Math.floor(viewport.height) + 'px';
 
-            // Ajustar tamaño visual de la caja de estampa proporcional a la página
-            actualizarTamanoEstampaPx();
-            actualizarCoordenadasFirmaGob();
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+
+                currentRenderTask = page.render(renderContext);
+                await currentRenderTask.promise;
+                currentRenderTask = null;
+
+                // Ajustar tamaño visual y posición de la caja de estampa proporcional a la página
+                actualizarTamanoEstampaPx();
+                actualizarCoordenadasFirmaGob();
+
+            } catch (err) {
+                if (err && err.name !== 'RenderingCancelledException') {
+                    console.error("Error en renderizado de página PDF:", err);
+                }
+            }
         }
 
-        // Calcula el tamaño en píxeles de la caja de estampa manteniendo la escala exacta del PDF
+        // Calcula el tamaño en píxeles de la caja de estampa manteniendo la escala física exacta
         function actualizarTamanoEstampaPx() {
-            const scaleX = canvas.width / pdfDimensiones.widthPt;
-            const scaleY = canvas.height / pdfDimensiones.heightPt;
+            const scaleX = canvas.width / (pdfDimensiones.widthPt || 612);
+            const scaleY = canvas.height / (pdfDimensiones.heightPt || 792);
 
-            const boxWidthPx = Math.round(stampDimensionesPt.widthPt * scaleX);
-            const boxHeightPx = Math.round(stampDimensionesPt.heightPt * scaleY);
+            let boxWidthPx = Math.round(stampDimensionesPt.widthPt * scaleX);
+            let boxHeightPx = Math.round(stampDimensionesPt.heightPt * scaleY);
+
+            // Límites para garantizar máxima legibilidad en pantalla
+            boxWidthPx = Math.max(190, Math.min(320, boxWidthPx));
+            boxHeightPx = Math.max(85, Math.min(130, boxHeightPx));
 
             stampBox.style.width = boxWidthPx + 'px';
             stampBox.style.height = boxHeightPx + 'px';
@@ -740,26 +787,25 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
 
         // Posicionamiento Rápido de la Estampa
         function posicionarEstampa(pos) {
-            const boxW = stampBox.offsetWidth;
-            const boxH = stampBox.offsetHeight;
+            const boxW = stampBox.offsetWidth || 190;
+            const boxH = stampBox.offsetHeight || 85;
             const margin = 25;
 
             switch (pos) {
                 case 'bottom-right':
-                    stampPosPx.left = canvas.width - boxW - margin;
-                    stampPosPx.top = canvas.height - boxH - margin;
+                    stampPosPx.left = Math.max(margin, canvas.width - boxW - margin);
+                    stampPosPx.top = Math.max(margin, canvas.height - boxH - margin);
                     break;
                 case 'bottom-center':
-                    stampPosPx.left = Math.round((canvas.width - boxW) / 2);
-                    stampPosPx.top = canvas.height - boxH - margin;
+                    stampPosPx.left = Math.max(margin, Math.round((canvas.width - boxW) / 2));
+                    stampPosPx.top = Math.max(margin, canvas.height - boxH - margin);
                     break;
                 case 'bottom-left':
                     stampPosPx.left = margin;
-                    stampPosPx.top = canvas.height - boxH - margin;
+                    stampPosPx.top = Math.max(margin, canvas.height - boxH - margin);
                     break;
             }
 
-            // Aplicar estilos
             stampBox.style.left = stampPosPx.left + 'px';
             stampBox.style.top = stampPosPx.top + 'px';
             actualizarCoordenadasFirmaGob();
@@ -801,11 +847,37 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
             isDragging = false;
         });
 
-        // 5. Controles de Paginación
+        // 5. Controles de Paginación Integrados
+        if (selectPagina) {
+            selectPagina.addEventListener('change', (e) => {
+                paginaActual = parseInt(e.target.value, 10);
+                document.getElementById('pageHidden').value = paginaActual;
+                renderizarPagina(paginaActual);
+            });
+        }
+
+        document.getElementById('btnPaginaPrimera').addEventListener('click', () => {
+            if (paginaActual !== 1) {
+                paginaActual = 1;
+                if (selectPagina) selectPagina.value = paginaActual;
+                document.getElementById('pageHidden').value = paginaActual;
+                renderizarPagina(paginaActual);
+            }
+        });
+
+        document.getElementById('btnPaginaUltima').addEventListener('click', () => {
+            if (paginaActual !== totalPaginas) {
+                paginaActual = totalPaginas;
+                if (selectPagina) selectPagina.value = paginaActual;
+                document.getElementById('pageHidden').value = paginaActual;
+                renderizarPagina(paginaActual);
+            }
+        });
+
         document.getElementById('btnPaginaAnterior').addEventListener('click', () => {
             if (paginaActual > 1) {
                 paginaActual--;
-                document.getElementById('numPaginaActual').innerText = paginaActual;
+                if (selectPagina) selectPagina.value = paginaActual;
                 document.getElementById('pageHidden').value = paginaActual;
                 renderizarPagina(paginaActual);
             }
@@ -814,7 +886,7 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
         document.getElementById('btnPaginaSiguiente').addEventListener('click', () => {
             if (paginaActual < totalPaginas) {
                 paginaActual++;
-                document.getElementById('numPaginaActual').innerText = paginaActual;
+                if (selectPagina) selectPagina.value = paginaActual;
                 document.getElementById('pageHidden').value = paginaActual;
                 renderizarPagina(paginaActual);
             }
@@ -841,6 +913,17 @@ $ambiente_firmagob = FIRMAGOB_AMBIENTE;
             escalaActual = 1.0;
             document.getElementById('labelZoom').innerText = '100%';
             renderizarPagina(paginaActual);
+        });
+
+        // Reajuste responsivo ante cambio de tamaño de ventana (con debounce)
+        let resizeTimeout = null;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (pdfDoc && !document.getElementById('seccionTaller').classList.contains('d-none')) {
+                    renderizarPagina(paginaActual);
+                }
+            }, 250);
         });
 
         // 6. Alternar Firma Visible vs Invisible
